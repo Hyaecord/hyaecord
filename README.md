@@ -9,15 +9,10 @@
 <p align="center">
   <em>A performance-focused, native-feeling Discord desktop client for Linux and Windows.</em>
 </p>
-
 <p align="center">
-  <a href="LICENSE">
-    <img alt="License: GPLv3 (NC)" src="https://img.shields.io/badge/License-GPLv3_(NC)-f1e9d5?style=for-the-badge&logoColor=ffffff">
-  </a>
+  <a href="LICENSE" style="text-decoration: none;"><img alt="License: GPLv3 (NC)" src="https://img.shields.io/badge/License-GPLv3_(NC)-f1e9d5?style=for-the-badge&logoColor=ffffff"></a>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logo=github&logoColor=ffffff&color=%23e44550">
-  <a href="https://hyaecord.vercel.app/discord">
-    <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&color=c88633">
-  </a>
+  <a href="https://hyaecord.vercel.app/discord" style="text-decoration: none;"><img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&color=c88633"></a>
 </p>
 
 Hyaecord is an original Discord desktop client that implements a
