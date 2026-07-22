@@ -1,0 +1,47 @@
+Hyaecord
+Copyright (C) 2026 Hyaecord Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program, in the file COPYING. If not, see
+<https://www.gnu.org/licenses/gpl-3.0.txt> for the full license text.
+
+===============================================================================
+SPECIAL EXCEPTION & BRANDING DISCLOSURE
+===============================================================================
+
+The GNU General Public License above covers the SOURCE CODE of Hyaecord
+only. It does not, and is not intended to, grant any license or right to use:
+
+  * The name "Hyaecord" or any confusingly similar name;
+  * The Hyaecord logo, icon, mascot, or other vector/raster brand assets
+    located under `assets/branding/`;
+  * Any trademark, service mark, or trade dress associated with the
+    Hyaecord project.
+
+These items are governed separately by TRADEMARK.md and are NOT part of
+the GPL-3.0 grant. This mirrors common practice among open-source projects
+(e.g. Mozilla/Firefox, Blender) where source code and brand identity are
+licensed under different terms.
+
+If you redistribute modified source code under GPL-3.0, you must still
+comply with TRADEMARK.md when it comes to naming and branding your
+redistribution. See TRADEMARK.md for full details, and PLUGIN_GUIDELINES.md
+for terms specific to third-party plugins and extensions.
+
+-------------------------------------------------------------------------------
+Note for maintainers: this file is a license NOTICE, not the full GPL-3.0
+license text. Per the GPL's own distribution requirements, a complete,
+unmodified copy of the license (commonly named COPYING) must also be
+included in every distribution of this software. Do not rely on this file
+alone to satisfy that requirement.
+-------------------------------------------------------------------------------
