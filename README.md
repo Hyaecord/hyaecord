@@ -12,7 +12,7 @@
 
 <p align="center">
   <img alt="GitHub License" src="https://img.shields.io/github/license/hyaecord/hyaecord?style=for-the-badge&logoColor=ffffff&color=f1e9d5">
-  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logoColor=ffffff&color=%23e44550">
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logo=github&logoColor=ffffff&color=%23e44550">
   <a href="PLUGIN_GUIDELINES.md">
   <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&labelColor=291a0f&color=c88633&link=https%3A%2F%2Fhyaecord.vercel.app%2Fdiscord">
 
