@@ -35,6 +35,7 @@ If Electron fails to launch in your dev environment with a sandbox error, run it
 
 - **Read [BUILD_PROMPT.md](BUILD_PROMPT.md) first.** It defines V1 scope, what's deliberately out of scope, and open decisions. Don't implement V2/backlog items without discussing first.
 - **Accessibility is not optional.** New UI needs ARIA semantics, keyboard navigation, and must respect reduced-motion and the text/UI scale settings. WCAG AA contrast is the baseline for any theme work.
+- **UI work follows [DESIGN.md](DESIGN.md)** — semantic colour tokens (no raw hex in components), the spacing grid, motion tokens, and the review checklist at the bottom of that document.
 - **All user-facing strings go through i18n** (`src/i18n/en.json`). No hardcoded UI text.
 - **Motion uses the shared tokens** in `styles.css` — GPU-friendly properties (transform/opacity) only, and everything must respect `prefers-reduced-motion`.
 - **Telemetry is minimal and honest.** One anonymous daily ping (random ID, version, OS, DE family) with a single opt-out, disclosed in the first-run wizard. Never add telemetry that touches message content, identifiers, or per-user behaviour, and never bypass the opt-out — everything goes through `src/main/telemetry.ts`.

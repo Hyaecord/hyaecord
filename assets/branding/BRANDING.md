@@ -1,6 +1,6 @@
 # Hyaecord Brand Guidelines
 
-How to use the Hyaecord name, logo, and palette. For *whether* you may use them at all, see [LICENSE.md](LICENSE.md) (brand assets are all-rights-reserved, separate from the code's GPL) and the repo's [TRADEMARK.md](../../TRADEMARK.md).
+How to use the Hyaecord name, logo, and palette. For *whether* you may use them at all, see [LICENSE.md](LICENSE.md) (brand assets are all-rights-reserved, separate from the code's GPL) and the repo's [TRADEMARK.md](../../TRADEMARK.md). For how these colours become interfaces — ramps, semantic tokens, typography, spacing, motion — see the [Design System](../../DESIGN.md).
 
 ## Philosophy
 
