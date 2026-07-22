@@ -12,7 +12,7 @@
 
 <p align="center">
   <a href="LICENSE">
-    <img alt="License: GPLv3 (NC)" src="https://img.shields.io/badge/License-GPLv3_(NC)-f1e9d5?style=for-the-badge&logo=gnu&logoColor=ffffff">
+    <img alt="License: GPLv3 (NC)" src="https://img.shields.io/badge/License-GPLv3_(NC)-f1e9d5?style=for-the-badge&logoColor=ffffff">
   </a>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logo=github&logoColor=ffffff&color=%23e44550">
   <a href="https://hyaecord.vercel.app/discord">
