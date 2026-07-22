@@ -36,5 +36,7 @@ export const IPC = {
   discordLogout: "hyaecord:discord-logout",
   discordGetSession: "hyaecord:discord-get-session",
   discordState: "hyaecord:discord-state",
-  discordEvent: "hyaecord:discord-event"
+  discordEvent: "hyaecord:discord-event",
+  discordFetchMessages: "hyaecord:discord-fetch-messages",
+  discordSendMessage: "hyaecord:discord-send-message"
 } as const;

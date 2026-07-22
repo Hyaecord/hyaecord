@@ -7,7 +7,15 @@ import { detectDesktopEnvironment, onSystemThemeChange } from "./theme";
 import { getLocaleStrings } from "./i18n";
 import { createTray } from "./tray";
 import { startTelemetry } from "./telemetry";
-import { initDiscord, login, logout, autoLogin, getSessionState } from "./discord";
+import {
+  initDiscord,
+  login,
+  logout,
+  autoLogin,
+  getSessionState,
+  fetchMessages,
+  sendMessage
+} from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -56,6 +64,10 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordLogin, (_e, token: string) => login(token));
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());
+  ipcMain.handle(IPC.discordFetchMessages, (_e, channelId: string) => fetchMessages(channelId));
+  ipcMain.handle(IPC.discordSendMessage, (_e, channelId: string, content: string) =>
+    sendMessage(channelId, content)
+  );
 
   initDiscord((channel, ...args) => {
     const ipcChannel = channel === "state" ? IPC.discordState : IPC.discordEvent;

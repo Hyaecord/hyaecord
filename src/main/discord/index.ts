@@ -1,5 +1,5 @@
 import { GatewayClient, type GatewayState } from "./gateway";
-import { RestClient, DiscordRestError } from "./rest";
+import { RestClient, DiscordRestError, type RawMessage } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import type { DiscordSessionState, DiscordUserSummary } from "@shared/types";
 
@@ -13,6 +13,7 @@ type Sender = (channel: "state" | "event", ...args: unknown[]) => void;
 
 let send: Sender = () => {};
 let gateway: GatewayClient | null = null;
+let rest: RestClient | null = null;
 let state: DiscordSessionState = "logged-out";
 let user: DiscordUserSummary | null = null;
 
@@ -45,7 +46,7 @@ export function getSessionState(): { state: DiscordSessionState; user: DiscordUs
 }
 
 async function startGateway(token: string): Promise<void> {
-  const rest = new RestClient(token);
+  rest = new RestClient(token);
   const me = await rest.getCurrentUser();
   user = {
     id: me.id,
@@ -103,7 +104,28 @@ export async function autoLogin(): Promise<void> {
 export function logout(): void {
   gateway?.destroy();
   gateway = null;
+  rest = null;
   user = null;
   clearToken();
   setState("logged-out");
+}
+
+export async function fetchMessages(channelId: string): Promise<RawMessage[]> {
+  if (!rest) return [];
+  try {
+    const messages = await rest.getMessages(channelId);
+    return messages.reverse(); // API returns newest-first; the UI wants oldest-first
+  } catch {
+    return [];
+  }
+}
+
+export async function sendMessage(channelId: string, content: string): Promise<boolean> {
+  if (!rest || !content.trim()) return false;
+  try {
+    await rest.createMessage(channelId, content);
+    return true;
+  } catch {
+    return false;
+  }
 }

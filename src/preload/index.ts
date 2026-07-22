@@ -19,7 +19,9 @@ const bridge: HyaecordBridge = {
   },
   onDiscordEvent: cb => {
     ipcRenderer.on(IPC.discordEvent, (_e, event: string, data: unknown) => cb(event, data));
-  }
+  },
+  fetchMessages: channelId => ipcRenderer.invoke(IPC.discordFetchMessages, channelId),
+  sendMessage: (channelId, content) => ipcRenderer.invoke(IPC.discordSendMessage, channelId, content)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

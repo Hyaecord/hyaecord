@@ -21,8 +21,19 @@ interface GuildSummary {
   channels: ChannelSummary[];
 }
 
+interface MessageSummary {
+  id: string;
+  channelId: string;
+  authorName: string;
+  authorId: string;
+  avatar: string | null;
+  content: string;
+  timestamp: string;
+}
+
 let guilds: GuildSummary[] = [];
 let loginOverlay: HTMLElement | null = null;
+let activeChannelId: string | null = null;
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 
@@ -30,8 +41,23 @@ export function initSession(): void {
   window.hyaecord.onDiscordState(applySession);
   window.hyaecord.onDiscordEvent((event, data) => {
     if (event === "READY") onReady(data);
+    if (event === "MESSAGE_CREATE") onMessageCreate(data);
   });
   void window.hyaecord.getDiscordSession().then(applySession);
+  wireComposer();
+}
+
+function wireComposer(): void {
+  const input = document.getElementById("composer-input") as HTMLInputElement;
+  input.addEventListener("keydown", async ev => {
+    if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
+    const content = input.value;
+    input.value = "";
+    const ok = await window.hyaecord.sendMessage(activeChannelId, content);
+    if (!ok) {
+      input.value = content; // don't lose what they typed
+    }
+  });
 }
 
 function statusText(session: DiscordSession): string {
@@ -139,6 +165,8 @@ function selectGuild(id: string): void {
       document.getElementById("chat-header")!.textContent = `# ${channel.name}`;
       const input = document.getElementById("composer-input") as HTMLInputElement;
       input.placeholder = t("shell.chat.placeholder").replace("#general", `#${channel.name}`);
+      activeChannelId = channel.id;
+      void loadMessages(channel.id);
     };
     li.addEventListener("click", select);
     li.addEventListener("keydown", ev => {
@@ -146,6 +174,78 @@ function selectGuild(id: string): void {
     });
     list.append(li);
   }
+}
+
+/* ---------- messages ---------- */
+
+function toSummary(raw: unknown): MessageSummary | null {
+  const m = raw as {
+    id?: string;
+    channel_id?: string;
+    content?: string;
+    timestamp?: string;
+    author?: { id?: string; username?: string; global_name?: string | null; avatar?: string | null };
+  };
+  if (!m?.id || !m.channel_id || !m.author?.id) return null;
+  return {
+    id: m.id,
+    channelId: m.channel_id,
+    authorId: m.author.id,
+    authorName: m.author.global_name ?? m.author.username ?? "?",
+    avatar: m.author.avatar ?? null,
+    content: m.content ?? "",
+    timestamp: m.timestamp ?? ""
+  };
+}
+
+function messageRow(msg: MessageSummary): HTMLElement {
+  const avatar = msg.avatar
+    ? el("img", {
+        className: "msg-avatar",
+        src: `https://cdn.discordapp.com/avatars/${msg.authorId}/${msg.avatar}.png?size=64`,
+        alt: "",
+        loading: "lazy"
+      })
+    : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" },
+        msg.authorName[0] ?? "?");
+  const time = msg.timestamp
+    ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : "";
+  return el(
+    "article",
+    { className: "msg", "data-message": msg.id },
+    avatar,
+    el("div", { className: "msg-body" },
+      el("header", { className: "msg-meta" },
+        el("span", { className: "msg-author" }, msg.authorName),
+        el("time", { className: "msg-time" }, time)
+      ),
+      // textContent path only — message content must never become HTML
+      el("p", { className: "msg-content" }, msg.content)
+    )
+  );
+}
+
+async function loadMessages(channelId: string): Promise<void> {
+  const container = document.getElementById("messages")!;
+  container.replaceChildren();
+  const raw = await window.hyaecord.fetchMessages(channelId);
+  if (channelId !== activeChannelId) return; // user moved on while we fetched
+  for (const entry of raw) {
+    const msg = toSummary(entry);
+    if (msg) container.append(messageRow(msg));
+  }
+  container.scrollTop = container.scrollHeight;
+}
+
+function onMessageCreate(data: unknown): void {
+  const msg = toSummary(data);
+  if (!msg || msg.channelId !== activeChannelId) return;
+  const container = document.getElementById("messages")!;
+  const atBottom =
+    container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+  container.append(messageRow(msg));
+  if (atBottom) container.scrollTop = container.scrollHeight;
 }
 
 /* ---------- login view ---------- */

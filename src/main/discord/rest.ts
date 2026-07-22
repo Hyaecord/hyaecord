@@ -51,4 +51,25 @@ export class RestClient {
   getGatewayUrl(): Promise<{ url: string }> {
     return this.request("GET", "/gateway");
   }
+
+  getMessages(channelId: string, limit = 50): Promise<RawMessage[]> {
+    return this.request("GET", `/channels/${channelId}/messages?limit=${limit}`);
+  }
+
+  createMessage(channelId: string, content: string): Promise<RawMessage> {
+    return this.request("POST", `/channels/${channelId}/messages`, { content });
+  }
+}
+
+export interface RawMessage {
+  id: string;
+  channel_id: string;
+  content: string;
+  timestamp: string;
+  author: {
+    id: string;
+    username: string;
+    global_name?: string | null;
+    avatar?: string | null;
+  };
 }
