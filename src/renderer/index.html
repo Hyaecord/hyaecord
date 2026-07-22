@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; img-src 'self' data: https:; script-src 'self'" />
+  <title>Hyaecord</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body data-theme="dark">
+  <div id="app" class="shell" role="application" aria-label="Hyaecord">
+    <nav id="server-rail" class="server-rail" role="navigation" aria-label="Servers" tabindex="0"></nav>
+    <nav id="channel-list" class="channel-list" role="navigation" aria-label="Channels" tabindex="0">
+      <header id="server-header" class="server-header"></header>
+      <ul id="channels" role="list"></ul>
+    </nav>
+    <main class="chat" role="main">
+      <header id="chat-header" class="chat-header"></header>
+      <section id="messages" class="messages" role="log" aria-live="polite" aria-label="Messages"></section>
+      <footer class="composer">
+        <input id="composer-input" type="text" aria-label="Message input" />
+      </footer>
+    </main>
+    <aside id="member-list" class="member-list" role="complementary" aria-label="Members" tabindex="0"></aside>
+  </div>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

@@ -100,3 +100,76 @@ Which specific Equicord/Vencord plugin API surfaces (patch points, context menus
 Reference: full original brief
 
 The complete, unabbreviated project brief (all 27 sections plus research notes) is preserved separately — this document is the condensed, build-ordered version of it for Claude Code to work from. If Claude Code needs the full rationale/detail behind any V1 item, ask and the source section can be provided.
+
+---
+
+# BUILD LOG — state as of 22 July 2026
+
+This section records what has actually been built so far and what the next agent should pick up. Everything below is real, on-disk state, not plans.
+
+## Environment setup already done on this machine
+
+- **GitHub CLI** installed at `~/.local/bin/gh` (v2.96.0) — the system git config previously pointed at a nonexistent `/usr/bin/gh`; `gh auth setup-git` has been re-run so the credential helper now points at `~/.local/bin/gh`. Authenticated as `aaronateataco` (scopes: gist, read:org, repo).
+- **Node.js v22.17.0** installed to `~/.local/node-v22.17.0-linux-x64`, symlinked into `~/.local/bin` (`node`, `npm`, `npx`, `pnpm`).
+- **Always `export PATH="$HOME/.local/bin:$PATH"`** before running node/pnpm/gh in this environment.
+- `rsvg-convert` is available for SVG→PNG icon generation; ImageMagick is not installed.
+
+## Repo 1: Hyaecord/hyaecord (main client) — pushed through commit "Tighten legal posture…"
+
+**Committed and pushed:**
+- README rewritten for accuracy: Hyaecord is described as an **original client with a plugin-API compatibility layer**, not a fork of Equicord (the old "fork of Equicord" wording contradicted this brief and weakened the legal position). Credits section reworded accordingly. Discord badge/link now points at `https://hyaecord.vercel.app/discord`; the `hyraecord.vercel.app` typo is fixed.
+- `assets/branding/LICENSE.md` — NEW. Explicit all-rights-reserved carve-out for brand assets, closing the loophole where the repo-wide GPL LICENSE could be read as covering the logo.
+- `TRADEMARK.md` — added a "Relationship to the GPL" note: the policy governs only the name/brand, never the code; rebranded forks need no permission. This pre-empts "your trademark policy violates the GPL" attacks.
+
+**Written locally but NOT YET COMMITTED (do this first):**
+- `package.json`, `tsconfig.json`, `.gitignore`, `pnpm-workspace.yaml` (contains `allowBuilds: electron/esbuild: true` — required by pnpm v11, the older `pnpm.onlyBuiltDependencies` field in package.json is ignored)
+- `scripts/build.mjs` — esbuild bundler for main (cjs), preload (cjs), renderer (esm); copies HTML/CSS/i18n into `dist/`
+- `src/shared/` — `types.ts` (settings, DE info, bridge interface), `constants.ts` (APP_ID, DEFAULT_SETTINGS, IPC channel names)
+- `src/main/` — `index.ts` (single-instance lock, BrowserWindow with contextIsolation+sandbox, IPC handlers), `settings.ts` (atomic write-then-rename JSON store), `theme.ts` (XDG_CURRENT_DESKTOP → gnome/kde/other + nativeTheme), `i18n.ts` (locale merged over English fallback), `tray.ts` (branded tray icon + menu)
+- `src/preload/index.ts` — contextBridge exposing the typed `window.hyaecord` API
+- `src/renderer/` — `index.html` (four-pane shell with ARIA roles: server rail → channels → chat → members), `styles.css` (Light/Dark/AMOLED token sets, shared motion tokens, reduced-motion handling, text/UI scale variables), `app.ts` (loads settings/DE/locale, applies theme, renders placeholder shell)
+- `src/i18n/en.json` — externalized strings incl. first-run wizard and disable-feature-confirmation copy
+- `electron-builder.yml` — appId `org.hyaecord.Hyaecord`, AppImage/deb/rpm + nsis targets, desktop entry
+- `assets/icons/` — `hyaecord-{16,32,64,128,256,512}.png` generated from the branding SVG via rsvg-convert, plus `hyaecord.svg`
+
+**Verified working:** `pnpm install`, `pnpm typecheck` (clean), `pnpm build` (bundles successfully). Electron launches — note it needs `--no-sandbox` in this dev environment because the pnpm-store chrome-sandbox binary isn't setuid root; that is a local dev quirk, not a code bug, and packaged builds are unaffected.
+
+**Next commit should be:** `git add -A && git commit -m "Scaffold Electron client: main/preload/renderer, tray, DE theme detection, settings store, i18n, icons, packaging config"` then push.
+
+## Repo 2: Hyaecord/website (deployed at hyaecord.vercel.app)
+
+**Committed, pushed, and verified live:**
+- `index.html` — landing page
+- `api/discord.js` + `vercel.json` rewrite — `/discord` fetches `https://discord.com/api/guilds/1529521295228928000/widget.json` at request time and 302s to `instant_invite`; falls back to the hardcoded last-known invite (`https://discord.com/invite/vhXNzJxV`) only if that fetch fails. Edge-cached 5 min. **Requires the Discord server widget to stay enabled.**
+- `privacy.html` — no cookies/analytics; documents Vercel's transient hosting logs with a GDPR Art. 6(1)(f) legitimate-interest basis; GDPR/UK GDPR/CCPA rights honoured
+- `legal.html` — non-affiliation with Discord Inc., nominative fair use of the "Discord" mark, ToS disclosure, GPL-vs-branding split, no-warranty notice, and a takedown/counter-notice section
+- `docs.html` — docs/wiki hub with FAQ accordions
+- `llms.txt` — machine-readable project summary so LLMs describe the project accurately
+- `.well-known/security.txt` — RFC 9116 contact pointing at GitHub private security advisories
+- `robots.txt`, `sitemap.xml`, `404.html`
+- Security headers in `vercel.json` (CSP, HSTS, X-Frame-Options DENY, nosniff, referrer + permissions policy) — all confirmed present on the live response
+
+**Written locally but NOT YET COMMITTED:**
+- `index.html` **redesign** — sticky blurred nav bar, gradient-mesh animated hero with gradient-clipped headline text, pill buttons, 9-card feature grid, 6-tile download grid, honest fine-print notice, expanded footer. Visual direction is *inspired by* modern OSS client landing pages (Vencord's included) but written from scratch: own palette (cream/amber/red hyena tones, not Vencord's purple), own copy, own layout structure, no copied CSS/markup/assets. **Do not copy Vencord's stylesheet, artwork, mascot, or wording verbatim** — that is the line between inspiration and infringement.
+
+## Repo 3: Hyaecord/hyaecord.wiki (GitHub wiki) — BLOCKED
+
+Wiki pages are written and committed locally in `/home/aaron/Documents/Github/hyaecord.wiki/`: `Home.md`, `Installation.md`, `FAQ.md`, `Building-from-Source.md`, `Plugin-Development.md`, `Plugin-Compatibility.md`, `Roadmap.md`, `_Sidebar.md`.
+
+`has_wiki` was flipped to `true` via the API, but **GitHub does not create the `.wiki.git` backend until the first page is created through the web UI**, so `git push` to `hyaecord.wiki.git` fails with "Repository not found".
+
+**Manual unblock (owner action):** visit `https://github.com/Hyaecord/hyaecord/wiki`, click "Create the first page", save anything. Then:
+```bash
+cd /home/aaron/Documents/Github/hyaecord.wiki
+git pull --rebase origin master   # or main, whichever GitHub created
+git push origin master
+```
+
+## Still to do
+
+1. Commit + push the client scaffold (repo 1) and the redesigned landing page (repo 2).
+2. Initialize the wiki via the web UI, then push the eight prepared pages.
+3. Build the real V1 features on top of the scaffold, in the order listed earlier in this document — the scaffold intentionally stops at a placeholder shell; no Discord connection, plugin loader, or first-run wizard logic exists yet.
+4. Add CI (GitHub Actions: typecheck + build on PR) and a release workflow driving electron-builder.
+5. Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` to the main repo.
+6. Mascot/logo work remains with the project owner (still [OPEN] above).

@@ -1,0 +1,29 @@
+appId: org.hyaecord.Hyaecord
+productName: Hyaecord
+copyright: Copyright © 2026 Hyaecord Contributors
+
+directories:
+  output: release
+
+files:
+  - dist/**/*
+  - assets/icons/**/*
+  - package.json
+
+linux:
+  target:
+    - AppImage
+    - deb
+    - rpm
+  category: Network;InstantMessaging
+  icon: assets/icons/hyaecord-256.png
+  desktop:
+    entry:
+      Name: Hyaecord
+      Comment: A performance-focused, native-feeling Discord desktop client
+      Categories: Network;InstantMessaging;
+
+win:
+  target:
+    - nsis
+  icon: assets/icons/hyaecord-256.png
