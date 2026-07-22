@@ -32,7 +32,9 @@ export function setToken(token: string): boolean {
   if (!safeStorage.isEncryptionAvailable()) return false;
   const path = tokenPath();
   const tmp = path + ".tmp";
-  writeFileSync(tmp, safeStorage.encryptString(token));
+  // 0600: the blob is already keyring-encrypted, but there's no reason other
+  // local users should be able to read even the ciphertext.
+  writeFileSync(tmp, safeStorage.encryptString(token), { mode: 0o600 });
   renameSync(tmp, path);
   return true;
 }
