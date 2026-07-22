@@ -1,20 +1,12 @@
-import type { HyaecordBridge, ThemeId } from "@shared/types";
+import type { HyaecordBridge } from "@shared/types";
+import { applySettingsToDocument, state, t } from "./ui";
+import { maybeShowWizard } from "./wizard";
+import { mountSettingsButton } from "./settings-ui";
 
 declare global {
   interface Window {
     hyaecord: HyaecordBridge;
   }
-}
-
-let strings: Record<string, string> = {};
-
-function t(key: string): string {
-  return strings[key] ?? key;
-}
-
-function applyTheme(theme: ThemeId, prefersDark: boolean): void {
-  const resolved = theme === "system" ? (prefersDark ? "dark" : "light") : theme;
-  document.body.dataset.theme = resolved;
 }
 
 function renderPlaceholderShell(): void {
@@ -51,18 +43,19 @@ async function init(): Promise<void> {
     api.getLocaleStrings()
   ]);
 
-  strings = locale;
+  state.settings = settings;
+  state.prefersDark = de.prefersDark;
+  state.strings = locale;
 
-  document.documentElement.style.setProperty("--text-scale", String(settings.textScale));
-  document.documentElement.style.setProperty("--ui-scale", String(settings.uiScale));
-  if (settings.reducedMotion !== "system") {
-    document.documentElement.dataset.reducedMotion = settings.reducedMotion;
-  }
-
-  applyTheme(settings.theme, de.prefersDark);
-  api.onThemeChanged(prefersDark => applyTheme(settings.theme, prefersDark));
+  applySettingsToDocument();
+  api.onThemeChanged(prefersDark => {
+    state.prefersDark = prefersDark;
+    applySettingsToDocument();
+  });
 
   renderPlaceholderShell();
+  mountSettingsButton();
+  maybeShowWizard(de);
 }
 
 init().catch(err => console.error("[hyaecord] renderer init failed:", err));

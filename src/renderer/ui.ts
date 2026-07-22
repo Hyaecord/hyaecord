@@ -1,0 +1,115 @@
+import type { HyaecordSettings } from "@shared/types";
+
+/** Shared renderer state, populated once by app.ts before anything renders. */
+export const state = {
+  settings: null as unknown as HyaecordSettings,
+  prefersDark: true,
+  strings: {} as Record<string, string>
+};
+
+export function t(key: string, vars?: Record<string, string | number>): string {
+  let s = state.strings[key] ?? key;
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, String(v));
+  }
+  return s;
+}
+
+type Attrs = Record<string, string | number | boolean | ((ev: Event) => void)>;
+
+export function el<K extends keyof HTMLElementTagNameMap>(
+  tag: K,
+  attrs: Attrs = {},
+  ...children: (Node | string)[]
+): HTMLElementTagNameMap[K] {
+  const node = document.createElement(tag);
+  for (const [key, value] of Object.entries(attrs)) {
+    if (typeof value === "function") {
+      node.addEventListener(key.replace(/^on/, "").toLowerCase(), value);
+    } else if (key === "className") {
+      node.className = String(value);
+    } else if (typeof value === "boolean") {
+      if (value) node.setAttribute(key, "");
+    } else {
+      node.setAttribute(key, String(value));
+    }
+  }
+  node.append(...children);
+  return node;
+}
+
+export function applySettingsToDocument(): void {
+  const { settings, prefersDark } = state;
+  const resolved =
+    settings.theme === "system" ? (prefersDark ? "dark" : "light") : settings.theme;
+  document.body.dataset.theme = resolved;
+  document.documentElement.style.setProperty("--text-scale", String(settings.textScale));
+  document.documentElement.style.setProperty("--ui-scale", String(settings.uiScale));
+  if (settings.reducedMotion === "system") {
+    delete document.documentElement.dataset.reducedMotion;
+  } else {
+    document.documentElement.dataset.reducedMotion = settings.reducedMotion;
+  }
+}
+
+export async function patchSettings(patch: Partial<HyaecordSettings>): Promise<void> {
+  state.settings = await window.hyaecord.setSettings(patch);
+  applySettingsToDocument();
+}
+
+/** Wrap Tab focus inside `container` and return a cleanup function. */
+export function trapFocus(container: HTMLElement): () => void {
+  const selector =
+    "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])";
+  const onKeydown = (ev: KeyboardEvent) => {
+    if (ev.key !== "Tab") return;
+    const focusable = [...container.querySelectorAll<HTMLElement>(selector)].filter(
+      f => !f.hasAttribute("disabled")
+    );
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (!first || !last) return;
+    if (ev.shiftKey && document.activeElement === first) {
+      ev.preventDefault();
+      last.focus();
+    } else if (!ev.shiftKey && document.activeElement === last) {
+      ev.preventDefault();
+      first.focus();
+    }
+  };
+  container.addEventListener("keydown", onKeydown);
+  return () => container.removeEventListener("keydown", onKeydown);
+}
+
+/**
+ * A labelled switch row: [label + description | toggle].
+ * `onChange` may return false (or resolve to false) to veto the change,
+ * e.g. when a disable-confirmation dialog is cancelled.
+ */
+export function toggleRow(
+  labelKey: string,
+  descriptionKey: string | null,
+  checked: boolean,
+  onChange: (next: boolean) => boolean | void | Promise<boolean | void>
+): HTMLElement {
+  const input = el("input", {
+    type: "checkbox",
+    className: "switch-input"
+  }) as HTMLInputElement;
+  input.checked = checked;
+  input.addEventListener("change", async () => {
+    const next = input.checked;
+    if ((await onChange(next)) === false) input.checked = !next;
+  });
+
+  const text = el("span", { className: "row-text" }, el("span", { className: "row-label" }, t(labelKey)));
+  if (descriptionKey) {
+    text.append(el("span", { className: "row-description" }, t(descriptionKey)));
+  }
+  return el(
+    "label",
+    { className: "setting-row" },
+    text,
+    el("span", { className: "switch" }, input, el("span", { className: "switch-thumb", "aria-hidden": "true" }))
+  );
+}
