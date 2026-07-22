@@ -30,6 +30,12 @@ practice.
 
 ## 3. Uses That Require Written Permission
 
+> **Relationship to the GPL:** Nothing in this policy limits the rights
+> granted by the GPL-3.0 over Hyaecord's source code. You may always fork,
+> modify, and redistribute the code. This policy governs only the Hyaecord
+> **name and brand assets** — a fork never needs permission to exist, only
+> to keep our branding. Rebranded forks need no permission at all.
+
 * **Forks and derivative builds.** Any publicly distributed build that
   modifies Hyaecord's source code, configuration, or default branding beyond
   cosmetic theming — including custom builds, "debloated" variants, or

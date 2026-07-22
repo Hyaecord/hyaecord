@@ -19,10 +19,13 @@
 
 </p>
 
-Hyaecord is a fork of [Equicord](https://github.com/Equicord/Equicord) that
-offers full Vencord and Equicord plugin ecosystem compatibility alongside
-desktop-native visual integration, event-driven resource management, and
-accessibility features.
+Hyaecord is an original Discord desktop client that implements a
+compatibility layer for the [Equicord](https://github.com/Equicord/Equicord)
+and [Vencord](https://github.com/Vendicated/Vencord) plugin ecosystems,
+alongside desktop-native visual integration, event-driven resource
+management, and accessibility features. It is not a fork of either
+codebase, and it does not include or redistribute Discord's proprietary
+client code or assets.
 
 You can join our [Discord server](https://hyaecord.vercel.app/discord) for
 commits, changes, chatting, or support.
@@ -144,7 +147,7 @@ pnpm build
 
 ## Technical Specifications
 
-- **Core Framework:** Electron (forked from [Equicord](https://github.com/Equicord/Equicord)).
+- **Core Framework:** Electron, with an original client shell and GUI; plugin support is provided by a compatibility layer against the [Equicord](https://github.com/Equicord/Equicord)/[Vencord](https://github.com/Vendicated/Vencord) plugin API.
 - **Target Platforms:** Linux (primary, v1), Windows (secondary).
 - **Networking & Split-Tunneling:** Compatible with `mullvad-exclude` using application ID `org.hyaecord.Hyaecord`.
 - **Localization:** Externalized string bundles (`src/i18n/`) with RTL layout support.
@@ -164,11 +167,11 @@ must be rebranded before public distribution.
 
 ## Credits
 
-Thank you to the [Equicord](https://github.com/Equicord/Equicord) team for
-the fork base Hyaecord builds on, and to
-[Vendicated](https://github.com/Vendicated) for creating
-[Vencord](https://github.com/Vendicated/Vencord), which Equicord — and by
-extension Hyaecord — is itself built on top of.
+Thank you to the [Equicord](https://github.com/Equicord/Equicord) team and
+to [Vendicated](https://github.com/Vendicated), creator of
+[Vencord](https://github.com/Vendicated/Vencord), for designing and
+maintaining the plugin API that Hyaecord's compatibility layer targets,
+and for the plugin ecosystem that makes it worth targeting.
 
 ---
 
@@ -221,3 +224,4 @@ For rules regarding logos, branding, and third-party extensions, see:
 
 - [TRADEMARK.md](TRADEMARK.md) — Branding and trademark usage guidelines
 - [PLUGIN_GUIDELINES.md](PLUGIN_GUIDELINES.md) — Extension rules and monetization policy
+- [assets/branding/LICENSE.md](assets/branding/LICENSE.md) — Brand assets are **not** GPL-licensed; all rights reserved
