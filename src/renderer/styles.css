@@ -55,11 +55,12 @@
 }
 
 [data-theme="light"] {
-  --bg-deep: #eee7d6;
-  --bg-base: #f7f2e6;
+  /* near-white with a warm hint; cream reserved for accents, not the canvas */
+  --bg-deep: #f3ede1;
+  --bg-base: #faf7f0;
   --bg-raise: #ffffff;
-  --bg-hover: #efe7d2;
-  --border: #ddd2b8;
+  --bg-hover: #f0e9da;
+  --border: #e2d8c2;
   --text: var(--brand-brown);
   --text-dim: #5f5240;
   --accent: var(--amber-600);

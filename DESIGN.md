@@ -49,11 +49,13 @@ Never reference ramp steps directly in component code — reference these:
 
 | Token | Dark (default) | Light | AMOLED | Role |
 |---|---|---|---|---|
-| `--bg-deep` | `#16130e` | `#eee7d6` | `#000000` | window chrome, rails |
-| `--bg-base` | `#1c1812` | `#f7f2e6` | `#000000` | main content surface |
+| `--bg-deep` | `#16130e` | `#f3ede1` | `#000000` | window chrome, rails |
+| `--bg-base` | `#1c1812` | `#faf7f0` | `#000000` | main content surface |
 | `--bg-raise` | `#241f16` | `#ffffff` | `#0d0b07` | cards, inputs, popovers |
-| `--bg-hover` | `#2d271c` | `#efe7d2` | `#1a160e` | hover/selected fills |
-| `--border` | `#3a3325` | `#ddd2b8` | `#2a2416` | hairlines, outlines |
+| `--bg-hover` | `#2d271c` | `#f0e9da` | `#1a160e` | hover/selected fills |
+| `--border` | `#3a3325` | `#e2d8c2` | `#2a2416` | hairlines, outlines |
+
+> Light surfaces are **near-white with a warm hint**, not full brand cream — cream as a page background reads dated and heavy; as an accent surface (chrome, footers) it keeps the brand warmth without carrying every pixel.
 | `--text` | `#f1e9d5` | `#2e1d11` | `#f1e9d5` | primary text |
 | `--text-dim` | `#b3a98d` | `#5f5240` | `#a89e83` | secondary text |
 | `--accent` | `#c88633` | `#835000` | `#c88633` | brand accent, focus rings |
