@@ -51,6 +51,16 @@ Auto-update — resilient to failed/interrupted updates, falls back to last know
 Disable-built-in-feature confirmation modal — for UserPFP/UsrBG/GlobalBadges/RPC Bridge toggles.
 Localization scaffolding — all UI strings externalized from the start, English-complete, fallback-to-English for missing strings, RTL-aware base layout — even if only English ships translated at launch.
 
+Website — separate repo, build alongside V1
+
+The project website lives in its own repository under the Hyaecord GitHub organisation: Hyaecord/website. It is deployed on Vercel at https://hyaecord.vercel.app (custom domain may come later — don't hardcode the vercel.app hostname anywhere that's painful to change).
+
+Requirements:
+
+Landing page — static, fast, no framework required. Presents the project (name, logo, tagline, feature highlights), links to the GitHub org/repo, downloads/releases, and the Discord server. Uses the branding assets from the main repo (assets/branding/), keeps to the brand palette already used in the README badges (cream #f1e9d5, red #e44550, amber #c88633), respects prefers-color-scheme and prefers-reduced-motion — the accessibility bar for the client applies to the website too.
+/discord redirect — https://hyaecord.vercel.app/discord must redirect to the Discord server. The invite URL is NOT hardcoded: a Vercel serverless function fetches the server widget at request time (https://discord.com/api/guilds/1529521295228928000/widget.json, server ID 1529521295228928000) and 302-redirects to its instant_invite field, so the link keeps working if the widget invite rotates. Hardcode the last-known invite only as a fallback for when the widget fetch fails. Requires the server widget to stay enabled in Discord server settings — note this in the website README.
+All links in the main repo (README badges, "join our Discord" copy) point at https://hyaecord.vercel.app/discord, never at a raw discord.gg invite, so the invite can rotate without touching the main repo.
+
 V2 / Later — don't build yet
 
 Theme Store (Themes / Layouts / Catboxes, including the "Discord Vanilla" catbox) and its moderation/review pipeline

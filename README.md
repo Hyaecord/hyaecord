@@ -1,7 +1,7 @@
 # Hyaecord
 
 <p align="center">
-  <a href="https://hyraecord.vercel.app">
+  <a href="https://hyaecord.vercel.app">
     <img src="assets/branding/logo.svg" alt="Hyaecord Logo" width="128" height="128" />
   </a>
 </p>
@@ -13,8 +13,9 @@
 <p align="center">
   <img alt="GitHub License" src="https://img.shields.io/github/license/hyaecord/hyaecord?style=for-the-badge&logoColor=ffffff&color=f1e9d5">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logo=github&logoColor=ffffff&color=%23e44550">
-  <a href="PLUGIN_GUIDELINES.md">
+  <a href="https://hyaecord.vercel.app/discord">
   <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&color=c88633&link=https%3A%2F%2Fhyaecord.vercel.app%2Fdiscord">
+  </a>
 
 </p>
 
@@ -25,8 +26,6 @@ accessibility features.
 
 You can join our [Discord server](https://hyaecord.vercel.app/discord) for
 commits, changes, chatting, or support.
-*(Replace this link and the badge above with your project's real
-server invite and Discord server ID before publishing.)*
 
 ## Contents
 
