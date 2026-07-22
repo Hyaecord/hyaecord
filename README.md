@@ -11,12 +11,13 @@
 </p>
 
 <p align="center">
-  <img alt="GitHub License" src="https://img.shields.io/github/license/hyaecord/hyaecord?style=for-the-badge&logoColor=ffffff&color=f1e9d5">
+  <a href="LICENSE">
+    <img alt="License: GPLv3 (NC)" src="https://img.shields.io/badge/License-GPLv3_(NC)-f1e9d5?style=for-the-badge&logo=gnu&logoColor=ffffff">
+  </a>
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logo=github&logoColor=ffffff&color=%23e44550">
   <a href="https://hyaecord.vercel.app/discord">
-  <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&color=c88633&link=https%3A%2F%2Fhyaecord.vercel.app%2Fdiscord">
+    <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&color=c88633">
   </a>
-
 </p>
 
 Hyaecord is an original Discord desktop client that implements a
