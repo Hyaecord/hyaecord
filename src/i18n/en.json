@@ -32,6 +32,7 @@
   "settings.disableFeature.body": "This is a built-in Hyaecord feature. You can re-enable it here at any time.",
   "settings.disableFeature.confirm": "Turn off",
   "settings.disableFeature.cancel": "Keep on",
+  "badge.hyaecordContributor": "Hyaecord Contributor",
   "tray.open": "Open Hyaecord",
   "tray.quit": "Quit"
 }

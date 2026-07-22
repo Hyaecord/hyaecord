@@ -35,7 +35,7 @@ System tray / taskbar icon: must show Hyaecord's actual branded icon (proper mul
 V1 Scope — build this first
 
 Plugin compatibility layer — supports most Equicord (and by extension Vencord) plugins unmodified via a compatibility layer against the plugin API, not via reuse of Equicord's client code; Equicord Cloud Saves for settings sync. Maintain a known-issues/compatibility list for plugins that don't work out of the box.
-Built-in integrations (not plugins): UserPFP, UsrBG, GlobalBadges, RPC Bridge.
+Built-in integrations (not plugins): UserPFP, UsrBG, GlobalBadges, RPC Bridge. On top of the badges GlobalBadges fetches (Vencord/Equicord contributor badges etc.), Hyaecord adds its own **"Hyaecord Contributor"** badge — icon is simply the Hyaecord logo, holders sourced from GitHub contributors of the org's repos (defined in `src/shared/badges.ts`).
 Custom GUI base — server list → channel list → chat → member list, familiar structure, fully redesigned visuals and original DOM/component structure (not a CSS reskin of Discord's or Equicord's DOM). Native-OS-adjacent visual direction: lean on GTK4/Libadwaita and KDE Plasma for spacing/controls/system feel, but give Hyaecord-specific surfaces their own distinct identity.
 Platform-native theming — auto-detect GNOME/KDE on first launch, default to matching theme, manual override in settings, graceful fallback elsewhere.
 Built-in default themes — Light, Dark, AMOLED, meeting WCAG AA contrast as the baseline bar.
