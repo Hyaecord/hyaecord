@@ -165,11 +165,19 @@ git pull --rebase origin master   # or main, whichever GitHub created
 git push origin master
 ```
 
+## Update — 22 July 2026 (evening session)
+
+Done since the log above was written:
+
+1. ✅ Client scaffold committed and pushed (commit "Scaffold Electron client…").
+2. ✅ CI (`.github/workflows/ci.yml`: typecheck + build) and release workflow (`.github/workflows/release.yml`: tag-driven electron-builder for Linux + Windows, draft release upload) written and committed. **Push blocked:** the gh OAuth token lacks the `workflow` scope, so GitHub rejects any push containing workflow files. Owner action: `gh auth refresh -h github.com -s workflow`, then `git push`.
+3. ✅ `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `SECURITY.md` (GitHub private advisories) committed (same blocked push).
+4. ✅ Website landing page redesigned per owner direction: **no gradients anywhere, flat colours only, all colours sourced from the logo**, AA-checked contrast in both colour schemes. Palette extracted from the actual logo raster: amber `#c88633`, spot brown `#2e1d11`, sticker white `#fefefe`, shadow red `#e44550`, tongue pink `#d4495f`, cream `#f1e9d5`.
+5. ✅ Branding kit added under `assets/branding/`: `BRANDING.md` (philosophy — flat/bold/sticker-like, no gradients; logo do/don'ts; palette table with contrast guidance), plus recolourable monochrome marks: `logo-mono.svg` (silhouette) and `logo-lineart.svg` (spots/features, red shadow excluded), both filled with `currentColor` so CSS `color` recolours them, plus black/white 1024px PNG renders. Note: these SVGs mask an embedded raster (the source logo is itself an embedded PNG) — if a true vector source ever materialises, regenerate them from it.
+
 ## Still to do
 
-1. Commit + push the client scaffold (repo 1) and the redesigned landing page (repo 2).
-2. Initialize the wiki via the web UI, then push the eight prepared pages.
-3. Build the real V1 features on top of the scaffold, in the order listed earlier in this document — the scaffold intentionally stops at a placeholder shell; no Discord connection, plugin loader, or first-run wizard logic exists yet.
-4. Add CI (GitHub Actions: typecheck + build on PR) and a release workflow driving electron-builder.
-5. Add `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, and `SECURITY.md` to the main repo.
-6. Mascot/logo work remains with the project owner (still [OPEN] above).
+1. Owner: `gh auth refresh -h github.com -s workflow` then push the main repo (two local commits waiting).
+2. Owner: initialize the wiki via the web UI ("Create the first page"), then push the eight prepared pages from `/home/aaron/Documents/Github/hyaecord.wiki/`.
+3. Build the real V1 features on top of the scaffold, in the order listed earlier in this document — the scaffold intentionally stops at a placeholder shell; no Discord connection, plugin loader, or first-run wizard logic exists yet. First-run wizard + settings UI is the natural next increment (i18n strings for it already exist in `src/i18n/en.json`).
+4. Mascot/logo design work remains with the project owner (still [OPEN] above).
