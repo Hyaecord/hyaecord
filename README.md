@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE.txt"><img alt="License: GPL v3" src="https://img.shields.io/badge/license-GPLv3-blue.svg"></a>
+  <a href="LICENSE"><img alt="License: GPL v3" src="https://img.shields.io/badge/license-GPLv3-blue.svg"></a>
   <a href="https://github.com/hyaecord/hyaecord/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord"></a>
   <a href="https://github.com/hyaecord/hyaecord/actions/workflows/test.yml"><img alt="Tests" src="https://github.com/hyaecord/hyaecord/actions/workflows/test.yml/badge.svg?branch=main"></a>
   <a href="PLUGIN_GUIDELINES.md"><img alt="Plugins: no paywalls" src="https://img.shields.io/badge/plugins-no%20paywalls-brightgreen"></a>
@@ -214,7 +214,7 @@ posting screenshots of Hyaecord in servers where that could get you banned.
 ## License
 
 Hyaecord's source code is licensed under the
-[GNU General Public License v3.0](LICENSE.txt).
+[GNU General Public License v3.0](LICENSE).
 
 For rules regarding logos, branding, and third-party extensions, see:
 

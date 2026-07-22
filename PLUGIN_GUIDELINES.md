@@ -1,9 +1,12 @@
 # Hyaecord Plugin & Extension Policy
 
 Hyaecord is committed to keeping the entire client experience free,
-accessible, and open. To maintain a fair and safe ecosystem, all plugins
-submitted to or bundled with Hyaecord — including ports from the Vencord
-and Equicord ecosystems — must adhere to these guidelines.
+accessible, and open. Hyaecord's compatibility layer runs most existing
+Vencord and Equicord plugins unmodified; a small number that rely on
+Equicord/Vencord-specific internals may need porting. To maintain a fair
+and safe ecosystem, all plugins submitted to or bundled with Hyaecord —
+whether run as-is or ported from the Vencord and Equicord ecosystems —
+must adhere to these guidelines.
 
 ## 1. No Paywalls or Commercial Features
 
