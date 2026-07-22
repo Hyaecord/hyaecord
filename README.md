@@ -192,7 +192,7 @@ extension Hyaecord — is itself built on top of.
 - **Trademarks:** "Discord" is a registered trademark of Discord Inc. Hyaecord is not affiliated with or endorsed by Discord Inc.
 
 <details>
-<summary>More about the Discord ToS risk</summary>
+<summary>More about the Discord ToS risk</summary><br>
 
 Client modifications are against Discord's Terms of Service.
 
