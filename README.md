@@ -23,7 +23,7 @@ offers full Vencord and Equicord plugin ecosystem compatibility alongside
 desktop-native visual integration, event-driven resource management, and
 accessibility features.
 
-You can join our [Discord server](https://hyaecord.org/discord) for
+You can join our [Discord server](https://hyaecord.vercel.app/discord) for
 commits, changes, chatting, or support.
 *(Replace this link and the badge above with your project's real
 server invite and Discord server ID before publishing.)*
