@@ -31,5 +31,10 @@ export const IPC = {
   setSettings: "hyaecord:set-settings",
   getDesktopEnvironment: "hyaecord:get-de",
   getLocaleStrings: "hyaecord:get-locale",
-  themeChanged: "hyaecord:theme-changed"
+  themeChanged: "hyaecord:theme-changed",
+  discordLogin: "hyaecord:discord-login",
+  discordLogout: "hyaecord:discord-logout",
+  discordGetSession: "hyaecord:discord-get-session",
+  discordState: "hyaecord:discord-state",
+  discordEvent: "hyaecord:discord-event"
 } as const;

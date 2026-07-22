@@ -2,6 +2,7 @@ import type { HyaecordBridge } from "@shared/types";
 import { applySettingsToDocument, state, t } from "./ui";
 import { maybeShowWizard } from "./wizard";
 import { mountSettingsButton } from "./settings-ui";
+import { initSession } from "./session";
 
 declare global {
   interface Window {
@@ -9,28 +10,8 @@ declare global {
   }
 }
 
-function renderPlaceholderShell(): void {
-  const rail = document.getElementById("server-rail")!;
-  for (let i = 0; i < 3; i++) {
-    const pill = document.createElement("div");
-    pill.className = "server-pill";
-    pill.setAttribute("role", "button");
-    pill.tabIndex = 0;
-    rail.appendChild(pill);
-  }
-
+function renderChrome(): void {
   document.getElementById("server-header")!.textContent = t("app.name");
-  document.getElementById("chat-header")!.textContent = t("shell.status.connecting");
-
-  const channels = document.getElementById("channels")!;
-  for (const name of ["general", "development", "support"]) {
-    const li = document.createElement("li");
-    li.textContent = `# ${name}`;
-    li.tabIndex = 0;
-    channels.appendChild(li);
-  }
-  channels.firstElementChild?.setAttribute("aria-current", "true");
-
   const input = document.getElementById("composer-input") as HTMLInputElement;
   input.placeholder = t("shell.chat.placeholder");
 }
@@ -53,8 +34,9 @@ async function init(): Promise<void> {
     applySettingsToDocument();
   });
 
-  renderPlaceholderShell();
+  renderChrome();
   mountSettingsButton();
+  initSession();
   maybeShowWizard(de);
 }
 

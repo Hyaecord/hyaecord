@@ -32,6 +32,28 @@ export interface DesktopEnvironmentInfo {
   prefersDark: boolean;
 }
 
+export type DiscordSessionState = "logged-out" | "connecting" | "ready" | "reconnecting";
+
+export interface DiscordUserSummary {
+  id: string;
+  username: string;
+  globalName: string | null;
+  avatar: string | null;
+}
+
+export interface DiscordSession {
+  state: DiscordSessionState;
+  user: DiscordUserSummary | null;
+}
+
+export interface LoginResult {
+  ok: boolean;
+  /** "invalid-token" | "network" | "empty" */
+  error?: string;
+  /** false when no OS keyring was available and the token is session-only */
+  persisted?: boolean;
+}
+
 /** API surface exposed to the renderer via contextBridge */
 export interface HyaecordBridge {
   getSettings(): Promise<HyaecordSettings>;
@@ -39,4 +61,9 @@ export interface HyaecordBridge {
   getDesktopEnvironment(): Promise<DesktopEnvironmentInfo>;
   getLocaleStrings(): Promise<Record<string, string>>;
   onThemeChanged(cb: (prefersDark: boolean) => void): void;
+  discordLogin(token: string): Promise<LoginResult>;
+  discordLogout(): Promise<void>;
+  getDiscordSession(): Promise<DiscordSession>;
+  onDiscordState(cb: (session: DiscordSession) => void): void;
+  onDiscordEvent(cb: (event: string, data: unknown) => void): void;
 }

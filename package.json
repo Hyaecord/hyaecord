@@ -21,9 +21,13 @@
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
     "esbuild": "^0.24.0",
     "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "ws": "^8.21.1"
   }
 }

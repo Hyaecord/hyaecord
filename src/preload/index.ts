@@ -10,6 +10,15 @@ const bridge: HyaecordBridge = {
   getLocaleStrings: () => ipcRenderer.invoke(IPC.getLocaleStrings),
   onThemeChanged: cb => {
     ipcRenderer.on(IPC.themeChanged, (_e, prefersDark: boolean) => cb(prefersDark));
+  },
+  discordLogin: token => ipcRenderer.invoke(IPC.discordLogin, token),
+  discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
+  getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
+  onDiscordState: cb => {
+    ipcRenderer.on(IPC.discordState, (_e, session) => cb(session));
+  },
+  onDiscordEvent: cb => {
+    ipcRenderer.on(IPC.discordEvent, (_e, event: string, data: unknown) => cb(event, data));
   }
 };
 
