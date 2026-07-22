@@ -9,11 +9,11 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: GPL v3" src="https://img.shields.io/badge/license-GPLv3-blue.svg"></a>
-  <a href="https://github.com/hyaecord/hyaecord/releases"><img alt="Latest release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord"></a>
-  <a href="https://github.com/hyaecord/hyaecord/actions/workflows/test.yml"><img alt="Tests" src="https://github.com/hyaecord/hyaecord/actions/workflows/test.yml/badge.svg?branch=main"></a>
-  <a href="PLUGIN_GUIDELINES.md"><img alt="Plugins: no paywalls" src="https://img.shields.io/badge/plugins-no%20paywalls-brightgreen"></a>
-  <a href="https://hyaecord.org/discord"><img alt="Discord" src="https://img.shields.io/discord/0000000000000000000.svg?color=768AD4&label=Discord&logo=discord&logoColor=white"></a>
+  <img alt="GitHub License" src="https://img.shields.io/github/license/hyaecord/hyaecord?style=for-the-badge&logoColor=ffffff&color=f1e9d5">
+  <img alt="GitHub Release" src="https://img.shields.io/github/v/release/hyaecord/hyaecord?include_prereleases&sort=date&display_name=release&style=for-the-badge&logoColor=ffffff&color=%23e44550">
+  <a href="PLUGIN_GUIDELINES.md">
+  <img alt="Discord" src="https://img.shields.io/discord/1529521295228928000?style=for-the-badge&logo=discord&logoColor=ffffff&labelColor=291a0f&color=c88633&link=https%3A%2F%2Fhyaecord.vercel.app%2Fdiscord">
+
 </p>
 
 Hyaecord is a fork of [Equicord](https://github.com/Equicord/Equicord) that
