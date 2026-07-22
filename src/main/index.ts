@@ -6,6 +6,7 @@ import { loadSettings, saveSettings } from "./settings";
 import { detectDesktopEnvironment, onSystemThemeChange } from "./theme";
 import { getLocaleStrings } from "./i18n";
 import { createTray } from "./tray";
+import { startTelemetry } from "./telemetry";
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -54,6 +55,7 @@ app.whenReady().then(() => {
 
   createWindow();
   if (mainWindow) createTray(mainWindow);
+  startTelemetry();
 
   onSystemThemeChange(prefersDark => {
     mainWindow?.webContents.send(IPC.themeChanged, prefersDark);

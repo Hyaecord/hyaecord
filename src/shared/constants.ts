@@ -17,8 +17,14 @@ export const DEFAULT_SETTINGS = {
   selfPinFade: {
     enabled: true,
     delaySeconds: 10
+  },
+  telemetry: {
+    enabled: true,
+    anonId: null
   }
 } as const;
+
+export const TELEMETRY_ENDPOINT = "https://hyaecord.vercel.app/api/telemetry";
 
 export const IPC = {
   getSettings: "hyaecord:get-settings",

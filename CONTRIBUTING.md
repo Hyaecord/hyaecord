@@ -37,7 +37,7 @@ If Electron fails to launch in your dev environment with a sandbox error, run it
 - **Accessibility is not optional.** New UI needs ARIA semantics, keyboard navigation, and must respect reduced-motion and the text/UI scale settings. WCAG AA contrast is the baseline for any theme work.
 - **All user-facing strings go through i18n** (`src/i18n/en.json`). No hardcoded UI text.
 - **Motion uses the shared tokens** in `styles.css` — GPU-friendly properties (transform/opacity) only, and everything must respect `prefers-reduced-motion`.
-- **No telemetry.** Ever, by default.
+- **Telemetry is minimal and honest.** One anonymous daily ping (random ID, version, OS, DE family) with a single opt-out, disclosed in the first-run wizard. Never add telemetry that touches message content, identifiers, or per-user behaviour, and never bypass the opt-out — everything goes through `src/main/telemetry.ts`.
 - **Nothing that automates user actions** or crosses from cosmetic/QoL into abusive-behavior territory. This is a hard line.
 - Don't copy code, assets, or wording from other clients. Plugin *API* compatibility with Equicord/Vencord is intentional; reuse of their client code is not.
 

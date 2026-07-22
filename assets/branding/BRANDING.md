@@ -20,10 +20,13 @@ For contexts where the full-colour mark doesn't work (single-colour print, embos
 
 | File | What it is |
 | --- | --- |
-| `logo-mono.svg` | Solid silhouette of the full sticker shape |
-| `logo-lineart.svg` | Spots-and-features line art (no shadow) |
+| `logo-vector.svg` | True-vector full-colour mark, traced from the original — keeps all colours, shades, and coat texture. Use where a scalable colour mark is needed. |
+| `logo-mono.svg` | True-vector solid silhouette of the full sticker shape |
+| `logo-lineart.svg` | True-vector spots-and-features line art (no shadow) |
 | `logo-mono-{black,white}-1024.png` | Pre-rendered silhouette |
 | `logo-lineart-{black,white}-1024.png` | Pre-rendered line art |
+
+`logo.svg` (the original, raster-embedded) remains the canonical mark; `logo-vector.svg` is a faithful vectorization of it for scalable use.
 
 Both SVGs are filled with **`currentColor`**, so they inherit whatever CSS `color` is set on them or an ancestor — recolour with one line:
 
