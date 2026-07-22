@@ -1,7 +1,9 @@
 # Hyaecord
 
 <p align="center">
-  <img src="assets/branding/logo.svg" alt="Hyaecord Logo" width="128" height="128" />
+  <a href="https://hyraecord.vercel.app">
+    <img src="assets/branding/logo.svg" alt="Hyaecord Logo" width="128" height="128" />
+  </a>
 </p>
 
 <p align="center">
