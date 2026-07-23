@@ -31,6 +31,7 @@ interface GuildSummary {
   id: string;
   name: string;
   icon: string | null;
+  banner: string | null;
   channels: ChannelSummary[];
   /** True if the user can manage channels in *any* channel of this guild — gates Moderator View. */
   canManageChannels: boolean;
@@ -203,7 +204,8 @@ function onReady(data: unknown): void {
       id: string;
       name?: string;
       icon?: string | null;
-      properties?: { name?: string; icon?: string | null };
+      banner?: string | null;
+      properties?: { name?: string; icon?: string | null; banner?: string | null };
       channels?: Array<{
         id: string;
         name?: string;
@@ -226,6 +228,7 @@ function onReady(data: unknown): void {
       id: g.id,
       name: g.properties?.name ?? g.name ?? "?",
       icon: g.properties?.icon ?? g.icon ?? null,
+      banner: g.properties?.banner ?? g.banner ?? null,
       channels,
       roles,
       canManageChannels: channels.some(ch => hasPermission(ch.permissions, Permission.MANAGE_CHANNELS))
@@ -613,7 +616,7 @@ function markActivePill(guildId: string | null): void {
 function selectDms(): void {
   activeGuildId = null;
   markActivePill(null);
-  document.getElementById("server-header")!.textContent = t("shell.directMessages");
+  applyServerHeaderBanner(null, t("shell.directMessages"), null);
   clearMemberList();
 
   const list = document.getElementById("channels")!;
@@ -647,13 +650,35 @@ function selectDms(): void {
   }
 }
 
+/**
+ * Renders a guild's real banner as a backdrop behind its name in the
+ * channel-list header — Discord's own client shows this same image as a
+ * thin, heavily-cropped sliver; this gives it real visual room instead
+ * (see BUILD_PROMPT.md's "server banner rendering" item). CSS `cover` +
+ * a fixed-height strip is deliberate: Discord doesn't publish a banner
+ * aspect ratio anywhere (checked docs.discord.com and docs.discord.food,
+ * neither states one), so `cover` sidesteps needing that fact at all
+ * rather than guessing at it.
+ */
+function applyServerHeaderBanner(guildId: string | null, name: string, banner: string | null): void {
+  const header = document.getElementById("server-header")!;
+  header.textContent = name;
+  if (guildId && banner) {
+    header.classList.add("has-banner");
+    header.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(https://cdn.discordapp.com/banners/${guildId}/${banner}.png?size=512)`;
+  } else {
+    header.classList.remove("has-banner");
+    header.style.backgroundImage = "";
+  }
+}
+
 function selectGuild(id: string): void {
   const guild = guilds.find(g => g.id === id);
   if (!guild) return;
 
   activeGuildId = id;
   markActivePill(id);
-  document.getElementById("server-header")!.textContent = guild.name;
+  applyServerHeaderBanner(guild.id, guild.name, guild.banner);
   setActiveGuildRoles(guild.roles);
 
   const list = document.getElementById("channels")!;

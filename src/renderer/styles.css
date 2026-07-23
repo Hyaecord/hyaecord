@@ -283,6 +283,16 @@ body {
   padding: 0.9rem 1rem;
   font-weight: 700;
   border-bottom: 1px solid var(--border);
+  transition: min-height var(--dur-base) var(--ease-standard);
+}
+.server-header.has-banner {
+  min-height: 96px;
+  display: flex;
+  align-items: flex-end;
+  background-size: cover;
+  background-position: center;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
 .channel-list ul { list-style: none; padding: 0.5rem; }
