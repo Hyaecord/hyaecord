@@ -1,0 +1,4578 @@
+For the avatar select, I want it to use elements from:
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Avatar Picker
+ * @version: 2.0.0
+ * @date: 2026-02-22
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { Check, ChevronRight, User2 } from "lucide-react";
+import type { Variants } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import type { ReactNode } from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+
+interface Avatar {
+  id: number;
+  svg: ReactNode;
+  alt: string;
+}
+
+// RGB values for the per-avatar color ring on the stage
+const AVATAR_RGB: Record<number, string> = {
+  1: "255, 0, 91",
+  2: "255, 125, 16",
+  3: "255, 0, 91",
+  4: "137, 252, 179",
+};
+
+const avatars: Avatar[] = [
+  {
+    id: 1,
+    svg: (
+      <svg
+        aria-label="Avatar 1"
+        fill="none"
+        height="40"
+        role="img"
+        viewBox="0 0 36 36"
+        width="40"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Avatar 1</title>
+        <mask
+          height="36"
+          id=":r111:"
+          maskUnits="userSpaceOnUse"
+          width="36"
+          x="0"
+          y="0"
+        >
+          <rect fill="#FFFFFF" height="36" rx="72" width="36" />
+        </mask>
+        <g mask="url(#:r111:)">
+          <rect fill="#ff005b" height="36" width="36" />
+          <rect
+            fill="#ffb238"
+            height="36"
+            rx="6"
+            transform="translate(9 -5) rotate(219 18 18) scale(1)"
+            width="36"
+            x="0"
+            y="0"
+          />
+          <g transform="translate(4.5 -4) rotate(9 18 18)">
+            <path
+              d="M15 19c2 1 4 1 6 0"
+              fill="none"
+              stroke="#000000"
+              strokeLinecap="round"
+            />
+            <rect
+              fill="#000000"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="10"
+              y="14"
+            />
+            <rect
+              fill="#000000"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="24"
+              y="14"
+            />
+          </g>
+        </g>
+      </svg>
+    ),
+    alt: "Avatar 1",
+  },
+  {
+    id: 2,
+    svg: (
+      <svg
+        aria-label="Avatar 2"
+        fill="none"
+        height="40"
+        role="img"
+        viewBox="0 0 36 36"
+        width="40"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Avatar 2</title>
+        <mask
+          height="36"
+          id=":R4mrttb:"
+          maskUnits="userSpaceOnUse"
+          width="36"
+          x="0"
+          y="0"
+        >
+          <rect fill="#FFFFFF" height="36" rx="72" width="36" />
+        </mask>
+        <g mask="url(#:R4mrttb:)">
+          <rect fill="#ff7d10" height="36" width="36" />
+          <rect
+            fill="#0a0310"
+            height="36"
+            rx="6"
+            transform="translate(5 -1) rotate(55 18 18) scale(1.1)"
+            width="36"
+            x="0"
+            y="0"
+          />
+          <g transform="translate(7 -6) rotate(-5 18 18)">
+            <path
+              d="M15 20c2 1 4 1 6 0"
+              fill="none"
+              stroke="#FFFFFF"
+              strokeLinecap="round"
+            />
+            <rect
+              fill="#FFFFFF"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="14"
+              y="14"
+            />
+            <rect
+              fill="#FFFFFF"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="20"
+              y="14"
+            />
+          </g>
+        </g>
+      </svg>
+    ),
+    alt: "Avatar 2",
+  },
+  {
+    id: 3,
+    svg: (
+      <svg
+        aria-label="Avatar 3"
+        fill="none"
+        height="40"
+        role="img"
+        viewBox="0 0 36 36"
+        width="40"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Avatar 3</title>
+        <mask
+          height="36"
+          id=":r11c:"
+          maskUnits="userSpaceOnUse"
+          width="36"
+          x="0"
+          y="0"
+        >
+          <rect fill="#FFFFFF" height="36" rx="72" width="36" />
+        </mask>
+        <g mask="url(#:r11c:)">
+          <rect fill="#0a0310" height="36" width="36" />
+          <rect
+            fill="#ff005b"
+            height="36"
+            rx="36"
+            transform="translate(-3 7) rotate(227 18 18) scale(1.2)"
+            width="36"
+            x="0"
+            y="0"
+          />
+          <g transform="translate(-3 3.5) rotate(7 18 18)">
+            <path d="M13,21 a1,0.75 0 0,0 10,0" fill="#FFFFFF" />
+            <rect
+              fill="#FFFFFF"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="12"
+              y="14"
+            />
+            <rect
+              fill="#FFFFFF"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="22"
+              y="14"
+            />
+          </g>
+        </g>
+      </svg>
+    ),
+    alt: "Avatar 3",
+  },
+  {
+    id: 4,
+    svg: (
+      <svg
+        aria-label="Avatar 4"
+        fill="none"
+        height="40"
+        role="img"
+        viewBox="0 0 36 36"
+        width="40"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <title>Avatar 4</title>
+        <mask
+          height="36"
+          id=":r1gg:"
+          maskUnits="userSpaceOnUse"
+          width="36"
+          x="0"
+          y="0"
+        >
+          <rect fill="#FFFFFF" height="36" rx="72" width="36" />
+        </mask>
+        <g mask="url(#:r1gg:)">
+          <rect fill="#d8fcb3" height="36" width="36" />
+          <rect
+            fill="#89fcb3"
+            height="36"
+            rx="6"
+            transform="translate(9 -5) rotate(219 18 18) scale(1)"
+            width="36"
+            x="0"
+            y="0"
+          />
+          <g transform="translate(4.5 -4) rotate(9 18 18)">
+            <path
+              d="M15 19c2 1 4 1 6 0"
+              fill="none"
+              stroke="#000000"
+              strokeLinecap="round"
+            />
+            <rect
+              fill="#000000"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="10"
+              y="14"
+            />
+            <rect
+              fill="#000000"
+              height="2"
+              rx="1"
+              stroke="none"
+              width="1.5"
+              x="24"
+              y="14"
+            />
+          </g>
+        </g>
+      </svg>
+    ),
+    alt: "Avatar 4",
+  },
+];
+
+interface ProfileSetupProps {
+  onComplete?: (data: { username: string; avatarId: number }) => void;
+  className?: string;
+}
+
+const containerVariants: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
+  },
+};
+
+const thumbnailVariants: Variants = {
+  initial: { opacity: 0, y: 6 },
+  animate: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.28, ease: "easeOut" },
+  },
+};
+
+export default function ProfileSetup({
+  onComplete,
+  className,
+}: ProfileSetupProps) {
+  const [selectedAvatar, setSelectedAvatar] = useState<Avatar>(avatars[0]);
+  const [username, setUsername] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+
+  const handleAvatarSelect = (avatar: Avatar) => {
+    if (avatar.id === selectedAvatar.id) return;
+    setSelectedAvatar(avatar);
+  };
+
+  const handleSubmit = () => {
+    if (username.trim() && onComplete) {
+      onComplete({
+        username: username.trim(),
+        avatarId: selectedAvatar.id,
+      });
+    }
+  };
+
+  const isValid = username.trim().length >= 3;
+  const showError = username.trim().length > 0 && username.trim().length < 3;
+  const rgb = AVATAR_RGB[selectedAvatar.id];
+
+  return (
+    <Card
+      className={cn(
+        "relative mx-auto w-full max-w-[400px] border-border bg-card",
+        className
+      )}
+    >
+      <CardContent className="p-8">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="space-y-1 text-center">
+            <h2 className="font-semibold text-xl tracking-tight">
+              Pick Your Avatar
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Choose one to get started
+            </p>
+          </div>
+
+          {/* Avatar Stage */}
+          <div className="flex flex-col items-center gap-4">
+            {/*
+             * Two-div approach: outer div holds the animated color ring
+             * (no overflow-hidden so box-shadow renders cleanly),
+             * inner div clips the avatar SVG.
+             * scale-[4] fills the 160px circle with the avatar's background.
+             */}
+            <div className="relative h-40 w-40">
+              {/* Animated per-avatar color ring */}
+              <motion.div
+                animate={{
+                  boxShadow: `0 0 0 2px rgba(${rgb}, 0.55), 0 6px 24px rgba(${rgb}, 0.18)`,
+                }}
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 rounded-full"
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.45, ease: "easeOut" }
+                }
+              />
+
+              {/* Avatar circle — clips content */}
+              <div className="relative h-full w-full overflow-hidden rounded-full">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex items-center justify-center"
+                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0 }}
+                    key={selectedAvatar.id}
+                    transition={
+                      shouldReduceMotion
+                        ? { duration: 0 }
+                        : { duration: 0.2, ease: "easeOut" }
+                    }
+                  >
+                    {/* scale-[4]: 40px SVG × 4 = 160px, fills the circle */}
+                    <div className="scale-[4] transform">
+                      {selectedAvatar.svg}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Avatar name — fades with selection */}
+            <AnimatePresence mode="wait">
+              <motion.span
+                animate={{ opacity: 1 }}
+                className="text-[11px] text-muted-foreground uppercase tracking-[0.12em]"
+                exit={{ opacity: 0 }}
+                initial={{ opacity: 0 }}
+                key={selectedAvatar.id}
+                transition={
+                  shouldReduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.16, ease: "easeOut" }
+                }
+              >
+                {selectedAvatar.alt}
+              </motion.span>
+            </AnimatePresence>
+
+            {/* Thumbnail strip */}
+            <motion.div
+              animate="animate"
+              className="flex gap-3"
+              initial="initial"
+              variants={containerVariants}
+            >
+              {avatars.map((avatar) => {
+                const isSelected = selectedAvatar.id === avatar.id;
+                return (
+                  <motion.button
+                    aria-label={`Select ${avatar.alt}`}
+                    aria-pressed={isSelected}
+                    className={cn(
+                      "relative h-14 w-14 overflow-hidden rounded-xl border bg-muted transition-[opacity,box-shadow] duration-200 ease-out",
+                      isSelected
+                        ? "border-foreground/20 opacity-100 ring-2 ring-foreground/70 ring-offset-2 ring-offset-background"
+                        : "border-border opacity-50 hover:opacity-100"
+                    )}
+                    key={avatar.id}
+                    onClick={() => handleAvatarSelect(avatar)}
+                    type="button"
+                    variants={thumbnailVariants}
+                    whileHover={shouldReduceMotion ? {} : { scale: 1.06 }}
+                    whileTap={shouldReduceMotion ? {} : { scale: 0.94 }}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="scale-[2.3] transform">{avatar.svg}</div>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute -right-0.5 -bottom-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-foreground">
+                        <Check
+                          aria-hidden="true"
+                          className="h-3 w-3 text-background"
+                        />
+                      </div>
+                    )}
+                  </motion.button>
+                );
+              })}
+            </motion.div>
+          </div>
+
+          {/* Username field */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="font-medium text-sm" htmlFor="username">
+                  Username
+                </label>
+                <span
+                  className={cn(
+                    "text-xs tabular-nums transition-colors duration-200 ease-out",
+                    username.length >= 18
+                      ? "text-amber-500 dark:text-amber-400"
+                      : "text-muted-foreground/50"
+                  )}
+                >
+                  {username.length}/20
+                </span>
+              </div>
+
+              <div className="relative">
+                <Input
+                  autoComplete="username"
+                  className={cn(
+                    "h-10 pl-9 text-sm",
+                    showError &&
+                      "border-destructive/50 focus-visible:ring-destructive"
+                  )}
+                  id="username"
+                  maxLength={20}
+                  name="username"
+                  onBlur={() => setIsFocused(false)}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onFocus={() => setIsFocused(true)}
+                  placeholder="your_username…"
+                  spellCheck={false}
+                  type="text"
+                  value={username}
+                />
+                <User2
+                  aria-hidden="true"
+                  className={cn(
+                    "absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transition-colors duration-200 ease-out",
+                    isFocused ? "text-foreground" : "text-muted-foreground"
+                  )}
+                />
+              </div>
+
+              <AnimatePresence>
+                {showError && (
+                  <motion.p
+                    animate={{ opacity: 1, y: 0 }}
+                    className="ml-0.5 text-destructive text-xs"
+                    exit={{ opacity: 0, y: -4 }}
+                    initial={{ opacity: 0, y: -4 }}
+                    role="alert"
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                  >
+                    Username must be at least 3 characters
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <Button
+              className="group h-10 w-full text-sm"
+              disabled={!isValid}
+              onClick={handleSubmit}
+              type="button"
+            >
+              Get Started
+              <ChevronRight
+                aria-hidden="true"
+                className="ml-1 h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-0.5"
+              />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+For when showing plugin contributors, add animations like from this:
+
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Team Selector
+ * @version: 3.0.0
+ * @date: 2026-04-23
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { Minus, Plus } from "lucide-react";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  type Variants,
+} from "motion/react";
+import Image from "next/image";
+import { useRef, useState } from "react";
+
+const AVATAR_OVERLAP = 12;
+const DICEBEAR_STYLE = "notionists-neutral";
+const dicebearUrl = (seed: string) =>
+  `https://api.dicebear.com/9.x/${DICEBEAR_STYLE}/svg?seed=${encodeURIComponent(seed)}&backgroundColor=f4f4f5,e4e4e7,d4d4d8,a1a1aa`;
+
+interface TeamMember {
+  id: string;
+  name: string;
+  avatarUrl: string;
+}
+
+const DEFAULT_MEMBERS: TeamMember[] = [
+  { id: "member-1", name: "Alex Rivera", avatarUrl: dicebearUrl("Alex") },
+  { id: "member-2", name: "Blair Kim", avatarUrl: dicebearUrl("Blair") },
+  { id: "member-3", name: "Casey Lin", avatarUrl: dicebearUrl("Casey") },
+  { id: "member-4", name: "Devon Marsh", avatarUrl: dicebearUrl("Devon") },
+];
+
+const animations = {
+  avatar: {
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        type: "spring",
+        stiffness: 260,
+        damping: 22,
+        mass: 0.6,
+      },
+    },
+    hidden: {
+      opacity: 0,
+      scale: 0.85,
+      transition: { duration: 0.18, ease: "easeOut" },
+    },
+  } satisfies Variants,
+  vibration: {
+    idle: { x: 0 },
+    shake: {
+      x: [-3, 3, -2, 2, 0] as const,
+      transition: { duration: 0.28, ease: "easeOut" },
+    },
+  } satisfies Variants,
+} as const;
+
+interface TeamSelectorProps {
+  members?: TeamMember[];
+  defaultValue?: number;
+  onChange?: (size: number) => void;
+  label?: string;
+  className?: string;
+}
+
+export default function TeamSelector({
+  members = DEFAULT_MEMBERS,
+  defaultValue = 1,
+  onChange,
+  label = "Team Size",
+  className = "",
+}: TeamSelectorProps) {
+  const maxTeamSize = members.length;
+  const [peopleCount, setPeopleCount] = useState(defaultValue);
+  const [isVibrating, setIsVibrating] = useState(false);
+  const directionRef = useRef<1 | -1>(1);
+  const prefersReducedMotion = useReducedMotion();
+
+  const triggerVibration = () => {
+    if (prefersReducedMotion) {
+      return;
+    }
+    setIsVibrating(true);
+    setTimeout(() => setIsVibrating(false), 280);
+  };
+
+  const handleIncrement = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.preventDefault();
+    if (peopleCount < maxTeamSize) {
+      directionRef.current = 1;
+      const newCount = peopleCount + 1;
+      setPeopleCount(newCount);
+      onChange?.(newCount);
+    } else {
+      triggerVibration();
+    }
+  };
+
+  const handleDecrement = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.preventDefault();
+    if (peopleCount > 1) {
+      directionRef.current = -1;
+      const newCount = peopleCount - 1;
+      setPeopleCount(newCount);
+      onChange?.(newCount);
+    } else {
+      triggerVibration();
+    }
+  };
+
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    action: "increment" | "decrement"
+  ) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (action === "increment") {
+        handleIncrement(e);
+      } else {
+        handleDecrement(e);
+      }
+    }
+  };
+
+  const counterDistance = prefersReducedMotion ? 0 : 10;
+
+  return (
+    <div
+      className={`flex w-full flex-col items-center justify-center ${className}`}
+    >
+      <div className="w-full max-w-xs rounded-2xl border border-zinc-200/80 bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)] dark:border-white/8 dark:bg-zinc-900/60">
+        <fieldset>
+          <legend className="mb-5 w-full font-medium text-[11px] text-zinc-400 uppercase tracking-[0.14em] dark:text-zinc-500">
+            {label}
+          </legend>
+
+          <div className="mb-7 flex justify-center">
+            <div className="flex items-center">
+              {members.map((member, index) => (
+                <motion.div
+                  animate={index < peopleCount ? "visible" : "hidden"}
+                  className="flex items-center justify-center"
+                  initial={index < defaultValue ? "visible" : "hidden"}
+                  key={member.id}
+                  style={{
+                    marginLeft: index === 0 ? 0 : -AVATAR_OVERLAP,
+                    zIndex: maxTeamSize - index,
+                  }}
+                  variants={animations.avatar}
+                >
+                  <Image
+                    alt={member.name}
+                    className="size-11 rounded-full border-2 border-white bg-zinc-100 object-cover shadow-[0_2px_8px_rgba(0,0,0,0.08)] ring-1 ring-black/5 dark:border-zinc-900 dark:bg-zinc-800 dark:ring-white/5"
+                    height={88}
+                    src={member.avatarUrl}
+                    unoptimized
+                    width={88}
+                  />
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <motion.div
+            animate={isVibrating ? "shake" : "idle"}
+            className="flex items-center justify-center gap-5"
+            initial="idle"
+            variants={animations.vibration}
+          >
+            <button
+              aria-label="Decrease team size"
+              className="flex size-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-white text-zinc-500 transition-all duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-offset-2 active:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-white/8 dark:bg-zinc-900 dark:text-zinc-400 dark:active:bg-zinc-800/80 dark:focus-visible:ring-zinc-500/40 dark:focus-visible:ring-offset-zinc-900 dark:hover:border-white/16 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:disabled:hover:bg-zinc-900"
+              disabled={peopleCount <= 1}
+              onClick={handleDecrement}
+              onKeyDown={(e) => handleKeyDown(e, "decrement")}
+              type="button"
+            >
+              <Minus aria-hidden="true" className="size-3.5" strokeWidth={2} />
+            </button>
+
+            <div className="flex min-w-16 flex-col items-center">
+              <div className="relative h-9 overflow-hidden">
+                <AnimatePresence initial={false} mode="popLayout">
+                  <motion.output
+                    animate={{ opacity: 1, y: 0 }}
+                    aria-live="polite"
+                    className="block select-none font-semibold text-3xl text-zinc-900 tabular-nums dark:text-zinc-100"
+                    exit={{
+                      opacity: 0,
+                      y: directionRef.current * -counterDistance,
+                      transition: { duration: 0.14, ease: "easeIn" },
+                    }}
+                    initial={{
+                      opacity: 0,
+                      y: directionRef.current * counterDistance,
+                    }}
+                    key={peopleCount}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                  >
+                    {peopleCount}
+                  </motion.output>
+                </AnimatePresence>
+              </div>
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                {peopleCount === 1 ? "member" : "members"}
+              </span>
+            </div>
+
+            <button
+              aria-label="Increase team size"
+              className="flex size-9 items-center justify-center rounded-xl border border-zinc-200/80 bg-white text-zinc-500 transition-all duration-150 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400/40 focus-visible:ring-offset-2 active:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white dark:border-white/8 dark:bg-zinc-900 dark:text-zinc-400 dark:active:bg-zinc-800/80 dark:focus-visible:ring-zinc-500/40 dark:focus-visible:ring-offset-zinc-900 dark:hover:border-white/16 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 dark:disabled:hover:bg-zinc-900"
+              disabled={peopleCount >= maxTeamSize}
+              onClick={handleIncrement}
+              onKeyDown={(e) => handleKeyDown(e, "increment")}
+              type="button"
+            >
+              <Plus aria-hidden="true" className="size-3.5" strokeWidth={2} />
+            </button>
+          </motion.div>
+        </fieldset>
+      </div>
+    </div>
+  );
+}
+
+
+Use this for when loading Hyaecord as you can use it for like the discord tooltips:
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Dynamic Text
+ * @version: 1.0.0
+ * @date: 2025-06-26
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
+
+interface Greeting {
+  text: string;
+  language: string;
+}
+
+const greetings: Greeting[] = [
+  { text: "Hello", language: "English" },
+  { text: "こんにちは", language: "Japanese" },
+  { text: "Bonjour", language: "French" },
+  { text: "Hola", language: "Spanish" },
+  { text: "안녕하세요", language: "Korean" },
+  { text: "Ciao", language: "Italian" },
+  { text: "Hallo", language: "German" },
+  { text: "こんにちは", language: "Japanese" },
+];
+
+const DynamicText = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  useEffect(() => {
+    if (!isAnimating) return;
+
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+
+        if (nextIndex >= greetings.length) {
+          clearInterval(interval);
+          setIsAnimating(false);
+          return prevIndex;
+        }
+
+        return nextIndex;
+      });
+    }, 300);
+
+    return () => clearInterval(interval);
+  }, [isAnimating]);
+
+  // Animation variants for the text
+  const textVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1 },
+    exit: { y: -100, opacity: 0 },
+  };
+
+  return (
+    <section
+      aria-label="Rapid greetings in different languages"
+      className="flex min-h-[200px] items-center justify-center gap-1 p-4"
+    >
+      <div className="relative flex h-16 w-60 items-center justify-center overflow-visible">
+        {isAnimating ? (
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              animate={textVariants.visible}
+              aria-live="off"
+              className="absolute flex items-center gap-2 font-medium text-2xl text-gray-800 dark:text-gray-200"
+              exit={textVariants.exit}
+              initial={textVariants.hidden}
+              key={currentIndex}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <div
+                aria-hidden="true"
+                className="h-2 w-2 rounded-full bg-black dark:bg-white"
+              />
+              {greetings[currentIndex].text}
+            </motion.div>
+          </AnimatePresence>
+        ) : (
+          <div className="flex items-center gap-2 font-medium text-2xl text-gray-800 dark:text-gray-200">
+            <div
+              aria-hidden="true"
+              className="h-2 w-2 rounded-full bg-black dark:bg-white"
+            />
+            {greetings[currentIndex].text}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+};
+
+export default DynamicText;
+
+
+Add these particle effects when a donate butto/ support button is clicked.
+
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Particle Button
+ * @version: 1.0.0
+ * @date: 2025-06-26
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { MousePointerClick } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { type RefObject, useRef, useState } from "react";
+import type { ButtonProps } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface ParticleButtonProps extends ButtonProps {
+  onSuccess?: () => void;
+  successDuration?: number;
+}
+
+function SuccessParticles({
+  buttonRef,
+}: {
+  buttonRef: React.RefObject<HTMLButtonElement>;
+}) {
+  const rect = buttonRef.current?.getBoundingClientRect();
+  if (!rect) return null;
+
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+
+  return (
+    <AnimatePresence>
+      {[...Array(6)].map((_, i) => (
+        <motion.div
+          animate={{
+            scale: [0, 1, 0],
+            x: [0, (i % 2 ? 1 : -1) * (Math.random() * 50 + 20)],
+            y: [0, -Math.random() * 50 - 20],
+          }}
+          className="fixed h-1 w-1 rounded-full bg-black dark:bg-white"
+          initial={{
+            scale: 0,
+            x: 0,
+            y: 0,
+          }}
+          key={i}
+          style={{ left: centerX, top: centerY }}
+          transition={{
+            duration: 0.6,
+            delay: i * 0.1,
+            ease: "easeOut",
+          }}
+        />
+      ))}
+    </AnimatePresence>
+  );
+}
+
+export default function ParticleButton({
+  children,
+  onClick,
+  onSuccess,
+  successDuration = 1000,
+  className,
+  ...props
+}: ParticleButtonProps) {
+  const [showParticles, setShowParticles] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    setShowParticles(true);
+
+    setTimeout(() => {
+      setShowParticles(false);
+    }, successDuration);
+  };
+
+  return (
+    <>
+      {showParticles && (
+        <SuccessParticles
+          buttonRef={buttonRef as RefObject<HTMLButtonElement>}
+        />
+      )}
+      <Button
+        className={cn(
+          "relative",
+          showParticles && "scale-95",
+          "transition-transform duration-100",
+          className
+        )}
+        onClick={handleClick}
+        ref={buttonRef}
+        {...props}
+      >
+        {children}
+        <MousePointerClick className="h-4 w-4" />
+      </Button>
+    </>
+  );
+}
+
+
+For Hyaecord, I want to add a feature to mass delete discord channels in a row in a mode we can call moderator view which can be started with shift + m and being ina server you have perms for.
+For that we can use this animation to pull all of the channels to delete into a trashcan or something, idk maybe make it hyena related.
+
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Attract Button
+ * @version: 1.0.0
+ * @date: 2025-06-26
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { Magnet } from "lucide-react";
+import { motion, useAnimation } from "motion/react";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface AttractButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  particleCount?: number;
+  attractRadius?: number;
+}
+
+interface Particle {
+  id: number;
+  x: number;
+  y: number;
+}
+
+export default function AttractButton({
+  className,
+  particleCount = 12,
+  attractRadius = 50,
+  ...props
+}: AttractButtonProps) {
+  const [isAttracting, setIsAttracting] = useState(false);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const particlesControl = useAnimation();
+
+  useEffect(() => {
+    const newParticles = Array.from({ length: particleCount }, (_, i) => ({
+      id: i,
+      x: Math.random() * 360 - 180,
+      y: Math.random() * 360 - 180,
+    }));
+    setParticles(newParticles);
+  }, [particleCount]);
+
+  const handleInteractionStart = useCallback(async () => {
+    setIsAttracting(true);
+    await particlesControl.start({
+      x: 0,
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 50,
+        damping: 10,
+      },
+    });
+  }, [particlesControl]);
+
+  const handleInteractionEnd = useCallback(async () => {
+    setIsAttracting(false);
+    await particlesControl.start((i) => ({
+      x: particles[i].x,
+      y: particles[i].y,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 15,
+      },
+    }));
+  }, [particlesControl, particles]);
+
+  return (
+    <Button
+      className={cn(
+        "relative min-w-40 touch-none",
+        "bg-violet-100 dark:bg-violet-900",
+        "hover:bg-violet-200 dark:hover:bg-violet-800",
+        "text-violet-600 dark:text-violet-300",
+        "border border-violet-300 dark:border-violet-700",
+        "transition-all duration-300",
+        className
+      )}
+      onMouseEnter={handleInteractionStart}
+      onMouseLeave={handleInteractionEnd}
+      onTouchEnd={handleInteractionEnd}
+      onTouchStart={handleInteractionStart}
+      {...props}
+    >
+      {particles.map((_, index) => (
+        <motion.div
+          animate={particlesControl}
+          className={cn(
+            "absolute h-1.5 w-1.5 rounded-full",
+            "bg-violet-400 dark:bg-violet-300",
+            "transition-opacity duration-300",
+            isAttracting ? "opacity-100" : "opacity-40"
+          )}
+          custom={index}
+          initial={{ x: particles[index].x, y: particles[index].y }}
+          key={index}
+        />
+      ))}
+      <span className="relative flex w-full items-center justify-center gap-2">
+        <Magnet
+          className={cn(
+            "h-4 w-4 transition-transform duration-300",
+            isAttracting && "scale-110"
+          )}
+        />
+        {isAttracting ? "Attracting" : "Hover me"}
+      </span>
+    </Button>
+  );
+}
+
+
+Instead of confirmation popups anywhere, make it use a hold button instead:
+
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Hold Button
+ * @version: 1.0.0
+ * @date: 2025-06-26
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import { cva, type VariantProps } from "class-variance-authority";
+import {
+  AlertCircleIcon,
+  ArchiveXIcon,
+  BanIcon,
+  Trash2Icon,
+  XCircleIcon,
+} from "lucide-react";
+import { motion, useAnimation } from "motion/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const holdButtonVariants = cva("relative min-w-40 touch-none overflow-hidden", {
+  variants: {
+    variant: {
+      red: [
+        "bg-red-100 dark:bg-red-200",
+        "hover:bg-red-100 dark:hover:bg-red-200",
+        "text-red-500 dark:text-red-600",
+        "border border-red-200 dark:border-red-300",
+      ],
+      green: [
+        "bg-green-100 dark:bg-green-200",
+        "hover:bg-green-100 dark:hover:bg-green-200",
+        "text-green-500 dark:text-green-600",
+        "border border-green-200 dark:border-green-300",
+      ],
+      blue: [
+        "bg-blue-100 dark:bg-blue-200",
+        "hover:bg-blue-100 dark:hover:bg-blue-200",
+        "text-blue-500 dark:text-blue-600",
+        "border border-blue-200 dark:border-blue-300",
+      ],
+      orange: [
+        "bg-orange-100 dark:bg-orange-200",
+        "hover:bg-orange-100 dark:hover:bg-orange-200",
+        "text-orange-500 dark:text-orange-600",
+        "border border-orange-200 dark:border-orange-300",
+      ],
+      grey: [
+        "bg-gray-100 dark:bg-gray-200",
+        "hover:bg-gray-100 dark:hover:bg-gray-200",
+        "text-gray-500 dark:text-gray-600",
+        "border border-gray-200 dark:border-gray-300",
+      ],
+    },
+  },
+  defaultVariants: {
+    variant: "red",
+  },
+});
+
+interface HoldButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof holdButtonVariants> {
+  holdDuration?: number;
+}
+
+export default function HoldButton({
+  className,
+  variant = "red",
+  holdDuration = 3000,
+  ...props
+}: HoldButtonProps) {
+  const [isHolding, setIsHolding] = useState(false);
+  const controls = useAnimation();
+
+  async function handleHoldStart() {
+    setIsHolding(true);
+    controls.set({ width: "0%" });
+    await controls.start({
+      width: "100%",
+      transition: {
+        duration: holdDuration / 1000,
+        ease: "linear",
+      },
+    });
+  }
+
+  function handleHoldEnd() {
+    setIsHolding(false);
+    controls.stop();
+    controls.start({
+      width: "0%",
+      transition: { duration: 0.1 },
+    });
+  }
+
+  return (
+    <Button
+      className={cn(holdButtonVariants({ variant, className }))}
+      onMouseDown={handleHoldStart}
+      onMouseLeave={handleHoldEnd}
+      onMouseUp={handleHoldEnd}
+      onTouchCancel={handleHoldEnd}
+      onTouchEnd={handleHoldEnd}
+      onTouchStart={handleHoldStart}
+      {...props}
+    >
+      <motion.div
+        animate={controls}
+        className={cn("absolute top-0 left-0 h-full", {
+          "bg-red-200/30 dark:bg-red-300/30": variant === "red",
+          "bg-green-200/30 dark:bg-green-300/30": variant === "green",
+          "bg-blue-200/30 dark:bg-blue-300/30": variant === "blue",
+          "bg-orange-200/30 dark:bg-orange-300/30": variant === "orange",
+          "bg-gray-200/30 dark:bg-gray-300/30": variant === "grey",
+        })}
+        initial={{ width: "0%" }}
+      />
+      <span className="relative z-10 flex w-full items-center justify-center gap-2">
+        {(variant === "red" || !variant) && <Trash2Icon className="h-4 w-4" />}
+        {variant === "green" && <ArchiveXIcon className="h-4 w-4" />}
+        {variant === "blue" && <XCircleIcon className="h-4 w-4" />}
+        {variant === "orange" && <AlertCircleIcon className="h-4 w-4" />}
+        {variant === "grey" && <BanIcon className="h-4 w-4" />}
+        {isHolding ? "Release" : "Hold me"}
+      </span>
+    </Button>
+  );
+}
+
+
+You can use this social snippet to show people's connections linked to their discord on their profiles:
+"use client";
+
+/**
+ * @author: @dorianbaffier
+ * @description: Social Button
+ * @version: 1.0.0
+ * @date: 2025-06-26
+ * @license: MIT
+ * @website: https://kokonutui.com
+ * @github: https://github.com/kokonut-labs/kokonutui
+ */
+
+import type { LucideIcon } from "lucide-react";
+import { Instagram, Link, Linkedin, Twitter } from "lucide-react";
+import { motion } from "motion/react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+interface ShareItem {
+  icon: LucideIcon;
+  label: string;
+}
+
+interface SocialButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  label?: string;
+  items?: ShareItem[];
+  onShare?: (index: number, item: ShareItem) => void;
+  className?: string;
+}
+
+const DEFAULT_SHARE_ITEMS: ShareItem[] = [
+  { icon: Twitter, label: "Share on Twitter" },
+  { icon: Instagram, label: "Share on Instagram" },
+  { icon: Linkedin, label: "Share on LinkedIn" },
+  { icon: Link, label: "Copy link" },
+];
+
+export default function SocialButton({
+  label = "Share",
+  items = DEFAULT_SHARE_ITEMS,
+  onShare,
+  className,
+  ...props
+}: SocialButtonProps) {
+  const [isVisible, setIsVisible] = useState(false);
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const handleShare = (index: number) => {
+    setActiveIndex(index);
+    onShare?.(index, items[index]);
+    setTimeout(() => setActiveIndex(null), 300);
+  };
+
+  return (
+    <div
+      className="relative"
+      onMouseEnter={() => setIsVisible(true)}
+      onMouseLeave={() => setIsVisible(false)}
+    >
+      <motion.div
+        animate={{
+          opacity: isVisible ? 0 : 1,
+        }}
+        transition={{
+          duration: 0.2,
+          ease: "easeInOut",
+        }}
+      >
+        <Button
+          className={cn(
+            "relative min-w-40",
+            "bg-white dark:bg-black",
+            "hover:bg-gray-50 dark:hover:bg-gray-950",
+            "text-black dark:text-white",
+            "border border-black/10 dark:border-white/10",
+            "transition-colors duration-200",
+            className
+          )}
+          {...props}
+        >
+          <span className="flex items-center gap-2">
+            <Link className="h-4 w-4" />
+            {label}
+          </span>
+        </Button>
+      </motion.div>
+
+      <motion.div
+        animate={{
+          width: isVisible ? "auto" : 0,
+        }}
+        className="absolute top-0 left-0 flex h-10 overflow-hidden"
+        transition={{
+          duration: 0.3,
+          ease: [0.23, 1, 0.32, 1],
+        }}
+      >
+        {items.map((button, i) => (
+          <motion.button
+            animate={{
+              opacity: isVisible ? 1 : 0,
+              x: isVisible ? 0 : -20,
+            }}
+            aria-label={button.label}
+            className={cn(
+              "h-10",
+              "w-10",
+              "flex items-center justify-center",
+              "bg-black dark:bg-white",
+              "text-white dark:text-black",
+              i === 0 && "rounded-l-md",
+              i === items.length - 1 && "rounded-r-md",
+              "border-white/10 border-r last:border-r-0 dark:border-black/10",
+              "hover:bg-gray-900 dark:hover:bg-gray-100",
+              "outline-none",
+              "relative overflow-hidden",
+              "transition-colors duration-200"
+            )}
+            key={`share-${button.label}`}
+            onClick={() => handleShare(i)}
+            transition={{
+              duration: 0.3,
+              ease: [0.23, 1, 0.32, 1],
+              delay: isVisible ? i * 0.05 : 0,
+            }}
+            type="button"
+          >
+            <motion.div
+              animate={{
+                scale: activeIndex === i ? 0.85 : 1,
+              }}
+              className="relative z-10"
+              transition={{
+                duration: 0.2,
+                ease: "easeInOut",
+              }}
+            >
+              <button.icon className="h-4 w-4" />
+            </motion.div>
+            <motion.div
+              animate={{
+                opacity: activeIndex === i ? 0.15 : 0,
+              }}
+              className="absolute inset-0 bg-white dark:bg-black"
+              initial={{ opacity: 0 }}
+              transition={{
+                duration: 0.2,
+                ease: "easeInOut",
+              }}
+            />
+          </motion.button>
+        ))}
+      </motion.div>
+    </div>
+  );
+}
+
+For the sidebar with the channel names, we could use this line sidebar snippet:
+
+## Integrate the <LineSidebar /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: LineSidebar
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import LineSidebar from './LineSidebar';
+
+<LineSidebar
+  items={['Overview', 'Components', 'Animations', 'Backgrounds', 'Showcase']}
+  accentColor="#A855F7"
+  textColor="#c4c4c4"
+  markerColor="#6c6c6c"
+  showIndex
+  showMarker
+  proximityRadius={100}
+  maxShift={30}
+  falloff="smooth"
+  markerLength={60}
+  markerGap={0}
+  tickScale={0.5}
+  scaleTick
+  itemGap={20}
+  fontSize={1.1}
+  smoothing={100}
+  defaultActive={0}
+  onItemClick={(index, label) => console.log(index, label)}
+/>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | string[] | [...] | Labels rendered as the list of sidebar entries. |
+| accentColor | string | "#A855F7" | Color items and markers shift toward as the cursor gets close. |
+| textColor | string | "#c4c4c4" | Resting color of the item labels. |
+| markerColor | string | "#6c6c6c" | Resting color of the leading marker lines. |
+| showIndex | boolean | true | Show the zero-padded index before each label. |
+| showMarker | boolean | true | Show the marker lines (and short ticks) beside each item. |
+| proximityRadius | number | 100 | Vertical distance in pixels within which the cursor influences an item. |
+| maxShift | number | 30 | Maximum horizontal shift in pixels the label slides at full proximity. |
+| falloff | "linear" | "smooth" | "sharp" | "smooth" | Curve mapping cursor distance to the proximity effect. |
+| markerLength | number | 60 | Length in pixels of the marker line; the in-between ticks scale from this too. |
+| markerGap | number | 0 | Gap in pixels between the labels and the markers. |
+| tickScale | number | 0.5 | Length of the in-between ticks as a fraction of markerLength. |
+| scaleTick | boolean | true | When true, the in-between ticks also grow with cursor proximity. |
+| itemGap | number | 20 | Vertical gap between items in pixels. |
+| fontSize | number | 1.1 | Font size of the labels in rem. |
+| smoothing | number | 100 | Transition duration in milliseconds for the proximity response. |
+| defaultActive | number | null | null | Index of the item selected on mount. |
+| onItemClick | (index, label) => void | - | Called when an item is clicked; the clicked item also becomes active. |
+| className | string | "" | Additional CSS classes for the outer wrapper. |
+
+### Full Component Source
+```jsx
+import { useRef, useState, useCallback, useEffect } from 'react';
+import './LineSidebar.css';
+
+const FALLOFF_CURVES = {
+  linear: p => p,
+  smooth: p => p * p * (3 - 2 * p),
+  sharp: p => p * p * p
+};
+
+const DEFAULT_ITEMS = [
+  'Overview',
+  'Components',
+  'Animations',
+  'Backgrounds',
+  'Showcase',
+  'Playground',
+  'Templates',
+  'Changelog',
+  'Community',
+  'Resources',
+  'Documentation',
+  'Support'
+];
+
+const LineSidebar = ({
+  items = DEFAULT_ITEMS,
+  accentColor = '#A855F7',
+  textColor = '#c4c4c4',
+  markerColor = '#6c6c6c',
+  showIndex = true,
+  showMarker = true,
+  proximityRadius = 100,
+  maxShift = 30,
+  falloff = 'smooth',
+  markerLength = 60,
+  markerGap = 0,
+  tickScale = 0.5,
+  scaleTick = true,
+  itemGap = 20,
+  fontSize = 1.1,
+  smoothing = 100,
+  defaultActive = null,
+  onItemClick,
+  className = ''
+}) => {
+  const listRef = useRef(null);
+  const itemRefs = useRef([]);
+  const targetsRef = useRef([]);
+  const currentRef = useRef([]);
+  const rafRef = useRef(null);
+  const lastRef = useRef(0);
+  const activeRef = useRef(defaultActive);
+  const smoothingRef = useRef(smoothing);
+  const [activeIndex, setActiveIndex] = useState(defaultActive);
+
+  activeRef.current = activeIndex;
+  smoothingRef.current = smoothing;
+
+  // Single rAF loop that eases every item's --effect toward its target using
+  // frame-rate independent exponential smoothing, so color, shift and scale
+  // all move together without staggering CSS transitions.
+  const runFrame = useCallback(now => {
+    const dt = Math.min((now - lastRef.current) / 1000, 0.05);
+    lastRef.current = now;
+    const tau = Math.max(smoothingRef.current, 1) / 1000;
+    const k = 1 - Math.exp(-dt / tau);
+
+    let moving = false;
+    const items = itemRefs.current;
+    for (let i = 0; i < items.length; i++) {
+      const el = items[i];
+      if (!el) continue;
+      const target = Math.max(targetsRef.current[i] || 0, activeRef.current === i ? 1 : 0);
+      const cur = currentRef.current[i] || 0;
+      const next = cur + (target - cur) * k;
+      const settled = Math.abs(target - next) < 0.0015;
+      const value = settled ? target : next;
+      currentRef.current[i] = value;
+      el.style.setProperty('--effect', value.toFixed(4));
+      if (!settled) moving = true;
+    }
+
+    rafRef.current = moving ? requestAnimationFrame(runFrame) : null;
+  }, []);
+
+  const startLoop = useCallback(() => {
+    if (rafRef.current != null) return;
+    lastRef.current = performance.now();
+    rafRef.current = requestAnimationFrame(runFrame);
+  }, [runFrame]);
+
+  const handlePointerMove = useCallback(
+    e => {
+      const list = listRef.current;
+      if (!list) return;
+      const rect = list.getBoundingClientRect();
+      const pointerY = e.clientY - rect.top;
+      const ease = FALLOFF_CURVES[falloff] ?? FALLOFF_CURVES.linear;
+      const items = itemRefs.current;
+      for (let i = 0; i < items.length; i++) {
+        const el = items[i];
+        if (!el) continue;
+        const center = el.offsetTop + el.offsetHeight / 2;
+        const distance = Math.abs(pointerY - center);
+        targetsRef.current[i] = ease(Math.max(0, 1 - distance / proximityRadius));
+      }
+      startLoop();
+    },
+    [falloff, proximityRadius, startLoop]
+  );
+
+  const handlePointerLeave = useCallback(() => {
+    targetsRef.current = targetsRef.current.map(() => 0);
+    startLoop();
+  }, [startLoop]);
+
+  const handleClick = useCallback(
+    (index, label) => {
+      setActiveIndex(index);
+      onItemClick?.(index, label);
+    },
+    [onItemClick]
+  );
+
+  useEffect(() => {
+    startLoop();
+  }, [activeIndex, startLoop]);
+
+  useEffect(
+    () => () => {
+      if (rafRef.current != null) cancelAnimationFrame(rafRef.current);
+    },
+    []
+  );
+
+  return (
+    <nav
+      className={`line-sidebar${showMarker ? ' line-sidebar--markers' : ''}${scaleTick ? ' line-sidebar--scale-tick' : ''}${className ? ` ${className}` : ''}`}
+      style={{
+        '--accent-color': accentColor,
+        '--text-color': textColor,
+        '--marker-color': markerColor,
+        '--marker-length': `${markerLength}px`,
+        '--marker-gap': `${markerGap}px`,
+        '--tick-scale': tickScale,
+        '--max-shift': `${maxShift}px`,
+        '--item-gap': `${itemGap}px`,
+        '--font-size': `${fontSize}rem`,
+        '--smoothing': `${smoothing}ms`
+      }}
+    >
+      <ul ref={listRef} className="line-sidebar__list" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
+        {items.map((label, index) => (
+          <li
+            key={`${label}-${index}`}
+            ref={el => {
+              itemRefs.current[index] = el;
+            }}
+            className="line-sidebar__item"
+            aria-current={activeIndex === index ? 'true' : undefined}
+            onClick={() => handleClick(index, label)}
+          >
+            {showMarker && <span className="line-sidebar__marker" aria-hidden="true" />}
+            <span className="line-sidebar__label">
+              {showIndex && <span className="line-sidebar__index">{String(index + 1).padStart(2, '0')}</span>}
+              <span className="line-sidebar__text">{label}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+};
+
+export default LineSidebar;
+
+```
+
+### Component CSS
+```css
+.line-sidebar {
+  --accent-color: #a855f7;
+  --text-color: #c4c4c4;
+  --marker-color: #6c6c6c;
+  --marker-length: 60px;
+  --marker-gap: 0px;
+  --tick-scale: 0.5;
+  --max-shift: 30px;
+  --item-gap: 20px;
+  --font-size: 1.1rem;
+  --smoothing: 100ms;
+
+  position: relative;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.line-sidebar--markers {
+  padding-left: calc(var(--marker-length) + var(--marker-gap));
+}
+
+.line-sidebar__list {
+  list-style: none;
+  margin: 0;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--item-gap);
+}
+
+/* --effect (0..1) is driven per item by a rAF lerp in JS, so every derived
+   property below reads the same continuously-animating value and stays in
+   step, with no CSS transitions to stagger. */
+.line-sidebar__item {
+  position: relative;
+  cursor: pointer;
+}
+
+/* Widen the pointer target so items react a touch before the cursor arrives */
+.line-sidebar__item::before {
+  content: '';
+  position: absolute;
+  inset: -6px -48px;
+}
+
+.line-sidebar__label {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  font-size: var(--font-size);
+  line-height: 1.2;
+  color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--text-color));
+  transform: translateX(calc(var(--effect, 0) * var(--max-shift)));
+}
+
+.line-sidebar__index {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin-right: 0.6rem;
+  font-size: 0.85em;
+  opacity: calc(0.55 + var(--effect, 0) * 0.45);
+}
+
+.line-sidebar__marker {
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--marker-length) - var(--marker-gap));
+  height: 1px;
+  width: var(--marker-length);
+  background-color: color-mix(in srgb, var(--accent-color) calc(var(--effect, 0) * 100%), var(--marker-color));
+  transform-origin: left center;
+  transform: translateY(-50%) scaleX(calc(0.7 + var(--effect, 0) * 0.5));
+}
+
+/* Short static tick centered in the gap between two menu items */
+.line-sidebar--markers .line-sidebar__item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + var(--item-gap) / 2);
+  left: calc(-1 * var(--marker-length) - var(--marker-gap));
+  height: 1px;
+  width: calc(var(--marker-length) * var(--tick-scale));
+  background-color: var(--marker-color);
+  opacity: 0.5;
+  transform: translateY(-50%);
+}
+
+/* When enabled, the in-between ticks grow with cursor proximity too */
+.line-sidebar--scale-tick .line-sidebar__item:not(:last-child)::after {
+  transform-origin: left center;
+  transform: translateY(-50%) scaleX(calc(0.7 + var(--effect, 0) * 0.6));
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+For the themes area and stuff we can use this snippet to select themes easily and also add a search bar:
+## Integrate the <CircularGallery /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: CircularGallery
+### Variant: JavaScript + CSS
+### Dependencies: ogl
+
+---
+
+### Usage Example
+```jsx
+import CircularGallery from './CircularGallery'
+
+<div style={{ height: '600px', position: 'relative' }}>
+  <CircularGallery
+    bend={3}
+    textColor="#ffffff"
+    borderRadius={0.05}
+    scrollEase={0.02}
+    // Optionally load a custom font for the labels.
+    // Accepts a stylesheet URL (e.g. Google Fonts) or a direct font file.
+    fontUrl="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap"
+    font="bold 30px Orbitron"
+  />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | Array<{ image: string; text: string }> | undefined | List of items to display in the gallery. Each item should have an image URL and a text label. |
+| bend | number | 3 | Determines the curvature of the gallery layout. A negative value bends in one direction, a positive value in the opposite. |
+| textColor | string | "#ffffff" | Specifies the color of the text labels. |
+| borderRadius | number | 0.05 | Sets the border radius for the media items to achieve rounded corners. |
+| font | string | "bold 30px Figtree" | CSS font shorthand (style, weight, size, family) used for the text labels below each card. |
+| fontUrl | string | undefined | URL of a font to load for the labels. Accepts a stylesheet URL (e.g. a Google Fonts link) or a direct font file (.woff2, .woff, .ttf, .otf). The loaded family overrides the family in `font`. |
+| scrollSpeed | number | 2 | Controls how much the gallery moves per scroll event. Lower values result in slower scrolling, higher values in faster scrolling. |
+| scrollEase | number | 0.05 | Controls the smoothness of scroll transitions. Lower values create smoother, more fluid motion, while higher values make it more responsive. |
+
+### Full Component Source
+```jsx
+import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
+import { useEffect, useRef } from 'react';
+
+import './CircularGallery.css';
+
+function debounce(func, wait) {
+  let timeout;
+  return function (...args) {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+function lerp(p1, p2, t) {
+  return p1 + (p2 - p1) * t;
+}
+
+function autoBind(instance) {
+  const proto = Object.getPrototypeOf(instance);
+  Object.getOwnPropertyNames(proto).forEach(key => {
+    if (key !== 'constructor' && typeof instance[key] === 'function') {
+      instance[key] = instance[key].bind(instance);
+    }
+  });
+}
+
+const DEFAULT_FONT = 'bold 30px Figtree';
+// Figtree is not guaranteed to be available on the host page, so the component
+// loads it on demand whenever the default font is used.
+const DEFAULT_FONT_URL = 'https://fonts.googleapis.com/css2?family=Figtree:wght@400;700&display=swap';
+
+function deriveFontFamilyFromUrl(url) {
+  const fileName = (url.split('/').pop() || 'custom-font').split('?')[0];
+  const base = fileName.replace(/\.(woff2?|ttf|otf|eot)$/i, '');
+  return base.replace(/[^a-zA-Z0-9-_ ]/g, '').trim() || 'CircularGalleryFont';
+}
+
+async function loadFontFromStylesheet(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error(`Failed to fetch font stylesheet (${response.status})`);
+  const cssText = await response.text();
+  const faceBlocks = cssText.match(/@font-face\s*{[^}]*}/g) || [];
+  let family = null;
+  const fontFaces = [];
+  for (const block of faceBlocks) {
+    const familyMatch = block.match(/font-family:\s*['"]?([^;'"]+)['"]?/);
+    const urlMatch = block.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/);
+    if (!familyMatch || !urlMatch) continue;
+    family = familyMatch[1].trim();
+    const descriptors = {};
+    const weightMatch = block.match(/font-weight:\s*([^;]+);/);
+    const styleMatch = block.match(/font-style:\s*([^;]+);/);
+    const rangeMatch = block.match(/unicode-range:\s*([^;]+);/);
+    if (weightMatch) descriptors.weight = weightMatch[1].trim();
+    if (styleMatch) descriptors.style = styleMatch[1].trim();
+    if (rangeMatch) descriptors.unicodeRange = rangeMatch[1].trim();
+    fontFaces.push(new FontFace(family, `url(${urlMatch[1]})`, descriptors));
+  }
+  if (!family) throw new Error('No @font-face rule found in the stylesheet');
+  await Promise.allSettled(
+    fontFaces.map(async face => {
+      await face.load();
+      document.fonts.add(face);
+    })
+  );
+  return family;
+}
+
+async function loadFontFromFile(url) {
+  const family = deriveFontFamilyFromUrl(url);
+  const fontFace = new FontFace(family, `url(${url})`);
+  await fontFace.load();
+  document.fonts.add(fontFace);
+  return family;
+}
+
+async function loadCustomFont(fontUrl) {
+  const isStylesheet = fontUrl.includes('fonts.googleapis.com') || /\.css(\?.*)?$/i.test(fontUrl);
+  return isStylesheet ? loadFontFromStylesheet(fontUrl) : loadFontFromFile(fontUrl);
+}
+
+// Loads `fontUrl` (a stylesheet such as a Google Fonts URL, or a direct font
+// file) and returns a canvas-ready font string that keeps the size/weight from
+// `font` but swaps in the freshly loaded family. Falls back to `font` on error.
+async function resolveFont(font, fontUrl) {
+  // Use the bundled Figtree stylesheet when the caller relies on the default
+  // font, otherwise honor the explicit `fontUrl`.
+  const effectiveUrl = fontUrl || (font === DEFAULT_FONT ? DEFAULT_FONT_URL : null);
+  if (!effectiveUrl) {
+    // A custom family was supplied without a URL – make sure it is ready (in
+    // case the host page declares it) before we draw it to the canvas,
+    // otherwise the first paint silently falls back to a system font.
+    if (document.fonts && document.fonts.load) {
+      try {
+        await document.fonts.load(font);
+        await document.fonts.ready;
+      } catch {
+        // Ignore – fall back to whatever the browser provides.
+      }
+    }
+    return font;
+  }
+  try {
+    const family = await loadCustomFont(effectiveUrl);
+    const sizeMatch = font.match(/^\s*(.*?\d+px)/);
+    const prefix = sizeMatch ? sizeMatch[1].trim() : 'bold 30px';
+    const resolved = `${prefix} "${family}"`;
+    if (document.fonts && document.fonts.load) {
+      try {
+        await document.fonts.load(resolved);
+      } catch {
+        // Ignore – we still attempt to render with the requested font.
+      }
+    }
+    return resolved;
+  } catch (error) {
+    console.error('CircularGallery: unable to load font from', fontUrl, error);
+    return font;
+  }
+}
+
+function getFontSize(font) {
+  const match = font.match(/(\d+)px/);
+  return match ? parseInt(match[1], 10) : 30;
+}
+
+function createTextTexture(gl, text, font = 'bold 30px monospace', color = 'black') {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  context.font = font;
+  const metrics = context.measureText(text);
+  const textWidth = Math.ceil(metrics.width);
+  const textHeight = Math.ceil(getFontSize(font) * 1.2);
+  canvas.width = textWidth + 20;
+  canvas.height = textHeight + 20;
+  context.font = font;
+  context.fillStyle = color;
+  context.textBaseline = 'middle';
+  context.textAlign = 'center';
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
+  const texture = new Texture(gl, { generateMipmaps: false });
+  texture.image = canvas;
+  return { texture, width: canvas.width, height: canvas.height };
+}
+
+class Title {
+  constructor({ gl, plane, renderer, text, textColor = '#545050', font = '30px sans-serif' }) {
+    autoBind(this);
+    this.gl = gl;
+    this.plane = plane;
+    this.renderer = renderer;
+    this.text = text;
+    this.textColor = textColor;
+    this.font = font;
+    this.createMesh();
+  }
+  createMesh() {
+    const { texture, width, height } = createTextTexture(this.gl, this.text, this.font, this.textColor);
+    const geometry = new Plane(this.gl);
+    const program = new Program(this.gl, {
+      vertex: `
+        attribute vec3 position;
+        attribute vec2 uv;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragment: `
+        precision highp float;
+        uniform sampler2D tMap;
+        varying vec2 vUv;
+        void main() {
+          vec4 color = texture2D(tMap, vUv);
+          if (color.a < 0.1) discard;
+          gl_FragColor = color;
+        }
+      `,
+      uniforms: { tMap: { value: texture } },
+      transparent: true
+    });
+    this.mesh = new Mesh(this.gl, { geometry, program });
+    const aspect = width / height;
+    const textHeight = this.plane.scale.y * 0.15;
+    const textWidth = textHeight * aspect;
+    this.mesh.scale.set(textWidth, textHeight, 1);
+    this.mesh.position.y = -this.plane.scale.y * 0.5 - textHeight * 0.5 - 0.05;
+    this.mesh.setParent(this.plane);
+  }
+}
+
+class Media {
+  constructor({
+    geometry,
+    gl,
+    image,
+    index,
+    length,
+    renderer,
+    scene,
+    screen,
+    text,
+    viewport,
+    bend,
+    textColor,
+    borderRadius = 0,
+    font
+  }) {
+    this.extra = 0;
+    this.geometry = geometry;
+    this.gl = gl;
+    this.image = image;
+    this.index = index;
+    this.length = length;
+    this.renderer = renderer;
+    this.scene = scene;
+    this.screen = screen;
+    this.text = text;
+    this.viewport = viewport;
+    this.bend = bend;
+    this.textColor = textColor;
+    this.borderRadius = borderRadius;
+    this.font = font;
+    this.createShader();
+    this.createMesh();
+    this.createTitle();
+    this.onResize();
+  }
+  createShader() {
+    const texture = new Texture(this.gl, {
+      generateMipmaps: true
+    });
+    this.program = new Program(this.gl, {
+      depthTest: false,
+      depthWrite: false,
+      vertex: `
+        precision highp float;
+        attribute vec3 position;
+        attribute vec2 uv;
+        uniform mat4 modelViewMatrix;
+        uniform mat4 projectionMatrix;
+        uniform float uTime;
+        uniform float uSpeed;
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec3 p = position;
+          p.z = (sin(p.x * 4.0 + uTime) * 1.5 + cos(p.y * 2.0 + uTime) * 1.5) * (0.1 + uSpeed * 0.5);
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        }
+      `,
+      fragment: `
+        precision highp float;
+        uniform vec2 uImageSizes;
+        uniform vec2 uPlaneSizes;
+        uniform sampler2D tMap;
+        uniform float uBorderRadius;
+        varying vec2 vUv;
+        
+        float roundedBoxSDF(vec2 p, vec2 b, float r) {
+          vec2 d = abs(p) - b;
+          return length(max(d, vec2(0.0))) + min(max(d.x, d.y), 0.0) - r;
+        }
+        
+        void main() {
+          vec2 ratio = vec2(
+            min((uPlaneSizes.x / uPlaneSizes.y) / (uImageSizes.x / uImageSizes.y), 1.0),
+            min((uPlaneSizes.y / uPlaneSizes.x) / (uImageSizes.y / uImageSizes.x), 1.0)
+          );
+          vec2 uv = vec2(
+            vUv.x * ratio.x + (1.0 - ratio.x) * 0.5,
+            vUv.y * ratio.y + (1.0 - ratio.y) * 0.5
+          );
+          vec4 color = texture2D(tMap, uv);
+          
+          float d = roundedBoxSDF(vUv - 0.5, vec2(0.5 - uBorderRadius), uBorderRadius);
+          
+          // Smooth antialiasing for edges
+          float edgeSmooth = 0.002;
+          float alpha = 1.0 - smoothstep(-edgeSmooth, edgeSmooth, d);
+          
+          gl_FragColor = vec4(color.rgb, alpha);
+        }
+      `,
+      uniforms: {
+        tMap: { value: texture },
+        uPlaneSizes: { value: [0, 0] },
+        uImageSizes: { value: [0, 0] },
+        uSpeed: { value: 0 },
+        uTime: { value: 100 * Math.random() },
+        uBorderRadius: { value: this.borderRadius }
+      },
+      transparent: true
+    });
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = this.image;
+    img.onload = () => {
+      texture.image = img;
+      this.program.uniforms.uImageSizes.value = [img.naturalWidth, img.naturalHeight];
+    };
+  }
+  createMesh() {
+    this.plane = new Mesh(this.gl, {
+      geometry: this.geometry,
+      program: this.program
+    });
+    this.plane.setParent(this.scene);
+  }
+  createTitle() {
+    this.title = new Title({
+      gl: this.gl,
+      plane: this.plane,
+      renderer: this.renderer,
+      text: this.text,
+      textColor: this.textColor,
+      font: this.font
+    });
+  }
+  update(scroll, direction) {
+    this.plane.position.x = this.x - scroll.current - this.extra;
+
+    const x = this.plane.position.x;
+    const H = this.viewport.width / 2;
+
+    if (this.bend === 0) {
+      this.plane.position.y = 0;
+      this.plane.rotation.z = 0;
+    } else {
+      const B_abs = Math.abs(this.bend);
+      const R = (H * H + B_abs * B_abs) / (2 * B_abs);
+      const effectiveX = Math.min(Math.abs(x), H);
+
+      const arc = R - Math.sqrt(R * R - effectiveX * effectiveX);
+      if (this.bend > 0) {
+        this.plane.position.y = -arc;
+        this.plane.rotation.z = -Math.sign(x) * Math.asin(effectiveX / R);
+      } else {
+        this.plane.position.y = arc;
+        this.plane.rotation.z = Math.sign(x) * Math.asin(effectiveX / R);
+      }
+    }
+
+    this.speed = scroll.current - scroll.last;
+    this.program.uniforms.uTime.value += 0.04;
+    this.program.uniforms.uSpeed.value = this.speed;
+
+    const planeOffset = this.plane.scale.x / 2;
+    const viewportOffset = this.viewport.width / 2;
+    this.isBefore = this.plane.position.x + planeOffset < -viewportOffset;
+    this.isAfter = this.plane.position.x - planeOffset > viewportOffset;
+    if (direction === 'right' && this.isBefore) {
+      this.extra -= this.widthTotal;
+      this.isBefore = this.isAfter = false;
+    }
+    if (direction === 'left' && this.isAfter) {
+      this.extra += this.widthTotal;
+      this.isBefore = this.isAfter = false;
+    }
+  }
+  onResize({ screen, viewport } = {}) {
+    if (screen) this.screen = screen;
+    if (viewport) {
+      this.viewport = viewport;
+      if (this.plane.program.uniforms.uViewportSizes) {
+        this.plane.program.uniforms.uViewportSizes.value = [this.viewport.width, this.viewport.height];
+      }
+    }
+    this.scale = this.screen.height / 1500;
+    this.plane.scale.y = (this.viewport.height * (900 * this.scale)) / this.screen.height;
+    this.plane.scale.x = (this.viewport.width * (700 * this.scale)) / this.screen.width;
+    this.plane.program.uniforms.uPlaneSizes.value = [this.plane.scale.x, this.plane.scale.y];
+    this.padding = 2;
+    this.width = this.plane.scale.x + this.padding;
+    this.widthTotal = this.width * this.length;
+    this.x = this.width * this.index;
+  }
+}
+
+class App {
+  constructor(
+    container,
+    {
+      items,
+      bend,
+      textColor = '#ffffff',
+      borderRadius = 0,
+      font = 'bold 30px Figtree',
+      scrollSpeed = 2,
+      scrollEase = 0.05
+    } = {}
+  ) {
+    document.documentElement.classList.remove('no-js');
+    this.container = container;
+    this.scrollSpeed = scrollSpeed;
+    this.scroll = { ease: scrollEase, current: 0, target: 0, last: 0 };
+    this.onCheckDebounce = debounce(this.onCheck, 200);
+    this.createRenderer();
+    this.createCamera();
+    this.createScene();
+    this.onResize();
+    this.createGeometry();
+    this.createMedias(items, bend, textColor, borderRadius, font);
+    this.update();
+    this.addEventListeners();
+  }
+  createRenderer() {
+    this.renderer = new Renderer({
+      alpha: true,
+      antialias: true,
+      dpr: Math.min(window.devicePixelRatio || 1, 2)
+    });
+    this.gl = this.renderer.gl;
+    this.gl.clearColor(0, 0, 0, 0);
+    this.container.appendChild(this.gl.canvas);
+  }
+  createCamera() {
+    this.camera = new Camera(this.gl);
+    this.camera.fov = 45;
+    this.camera.position.z = 20;
+  }
+  createScene() {
+    this.scene = new Transform();
+  }
+  createGeometry() {
+    this.planeGeometry = new Plane(this.gl, {
+      heightSegments: 50,
+      widthSegments: 100
+    });
+  }
+  createMedias(items, bend = 1, textColor, borderRadius, font) {
+    const defaultItems = [
+      { image: `https://picsum.photos/seed/1/800/600?grayscale`, text: 'Bridge' },
+      { image: `https://picsum.photos/seed/2/800/600?grayscale`, text: 'Desk Setup' },
+      { image: `https://picsum.photos/seed/3/800/600?grayscale`, text: 'Waterfall' },
+      { image: `https://picsum.photos/seed/4/800/600?grayscale`, text: 'Strawberries' },
+      { image: `https://picsum.photos/seed/5/800/600?grayscale`, text: 'Deep Diving' },
+      { image: `https://picsum.photos/seed/16/800/600?grayscale`, text: 'Train Track' },
+      { image: `https://picsum.photos/seed/17/800/600?grayscale`, text: 'Santorini' },
+      { image: `https://picsum.photos/seed/8/800/600?grayscale`, text: 'Blurry Lights' },
+      { image: `https://picsum.photos/seed/9/800/600?grayscale`, text: 'New York' },
+      { image: `https://picsum.photos/seed/10/800/600?grayscale`, text: 'Good Boy' },
+      { image: `https://picsum.photos/seed/21/800/600?grayscale`, text: 'Coastline' },
+      { image: `https://picsum.photos/seed/12/800/600?grayscale`, text: 'Palm Trees' }
+    ];
+    const galleryItems = items && items.length ? items : defaultItems;
+    this.mediasImages = galleryItems.concat(galleryItems);
+    this.medias = this.mediasImages.map((data, index) => {
+      return new Media({
+        geometry: this.planeGeometry,
+        gl: this.gl,
+        image: data.image,
+        index,
+        length: this.mediasImages.length,
+        renderer: this.renderer,
+        scene: this.scene,
+        screen: this.screen,
+        text: data.text,
+        viewport: this.viewport,
+        bend,
+        textColor,
+        borderRadius,
+        font
+      });
+    });
+  }
+  onTouchDown(e) {
+    this.isDown = true;
+    this.scroll.position = this.scroll.current;
+    this.start = e.touches ? e.touches[0].clientX : e.clientX;
+  }
+  onTouchMove(e) {
+    if (!this.isDown) return;
+    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const distance = (this.start - x) * (this.scrollSpeed * 0.025);
+    this.scroll.target = this.scroll.position + distance;
+  }
+  onTouchUp() {
+    this.isDown = false;
+    this.onCheck();
+  }
+  onWheel(e) {
+    const delta = e.deltaY || e.wheelDelta || e.detail;
+    this.scroll.target += (delta > 0 ? this.scrollSpeed : -this.scrollSpeed) * 0.2;
+    this.onCheckDebounce();
+  }
+  onKeyDown(e) {
+    switch (e.key) {
+      case 'ArrowRight':
+        e.preventDefault();
+        this.scroll.target += this.scrollSpeed * 5;
+        this.onCheckDebounce();
+        break;
+
+      case 'ArrowLeft':
+        e.preventDefault();
+        this.scroll.target -= this.scrollSpeed * 5;
+        this.onCheckDebounce();
+        break;
+
+      case 'Home':
+        e.preventDefault();
+        this.scroll.target = 0;
+        this.onCheckDebounce();
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  onCheck() {
+    if (!this.medias || !this.medias[0]) return;
+    const width = this.medias[0].width;
+    const itemIndex = Math.round(Math.abs(this.scroll.target) / width);
+    const item = width * itemIndex;
+    this.scroll.target = this.scroll.target < 0 ? -item : item;
+  }
+  onResize() {
+    this.screen = {
+      width: this.container.clientWidth,
+      height: this.container.clientHeight
+    };
+    this.renderer.setSize(this.screen.width, this.screen.height);
+    this.camera.perspective({
+      aspect: this.screen.width / this.screen.height
+    });
+    const fov = (this.camera.fov * Math.PI) / 180;
+    const height = 2 * Math.tan(fov / 2) * this.camera.position.z;
+    const width = height * this.camera.aspect;
+    this.viewport = { width, height };
+    if (this.medias) {
+      this.medias.forEach(media => media.onResize({ screen: this.screen, viewport: this.viewport }));
+    }
+  }
+  update() {
+    this.scroll.current = lerp(this.scroll.current, this.scroll.target, this.scroll.ease);
+    const direction = this.scroll.current > this.scroll.last ? 'right' : 'left';
+    if (this.medias) {
+      this.medias.forEach(media => media.update(this.scroll, direction));
+    }
+    this.renderer.render({ scene: this.scene, camera: this.camera });
+    this.scroll.last = this.scroll.current;
+    this.raf = window.requestAnimationFrame(this.update.bind(this));
+  }
+  addEventListeners() {
+    this.boundOnResize = this.onResize.bind(this);
+    this.boundOnWheel = this.onWheel.bind(this);
+    this.boundOnTouchDown = this.onTouchDown.bind(this);
+    this.boundOnTouchMove = this.onTouchMove.bind(this);
+    this.boundOnTouchUp = this.onTouchUp.bind(this);
+    this.boundOnKeyDown = this.onKeyDown.bind(this);
+
+    window.addEventListener('resize', this.boundOnResize);
+    window.addEventListener('mousewheel', this.boundOnWheel);
+    window.addEventListener('wheel', this.boundOnWheel);
+    window.addEventListener('mousedown', this.boundOnTouchDown);
+    window.addEventListener('mousemove', this.boundOnTouchMove);
+    window.addEventListener('mouseup', this.boundOnTouchUp);
+    window.addEventListener('touchstart', this.boundOnTouchDown);
+    window.addEventListener('touchmove', this.boundOnTouchMove);
+    window.addEventListener('touchend', this.boundOnTouchUp);
+
+    this.container?.addEventListener('keydown', this.boundOnKeyDown);
+  }
+  destroy() {
+    window.cancelAnimationFrame(this.raf);
+    window.removeEventListener('resize', this.boundOnResize);
+    window.removeEventListener('mousewheel', this.boundOnWheel);
+    window.removeEventListener('wheel', this.boundOnWheel);
+    window.removeEventListener('mousedown', this.boundOnTouchDown);
+    window.removeEventListener('mousemove', this.boundOnTouchMove);
+    window.removeEventListener('mouseup', this.boundOnTouchUp);
+    window.removeEventListener('touchstart', this.boundOnTouchDown);
+    window.removeEventListener('touchmove', this.boundOnTouchMove);
+    window.removeEventListener('touchend', this.boundOnTouchUp);
+    if (this.renderer && this.renderer.gl && this.renderer.gl.canvas.parentNode) {
+      this.renderer.gl.canvas.parentNode.removeChild(this.renderer.gl.canvas);
+    }
+
+    if (this.container) {
+      this.container.removeEventListener('keydown', this.boundOnKeyDown);
+    }
+  }
+}
+
+export default function CircularGallery({
+  items,
+  bend = 3,
+  textColor = '#ffffff',
+  borderRadius = 0.05,
+  font = 'bold 30px Figtree',
+  fontUrl,
+  scrollSpeed = 2,
+  scrollEase = 0.05
+}) {
+  const containerRef = useRef(null);
+  useEffect(() => {
+    if (!containerRef.current) return;
+    let app;
+    let isMounted = true;
+    resolveFont(font, fontUrl).then(resolvedFont => {
+      if (!isMounted || !containerRef.current) return;
+      app = new App(containerRef.current, {
+        items,
+        bend,
+        textColor,
+        borderRadius,
+        font: resolvedFont,
+        scrollSpeed,
+        scrollEase
+      });
+    });
+
+    return () => {
+      isMounted = false;
+      if (app) app.destroy();
+    };
+  }, [items, bend, textColor, borderRadius, font, fontUrl, scrollSpeed, scrollEase]);
+  return (
+    <div
+      className="circular-gallery"
+      ref={containerRef}
+      tabIndex={0}
+      role="region"
+      aria-label="Circular image gallery. Use left and right arrow keys to navigate."
+    />
+  );
+}
+
+```
+
+### Component CSS
+```css
+.circular-gallery {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+}
+
+.circular-gallery:active {
+  cursor: grabbing;
+}
+
+.circular-gallery:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+
+We could use this card nav for the website:
+
+## Integrate the <CardNav /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: CardNav
+### Variant: JavaScript + CSS
+### Dependencies: gsap
+
+---
+
+### Usage Example
+```jsx
+import CardNav from './CardNav'
+import logo from './logo.svg';
+
+const App = () => {
+  const items = [
+    {
+      label: "About",
+      bgColor: "#1B1722",
+      textColor: "#fff",
+      links: [
+        { label: "Company", ariaLabel: "About Company" },
+        { label: "Careers", ariaLabel: "About Careers" }
+      ]
+    },
+    {
+      label: "Projects", 
+      bgColor: "#2F293A",
+      textColor: "#fff",
+      links: [
+        { label: "Featured", ariaLabel: "Featured Projects" },
+        { label: "Case Studies", ariaLabel: "Project Case Studies" }
+      ]
+    },
+    {
+      label: "Contact",
+      bgColor: "#2F293A", 
+      textColor: "#fff",
+      links: [
+        { label: "Email", ariaLabel: "Email us" },
+        { label: "Twitter", ariaLabel: "Twitter" },
+        { label: "LinkedIn", ariaLabel: "LinkedIn" }
+      ]
+    }
+  ];
+
+  return (
+    <CardNav
+      logo={logo}
+      logoAlt="Company Logo"
+      items={items}
+      baseColor="#fff"
+      menuColor="#000"
+      buttonBgColor="#111"
+      buttonTextColor="#fff"
+      ease="power3.out"
+    />
+  );
+};
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| logo | string | - | URL for the logo image |
+| logoAlt | string | Logo | Alt text for the logo image |
+| items | CardNavItem[] | - | Array of navigation items with label, bgColor, textColor, and links |
+| className | string | '' | Additional CSS classes for the navigation container |
+| ease | string | power3.out | GSAP easing function for animations |
+| baseColor | string | #fff | Background color for the navigation container |
+| menuColor | string | undefined | Color for the hamburger menu lines |
+| buttonBgColor | string | #111 | Background color for the CTA button |
+| buttonTextColor | string | white | Text color for the CTA button |
+
+### Full Component Source
+```jsx
+import { useLayoutEffect, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+// use your own icon import if react-icons is not available
+import { GoArrowUpRight } from 'react-icons/go';
+import './CardNav.css';
+
+const CardNav = ({
+  logo,
+  logoAlt = 'Logo',
+  items,
+  className = '',
+  ease = 'power3.out',
+  baseColor = '#fff',
+  menuColor,
+  buttonBgColor,
+  buttonTextColor
+}) => {
+  const [isHamburgerOpen, setIsHamburgerOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const navRef = useRef(null);
+  const cardsRef = useRef([]);
+  const tlRef = useRef(null);
+
+  const calculateHeight = () => {
+    const navEl = navRef.current;
+    if (!navEl) return 260;
+
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    if (isMobile) {
+      const contentEl = navEl.querySelector('.card-nav-content');
+      if (contentEl) {
+        const wasVisible = contentEl.style.visibility;
+        const wasPointerEvents = contentEl.style.pointerEvents;
+        const wasPosition = contentEl.style.position;
+        const wasHeight = contentEl.style.height;
+
+        contentEl.style.visibility = 'visible';
+        contentEl.style.pointerEvents = 'auto';
+        contentEl.style.position = 'static';
+        contentEl.style.height = 'auto';
+
+        contentEl.offsetHeight;
+
+        const topBar = 60;
+        const padding = 16;
+        const contentHeight = contentEl.scrollHeight;
+
+        contentEl.style.visibility = wasVisible;
+        contentEl.style.pointerEvents = wasPointerEvents;
+        contentEl.style.position = wasPosition;
+        contentEl.style.height = wasHeight;
+
+        return topBar + contentHeight + padding;
+      }
+    }
+    return 260;
+  };
+
+  const createTimeline = () => {
+    const navEl = navRef.current;
+    if (!navEl) return null;
+
+    gsap.set(navEl, { height: 60, overflow: 'hidden' });
+    gsap.set(cardsRef.current, { y: 50, opacity: 0 });
+
+    const tl = gsap.timeline({ paused: true });
+
+    tl.to(navEl, {
+      height: calculateHeight,
+      duration: 0.4,
+      ease
+    });
+
+    tl.to(cardsRef.current, { y: 0, opacity: 1, duration: 0.4, ease, stagger: 0.08 }, '-=0.1');
+
+    return tl;
+  };
+
+  useLayoutEffect(() => {
+    const tl = createTimeline();
+    tlRef.current = tl;
+
+    return () => {
+      tl?.kill();
+      tlRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ease, items]);
+
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      if (!tlRef.current) return;
+
+      if (isExpanded) {
+        const newHeight = calculateHeight();
+        gsap.set(navRef.current, { height: newHeight });
+
+        tlRef.current.kill();
+        const newTl = createTimeline();
+        if (newTl) {
+          newTl.progress(1);
+          tlRef.current = newTl;
+        }
+      } else {
+        tlRef.current.kill();
+        const newTl = createTimeline();
+        if (newTl) {
+          tlRef.current = newTl;
+        }
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded]);
+
+  const toggleMenu = () => {
+    const tl = tlRef.current;
+    if (!tl) return;
+    if (!isExpanded) {
+      setIsHamburgerOpen(true);
+      setIsExpanded(true);
+      tl.play(0);
+    } else {
+      setIsHamburgerOpen(false);
+      tl.eventCallback('onReverseComplete', () => setIsExpanded(false));
+      tl.reverse();
+    }
+  };
+
+  const setCardRef = i => el => {
+    if (el) cardsRef.current[i] = el;
+  };
+
+  return (
+    <div className={`card-nav-container ${className}`}>
+      <nav ref={navRef} className={`card-nav ${isExpanded ? 'open' : ''}`} style={{ backgroundColor: baseColor }}>
+        <div className="card-nav-top">
+          <div
+            className={`hamburger-menu ${isHamburgerOpen ? 'open' : ''}`}
+            onClick={toggleMenu}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleMenu();
+              }
+            }}
+            role="button"
+            aria-label={isExpanded ? 'Close menu' : 'Open menu'}
+            aria-expanded={isExpanded}
+            tabIndex={0}
+            style={{ color: menuColor || '#000' }}
+          >
+            <div className="hamburger-line" />
+            <div className="hamburger-line" />
+          </div>
+
+          <div className="logo-container">
+            <img src={logo} alt={logoAlt} className="logo" />
+          </div>
+
+          <button
+            type="button"
+            className="card-nav-cta-button"
+            style={{ backgroundColor: buttonBgColor, color: buttonTextColor }}
+          >
+            Get Started
+          </button>
+        </div>
+
+        <div className="card-nav-content" aria-hidden={!isExpanded}>
+          {(items || []).slice(0, 3).map((item, idx) => (
+            <div
+              key={`${item.label}-${idx}`}
+              className="nav-card"
+              ref={setCardRef(idx)}
+              style={{ backgroundColor: item.bgColor, color: item.textColor }}
+            >
+              <div className="nav-card-label">{item.label}</div>
+              <div className="nav-card-links">
+                {item.links?.map((lnk, i) => (
+                  <a key={`${lnk.label}-${i}`} className="nav-card-link" href={lnk.href} aria-label={lnk.ariaLabel}>
+                    <GoArrowUpRight className="nav-card-link-icon" aria-hidden="true" />
+                    {lnk.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </nav>
+    </div>
+  );
+};
+
+export default CardNav;
+
+```
+
+### Component CSS
+```css
+.card-nav-container {
+  position: absolute;
+  top: 2em;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  z-index: 99;
+  box-sizing: border-box;
+}
+
+.card-nav {
+  display: block;
+  height: 60px;
+  padding: 0;
+  background-color: white;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  will-change: height;
+}
+
+.card-nav-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.45rem 0.55rem 1.1rem;
+  z-index: 2;
+}
+
+.hamburger-menu {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 6px;
+}
+
+.hamburger-menu:hover .hamburger-line {
+  opacity: 0.75;
+}
+
+.hamburger-line {
+  width: 30px;
+  height: 2px;
+  background-color: currentColor;
+  transition:
+    transform 0.25s ease,
+    opacity 0.2s ease,
+    margin 0.3s ease;
+  transform-origin: 50% 50%;
+}
+
+.hamburger-menu.open .hamburger-line:first-child {
+  transform: translateY(4px) rotate(45deg);
+}
+
+.hamburger-menu.open .hamburger-line:last-child {
+  transform: translateY(-4px) rotate(-45deg);
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.logo {
+  height: 28px;
+}
+
+.card-nav-cta-button {
+  background-color: #111;
+  color: white;
+  border: none;
+  border-radius: calc(0.75rem - 0.35rem);
+  padding: 0 1rem;
+  height: 100%;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  align-items: center;
+}
+
+.card-nav-cta-button:hover {
+  background-color: #333;
+}
+
+.card-nav-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 60px;
+  bottom: 0;
+  padding: 0.5rem;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-nav.open .card-nav-content {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.nav-card {
+  height: 100%;
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: calc(0.75rem - 0.2rem);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 8px;
+  user-select: none;
+}
+
+.nav-card-label {
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: -0.5px;
+}
+
+.nav-card-links {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-card-link {
+  font-size: 16px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav-card-link:hover {
+  opacity: 0.75;
+}
+
+@media (max-width: 768px) {
+  .card-nav-container {
+    width: 90%;
+    top: 1.2em;
+  }
+
+  .card-nav-top {
+    padding: 0.5rem 1rem;
+    justify-content: space-between;
+  }
+
+  .hamburger-menu {
+    order: 2;
+  }
+
+  .logo-container {
+    position: static;
+    transform: none;
+    order: 1;
+  }
+
+  .card-nav-cta-button {
+    display: none;
+  }
+
+  .card-nav-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 0.5rem;
+    bottom: 0;
+    justify-content: flex-start;
+  }
+
+  .nav-card {
+    height: auto;
+    min-height: 60px;
+    flex: 1 1 auto;
+    max-height: none;
+  }
+
+  .nav-card-label {
+    font-size: 18px;
+  }
+
+  .nav-card-link {
+    font-size: 15px;
+  }
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+We can use this snippet as a quick friend cleanup tool that you can swipe to 1 side to delete and one side to keep, we can also use this for hiding servers (we can call this feature the server chomper or something and we should also make this feature mute servers in this client, it won't delete the servers and wil simply hide them and you can add a toggle to show them again which will unmute servers what weerre muted by this specific feature also):
+
+## Integrate the <Stack /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Stack
+### Variant: JavaScript + CSS
+### Dependencies: motion
+
+---
+
+### Usage Example
+```jsx
+import Stack from './Stack'
+
+const images = [
+  "https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=500&auto=format",
+  "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=500&auto=format",
+  "https://images.unsplash.com/photo-1452626212852-811d58933cae?q=80&w=500&auto=format",
+  "https://images.unsplash.com/photo-1572120360610-d971b9d7767c?q=80&w=500&auto=format"
+];
+
+<div style={{ width: 208, height: 208 }}>
+  <Stack
+    randomRotation={true}
+    sensitivity={180}
+    sendToBackOnClick={true}
+    cards={images.map((src, i) => (
+      <img 
+        key={i} 
+        src={src} 
+        alt={`card-${i + 1}`} 
+        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+      />
+    ))}
+  />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| randomRotation | boolean | — | Applies a random rotation to each card for a 'messy' look. |
+| sensitivity | number | 200 | Drag sensitivity for sending a card to the back. |
+| sendToBackOnClick | boolean | false | When enabled, the stack also shifts to the next card on click. |
+| cards | ReactNode[] | [] | The array of card elements to display in the stack. |
+| animationConfig | object | { stiffness: 260, damping: 20 } | Configures the spring animation's stiffness and damping. |
+| autoplay | boolean | false | When enabled, the stack automatically cycles through cards. |
+| autoplayDelay | number | 3000 | Delay in milliseconds between automatic card transitions. |
+| pauseOnHover | boolean | false | When enabled, autoplay pauses when hovering over the stack. |
+
+### Full Component Source
+```jsx
+import { motion, useMotionValue, useTransform } from 'motion/react';
+import { useState, useEffect } from 'react';
+import './Stack.css';
+
+function CardRotate({ children, onSendToBack, sensitivity, disableDrag = false }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useTransform(y, [-100, 100], [60, -60]);
+  const rotateY = useTransform(x, [-100, 100], [-60, 60]);
+
+  function handleDragEnd(_, info) {
+    if (Math.abs(info.offset.x) > sensitivity || Math.abs(info.offset.y) > sensitivity) {
+      onSendToBack();
+    } else {
+      x.set(0);
+      y.set(0);
+    }
+  }
+
+  if (disableDrag) {
+    return (
+      <motion.div className="card-rotate-disabled" style={{ x: 0, y: 0 }}>
+        {children}
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      className="card-rotate"
+      style={{ x, y, rotateX, rotateY }}
+      drag
+      dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
+      dragElastic={0.6}
+      whileTap={{ cursor: 'grabbing' }}
+      onDragEnd={handleDragEnd}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+export default function Stack({
+  randomRotation = false,
+  sensitivity = 200,
+  cards = [],
+  animationConfig = { stiffness: 260, damping: 20 },
+  sendToBackOnClick = false,
+  autoplay = false,
+  autoplayDelay = 3000,
+  pauseOnHover = false,
+  mobileClickOnly = false,
+  mobileBreakpoint = 768
+}) {
+  const [isMobile, setIsMobile] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < mobileBreakpoint);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [mobileBreakpoint]);
+
+  const shouldDisableDrag = mobileClickOnly && isMobile;
+  const shouldEnableClick = sendToBackOnClick || shouldDisableDrag;
+
+  const [stack, setStack] = useState(() => {
+    if (cards.length) {
+      return cards.map((content, index) => ({ id: index + 1, content }));
+    } else {
+      return [
+        {
+          id: 1,
+          content: (
+            <img
+              src="https://images.unsplash.com/photo-1480074568708-e7b720bb3f09?q=80&w=500&auto=format"
+              alt="card-1"
+              className="card-image"
+            />
+          )
+        },
+        {
+          id: 2,
+          content: (
+            <img
+              src="https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=500&auto=format"
+              alt="card-2"
+              className="card-image"
+            />
+          )
+        },
+        {
+          id: 3,
+          content: (
+            <img
+              src="https://images.unsplash.com/photo-1452626212852-811d58933cae?q=80&w=500&auto=format"
+              alt="card-3"
+              className="card-image"
+            />
+          )
+        },
+        {
+          id: 4,
+          content: (
+            <img
+              src="https://images.unsplash.com/photo-1572120360610-d971b9d7767c?q=80&w=500&auto=format"
+              alt="card-4"
+              className="card-image"
+            />
+          )
+        }
+      ];
+    }
+  });
+
+  useEffect(() => {
+    if (cards.length) {
+      setStack(cards.map((content, index) => ({ id: index + 1, content })));
+    }
+  }, [cards]);
+
+  const sendToBack = id => {
+    setStack(prev => {
+      const newStack = [...prev];
+      const index = newStack.findIndex(card => card.id === id);
+      const [card] = newStack.splice(index, 1);
+      newStack.unshift(card);
+      return newStack;
+    });
+  };
+
+  useEffect(() => {
+    if (autoplay && stack.length > 1 && !isPaused) {
+      const interval = setInterval(() => {
+        const topCardId = stack[stack.length - 1].id;
+        sendToBack(topCardId);
+      }, autoplayDelay);
+
+      return () => clearInterval(interval);
+    }
+  }, [autoplay, autoplayDelay, stack, isPaused]);
+
+  return (
+    <div
+      className="stack-container"
+      onMouseEnter={() => pauseOnHover && setIsPaused(true)}
+      onMouseLeave={() => pauseOnHover && setIsPaused(false)}
+    >
+      {stack.map((card, index) => {
+        const randomRotate = randomRotation ? Math.random() * 10 - 5 : 0;
+        return (
+          <CardRotate
+            key={card.id}
+            onSendToBack={() => sendToBack(card.id)}
+            sensitivity={sensitivity}
+            disableDrag={shouldDisableDrag}
+          >
+            <motion.div
+              className="card"
+              onClick={() => shouldEnableClick && sendToBack(card.id)}
+              animate={{
+                rotateZ: (stack.length - index - 1) * 4 + randomRotate,
+                scale: 1 + index * 0.06 - stack.length * 0.06,
+                transformOrigin: '90% 90%'
+              }}
+              initial={false}
+              transition={{
+                type: 'spring',
+                stiffness: animationConfig.stiffness,
+                damping: animationConfig.damping
+              }}
+            >
+              {card.content}
+            </motion.div>
+          </CardRotate>
+        );
+      })}
+    </div>
+  );
+}
+
+```
+
+### Component CSS
+```css
+.stack-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  perspective: 600px;
+}
+
+.card-rotate {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.card-rotate-disabled {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.card {
+  border-radius: 1rem;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+We can use masonry for the gif selector menu:
+
+## Integrate the <Masonry /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Masonry
+### Variant: JavaScript + CSS
+### Dependencies: gsap
+
+---
+
+### Usage Example
+```jsx
+import Masonry from './Masonry';
+
+const items = [
+    {
+      id: "1",
+      img: "https://picsum.photos/id/1015/600/900?grayscale",
+      url: "https://example.com/one",
+      height: 400,
+    },
+    {
+      id: "2",
+      img: "https://picsum.photos/id/1011/600/750?grayscale",
+      url: "https://example.com/two",
+      height: 250,
+    },
+    {
+      id: "3",
+      img: "https://picsum.photos/id/1020/600/800?grayscale",
+      url: "https://example.com/three",
+      height: 600,
+    },
+    // ... more items
+];
+
+<Masonry
+  items={items}
+  ease="power3.out"
+  duration={0.6}
+  stagger={0.05}
+  animateFrom="bottom"
+  scaleOnHover={true}
+  hoverScale={0.95}
+  blurToFocus={true}
+  colorShiftOnHover={false}
+/>
+
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| items | array | required | Array of items to display in the masonry layout. Each item should have id, img, url, and height properties. |
+| ease | string | "power3.out" | GSAP easing function for animations. |
+| duration | number | 0.6 | Duration of the transition animations in seconds. |
+| stagger | number | 0.05 | Delay between each item's animation in seconds. |
+| animateFrom | string | "bottom" | Direction from which items animate in. Options: 'top', 'bottom', 'left', 'right', 'center', 'random'. |
+| scaleOnHover | boolean | true | Whether items should scale on hover. |
+| hoverScale | number | 0.95 | Scale value when hovering over items (only applies if scaleOnHover is true). |
+| blurToFocus | boolean | true | Whether items should animate from blurred to focused on initial load. |
+| colorShiftOnHover | boolean | false | Whether to show a color overlay effect on hover. |
+
+### Full Component Source
+```jsx
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { gsap } from 'gsap';
+
+import './Masonry.css';
+
+const useMedia = (queries, values, defaultValue) => {
+  const get = () => values[queries.findIndex(q => matchMedia(q).matches)] ?? defaultValue;
+
+  const [value, setValue] = useState(get);
+
+  useEffect(() => {
+    const handler = () => setValue(get);
+    queries.forEach(q => matchMedia(q).addEventListener('change', handler));
+    return () => queries.forEach(q => matchMedia(q).removeEventListener('change', handler));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queries]);
+
+  return value;
+};
+
+const useMeasure = () => {
+  const ref = useRef(null);
+  const [size, setSize] = useState({ width: 0, height: 0 });
+
+  useLayoutEffect(() => {
+    if (!ref.current) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      setSize({ width, height });
+    });
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, []);
+
+  return [ref, size];
+};
+
+const preloadImages = async urls => {
+  await Promise.all(
+    urls.map(
+      src =>
+        new Promise(resolve => {
+          const img = new Image();
+          img.src = src;
+          img.onload = img.onerror = () => resolve();
+        })
+    )
+  );
+};
+
+const Masonry = ({
+  items,
+  ease = 'power3.out',
+  duration = 0.6,
+  stagger = 0.05,
+  animateFrom = 'bottom',
+  scaleOnHover = true,
+  hoverScale = 0.95,
+  blurToFocus = true,
+  colorShiftOnHover = false
+}) => {
+  const columns = useMedia(
+    ['(min-width:1500px)', '(min-width:1000px)', '(min-width:600px)', '(min-width:400px)'],
+    [5, 4, 3, 2],
+    1
+  );
+
+  const [containerRef, { width }] = useMeasure();
+  const [imagesReady, setImagesReady] = useState(false);
+
+  const getInitialPosition = item => {
+    const containerRect = containerRef.current?.getBoundingClientRect();
+    if (!containerRect) return { x: item.x, y: item.y };
+
+    let direction = animateFrom;
+
+    if (animateFrom === 'random') {
+      const directions = ['top', 'bottom', 'left', 'right'];
+      direction = directions[Math.floor(Math.random() * directions.length)];
+    }
+
+    switch (direction) {
+      case 'top':
+        return { x: item.x, y: -200 };
+      case 'bottom':
+        return { x: item.x, y: window.innerHeight + 200 };
+      case 'left':
+        return { x: -200, y: item.y };
+      case 'right':
+        return { x: window.innerWidth + 200, y: item.y };
+      case 'center':
+        return {
+          x: containerRect.width / 2 - item.w / 2,
+          y: containerRect.height / 2 - item.h / 2
+        };
+      default:
+        return { x: item.x, y: item.y + 100 };
+    }
+  };
+
+  useEffect(() => {
+    preloadImages(items.map(i => i.img)).then(() => setImagesReady(true));
+  }, [items]);
+
+  const grid = useMemo(() => {
+    if (!width) return [];
+
+    const colHeights = new Array(columns).fill(0);
+    const columnWidth = width / columns;
+
+    return items.map(child => {
+      const col = colHeights.indexOf(Math.min(...colHeights));
+      const x = columnWidth * col;
+      const height = child.height / 2;
+      const y = colHeights[col];
+
+      colHeights[col] += height;
+
+      return { ...child, x, y, w: columnWidth, h: height };
+    });
+  }, [columns, items, width]);
+
+  const hasMounted = useRef(false);
+
+  useLayoutEffect(() => {
+    if (!imagesReady) return;
+
+    grid.forEach((item, index) => {
+      const selector = `[data-key="${item.id}"]`;
+      const animationProps = {
+        x: item.x,
+        y: item.y,
+        width: item.w,
+        height: item.h
+      };
+
+      if (!hasMounted.current) {
+        const initialPos = getInitialPosition(item, index);
+        const initialState = {
+          opacity: 0,
+          x: initialPos.x,
+          y: initialPos.y,
+          width: item.w,
+          height: item.h,
+          ...(blurToFocus && { filter: 'blur(10px)' })
+        };
+
+        gsap.fromTo(selector, initialState, {
+          opacity: 1,
+          ...animationProps,
+          ...(blurToFocus && { filter: 'blur(0px)' }),
+          duration: 0.8,
+          ease: 'power3.out',
+          delay: index * stagger
+        });
+      } else {
+        gsap.to(selector, {
+          ...animationProps,
+          duration: duration,
+          ease: ease,
+          overwrite: 'auto'
+        });
+      }
+    });
+
+    hasMounted.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [grid, imagesReady, stagger, animateFrom, blurToFocus, duration, ease]);
+
+  const handleMouseEnter = (e, item) => {
+    const element = e.currentTarget;
+    const selector = `[data-key="${item.id}"]`;
+
+    if (scaleOnHover) {
+      gsap.to(selector, {
+        scale: hoverScale,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    }
+
+    if (colorShiftOnHover) {
+      const overlay = element.querySelector('.color-overlay');
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0.3,
+          duration: 0.3
+        });
+      }
+    }
+  };
+
+  const handleMouseLeave = (e, item) => {
+    const element = e.currentTarget;
+    const selector = `[data-key="${item.id}"]`;
+
+    if (scaleOnHover) {
+      gsap.to(selector, {
+        scale: 1,
+        duration: 0.3,
+        ease: 'power2.out'
+      });
+    }
+
+    if (colorShiftOnHover) {
+      const overlay = element.querySelector('.color-overlay');
+      if (overlay) {
+        gsap.to(overlay, {
+          opacity: 0,
+          duration: 0.3
+        });
+      }
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="list">
+      {grid.map(item => {
+        return (
+          <div
+            key={item.id}
+            data-key={item.id}
+            className="item-wrapper"
+            onClick={() => window.open(item.url, '_blank', 'noopener')}
+            onMouseEnter={e => handleMouseEnter(e, item)}
+            onMouseLeave={e => handleMouseLeave(e, item)}
+          >
+            <div className="item-img" style={{ backgroundImage: `url(${item.img})` }}>
+              {colorShiftOnHover && (
+                <div
+                  className="color-overlay"
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    background: 'linear-gradient(45deg, rgba(255,0,150,0.5), rgba(0,150,255,0.5))',
+                    opacity: 0,
+                    pointerEvents: 'none',
+                    borderRadius: '8px'
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default Masonry;
+
+```
+
+### Component CSS
+```css
+.list {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.item-wrapper {
+  position: absolute;
+  will-change: transform, width, height, opacity;
+  padding: 6px;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+}
+
+.item-wrapper > .item-img {
+  position: relative;
+  background-size: cover;
+  background-position: center center;
+  width: 100%;
+  height: 100%;
+  text-transform: uppercase;
+  font-size: 10px;
+  line-height: 10px;
+  border-radius: 10px;
+  box-shadow: 0px 10px 50px -10px rgba(0, 0, 0, 0.2);
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+We can use this folder for server folders:
+## Integrate the <Folder /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Folder
+### Variant: JavaScript + CSS
+
+
+---
+
+### Usage Example
+```jsx
+import Folder from './Folder'
+
+<div style={{ height: '600px', position: 'relative' }}>
+  <Folder size={2} color="#5227FF" className="custom-folder" />
+</div>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| color | string | #5227FF | The primary color of the folder. |
+| size | number | 1 | Scale factor for the folder size. |
+| items | React.ReactNode[] | [] | An array of up to 3 items rendered as papers in the folder. |
+| className | string | — | Additional CSS classes for the folder container. |
+
+### Full Component Source
+```jsx
+import { useState } from 'react';
+import './Folder.css';
+
+const darkenColor = (hex, percent) => {
+  let color = hex.startsWith('#') ? hex.slice(1) : hex;
+  if (color.length === 3) {
+    color = color
+      .split('')
+      .map(c => c + c)
+      .join('');
+  }
+  const num = parseInt(color.slice(0, 6), 16);
+  let r = (num >> 16) & 0xff;
+  let g = (num >> 8) & 0xff;
+  let b = num & 0xff;
+  r = Math.max(0, Math.min(255, Math.floor(r * (1 - percent))));
+  g = Math.max(0, Math.min(255, Math.floor(g * (1 - percent))));
+  b = Math.max(0, Math.min(255, Math.floor(b * (1 - percent))));
+  return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+};
+
+const Folder = ({ color = '#5227FF', size = 1, items = [], className = '' }) => {
+  const maxItems = 3;
+  const papers = items.slice(0, maxItems);
+  while (papers.length < maxItems) {
+    papers.push(null);
+  }
+
+  const [open, setOpen] = useState(false);
+  const [paperOffsets, setPaperOffsets] = useState(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
+
+  const folderBackColor = darkenColor(color, 0.08);
+  const paper1 = darkenColor('#ffffff', 0.1);
+  const paper2 = darkenColor('#ffffff', 0.05);
+  const paper3 = '#ffffff';
+
+  const handleClick = () => {
+    setOpen(prev => !prev);
+    if (open) {
+      setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })));
+    }
+  };
+
+  const handlePaperMouseMove = (e, index) => {
+    if (!open) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const offsetX = (e.clientX - centerX) * 0.15;
+    const offsetY = (e.clientY - centerY) * 0.15;
+    setPaperOffsets(prev => {
+      const newOffsets = [...prev];
+      newOffsets[index] = { x: offsetX, y: offsetY };
+      return newOffsets;
+    });
+  };
+
+  const handlePaperMouseLeave = (e, index) => {
+    setPaperOffsets(prev => {
+      const newOffsets = [...prev];
+      newOffsets[index] = { x: 0, y: 0 };
+      return newOffsets;
+    });
+  };
+
+  const folderStyle = {
+    '--folder-color': color,
+    '--folder-back-color': folderBackColor,
+    '--paper-1': paper1,
+    '--paper-2': paper2,
+    '--paper-3': paper3
+  };
+
+  const folderClassName = `folder ${open ? 'open' : ''}`.trim();
+  const scaleStyle = { transform: `scale(${size})` };
+
+  return (
+    <div style={scaleStyle} className={className}>
+      <div
+        className={folderClassName}
+        style={folderStyle}
+        onClick={handleClick}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+
+            handleClick();
+          }
+        }}
+        tabIndex={0}
+        role="button"
+        aria-expanded={open}
+        aria-label={open ? 'Close folder' : 'Open folder'}
+      >
+        <div className="folder__back">
+          {papers.map((item, i) => (
+            <div
+              key={i}
+              className={`paper paper-${i + 1}`}
+              onMouseMove={e => handlePaperMouseMove(e, i)}
+              onMouseLeave={e => handlePaperMouseLeave(e, i)}
+              style={
+                open
+                  ? {
+                      '--magnet-x': `${paperOffsets[i]?.x || 0}px`,
+                      '--magnet-y': `${paperOffsets[i]?.y || 0}px`
+                    }
+                  : {}
+              }
+            >
+              {item}
+            </div>
+          ))}
+          <div className="folder__front"></div>
+          <div className="folder__front right"></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Folder;
+
+```
+
+### Component CSS
+```css
+:root {
+  --folder-color: #70a1ff;
+  --folder-back-color: #4785ff;
+  --paper-1: #e6e6e6;
+  --paper-2: #f2f2f2;
+  --paper-3: #ffffff;
+}
+
+.folder {
+  transition: all 0.2s ease-in;
+  cursor: pointer;
+}
+
+.folder:not(.folder--click):hover {
+  transform: translateY(-8px);
+}
+
+.folder:not(.folder--click):hover .paper {
+  transform: translate(-50%, 0%);
+}
+
+.folder:not(.folder--click):hover .folder__front {
+  transform: skew(15deg) scaleY(0.6);
+}
+
+.folder:not(.folder--click):hover .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+.folder.open {
+  transform: translateY(-8px);
+}
+
+.folder.open .paper:nth-child(1) {
+  transform: translate(-120%, -70%) rotateZ(-15deg);
+}
+
+.folder.open .paper:nth-child(1):hover {
+  transform: translate(-120%, -70%) rotateZ(-15deg) scale(1.1);
+}
+
+.folder.open .paper:nth-child(2) {
+  transform: translate(10%, -70%) rotateZ(15deg);
+  height: 80%;
+}
+
+.folder.open .paper:nth-child(2):hover {
+  transform: translate(10%, -70%) rotateZ(15deg) scale(1.1);
+}
+
+.folder.open .paper:nth-child(3) {
+  transform: translate(-50%, -100%) rotateZ(5deg);
+  height: 80%;
+}
+
+.folder.open .paper:nth-child(3):hover {
+  transform: translate(-50%, -100%) rotateZ(5deg) scale(1.1);
+}
+
+.folder.open .folder__front {
+  transform: skew(15deg) scaleY(0.6);
+}
+
+.folder.open .right {
+  transform: skew(-15deg) scaleY(0.6);
+}
+
+.folder__back {
+  position: relative;
+  width: 100px;
+  height: 80px;
+  background: var(--folder-back-color);
+  border-radius: 0px 10px 10px 10px;
+}
+
+.folder__back::after {
+  position: absolute;
+  z-index: 0;
+  bottom: 98%;
+  left: 0;
+  content: '';
+  width: 30px;
+  height: 10px;
+  background: var(--folder-back-color);
+  border-radius: 5px 5px 0 0;
+}
+
+.paper {
+  position: absolute;
+  z-index: 2;
+  bottom: 10%;
+  left: 50%;
+  transform: translate(-50%, 10%);
+  width: 70%;
+  height: 80%;
+  background: var(--paper-1);
+  border-radius: 10px;
+  transition: all 0.3s ease-in-out;
+}
+
+.paper:nth-child(2) {
+  background: var(--paper-2);
+  width: 80%;
+  height: 70%;
+}
+
+.paper:nth-child(3) {
+  background: var(--paper-3);
+  width: 90%;
+  height: 60%;
+}
+
+.folder__front {
+  position: absolute;
+  z-index: 3;
+  width: 100%;
+  height: 100%;
+  background: var(--folder-color);
+  border-radius: 5px 10px 10px 10px;
+  transform-origin: bottom;
+  transition: all 0.3s ease-in-out;
+}
+
+.folder:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+We can use this lanyard to display on people's accounts for hyaecord contributors and should work like a profilem effect maybe idk:
+
+## Integrate the <Lanyard /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Lanyard
+### Variant: JavaScript + CSS
+### Dependencies: three meshline @react-three/fiber @react-three/drei @react-three/rapier
+
+---
+
+### Usage Example
+```jsx
+import Lanyard from './Lanyard'
+
+<Lanyard position={[0, 0, 20]} gravity={[0, -40, 0]} />
+
+// Pass custom images for the card's front/back faces and/or the lanyard band.
+// frontImage and backImage render independently; imageFit keeps aspect ratio.
+// lanyardWidth widens the band so a custom band image has more room.
+<Lanyard
+  position={[0,0,24]}
+  gravity={[0,-40,0]}
+  frontImage="/my-front.png"
+  backImage="/my-back.png"
+  imageFit="cover"
+  lanyardImage="/my-band.png"
+  lanyardWidth={1}
+/>
+
+/* IMPORTANT INFO BELOW
+
+1. You MUST have the card.glb and lanyard.png files in your project and import them
+- these can be downloaded from the repo's files, under src/assets/lanyard
+
+2. You can edit your card.glb file in this online .glb editor and change the texture:
+- https://modelviewer.dev/editor/
+- alternatively, pass the "frontImage" / "backImage" props to swap the card's faces at runtime
+
+4. The png file is the texture for the lanyard's band and can be edited in any image editor
+
+5. Your Vite configuration must be updated to include the following in vite.config.js:
+assetsInclude: ['**/*.glb']
+
+6. For TS users, you might need these changes:
+
+- src/global.d.ts
+export { };
+
+declare module '*.glb';
+declare module '*.png';
+
+declare module 'meshline' {
+  export const MeshLineGeometry: any;
+  export const MeshLineMaterial: any;
+}
+
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      meshLineGeometry: any;
+      meshLineMaterial: any;
+    }
+  }
+}
+
+- src/vite-env.d.ts
+/// <reference types="vite/client" />
+declare module '*.glb';
+declare module '*.png';
+*/
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| position | array | [0, 0, 30] | Initial camera position for the canvas. |
+| gravity | array | [0, -40, 0] | Gravity vector for the physics simulation. |
+| fov | number | 20 | Camera field of view. |
+| transparent | boolean | true | Enables a transparent background for the canvas. |
+| frontImage | string | null | Custom image URL for the card's front face. Falls back to the model's built-in texture when not set. |
+| backImage | string | null | Custom image URL for the card's back face, rendered independently from the front. |
+| imageFit | "cover" | "contain" | "cover" | How a custom front/back image fits its face. Both preserve aspect ratio; 'cover' fills and crops, 'contain' letterboxes. |
+| lanyardImage | string | null | Custom image URL for the lanyard band's repeating texture. Falls back to the default band texture when not set. |
+| lanyardWidth | number | 1 | Width of the lanyard band (meshline lineWidth). Increase it to give a custom band image more room and reduce stretching. |
+
+### Full Component Source
+```jsx
+/* eslint-disable react/no-unknown-property */
+'use client';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Canvas, extend, useFrame } from '@react-three/fiber';
+import { useGLTF, useTexture, Environment, Lightformer } from '@react-three/drei';
+import { BallCollider, CuboidCollider, Physics, RigidBody, useRopeJoint, useSphericalJoint } from '@react-three/rapier';
+import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
+
+// replace with your own imports, see the usage snippet for details
+import cardGLB from './card.glb';
+import lanyard from './lanyard.png';
+
+import * as THREE from 'three';
+import './Lanyard.css';
+
+extend({ MeshLineGeometry, MeshLineMaterial });
+
+// 1x1 transparent pixel — lets useTexture be called unconditionally when a
+// front/back image isn't supplied.
+const BLANK_PIXEL =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+// The card model's front face is UV-mapped to the LEFT half of the texture
+// atlas and the back face to the RIGHT half (measured from card.glb). Each
+// custom image is composited into its own half so the two faces render
+// independently, aspect-preserving (no stretching).
+const FRONT_UV_RECT = { x: 0, y: 0, w: 0.5, h: 0.755 };
+const BACK_UV_RECT = { x: 0.5, y: 0, w: 0.5, h: 0.757 };
+
+export default function Lanyard({
+  position = [0, 0, 30],
+  gravity = [0, -40, 0],
+  fov = 20,
+  transparent = true,
+  frontImage = null,
+  backImage = null,
+  imageFit = 'cover',
+  lanyardImage = null,
+  lanyardWidth = 1
+}) {
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return (
+    <div className="lanyard-wrapper">
+      <Canvas
+        camera={{ position: position, fov: fov }}
+        dpr={[1, isMobile ? 1.5 : 2]}
+        gl={{ alpha: transparent }}
+        onCreated={({ gl }) => gl.setClearColor(new THREE.Color(0x000000), transparent ? 0 : 1)}
+      >
+        <ambientLight intensity={Math.PI} />
+        <Physics gravity={gravity} timeStep={isMobile ? 1 / 30 : 1 / 60}>
+          <Band
+            isMobile={isMobile}
+            frontImage={frontImage}
+            backImage={backImage}
+            imageFit={imageFit}
+            lanyardImage={lanyardImage}
+            lanyardWidth={lanyardWidth}
+          />
+        </Physics>
+        <Environment blur={0.75}>
+          <Lightformer
+            intensity={2}
+            color="white"
+            position={[0, -1, 5]}
+            rotation={[0, 0, Math.PI / 3]}
+            scale={[100, 0.1, 1]}
+          />
+          <Lightformer
+            intensity={3}
+            color="white"
+            position={[-1, -1, 1]}
+            rotation={[0, 0, Math.PI / 3]}
+            scale={[100, 0.1, 1]}
+          />
+          <Lightformer
+            intensity={3}
+            color="white"
+            position={[1, 1, 1]}
+            rotation={[0, 0, Math.PI / 3]}
+            scale={[100, 0.1, 1]}
+          />
+          <Lightformer
+            intensity={10}
+            color="white"
+            position={[-10, 0, 14]}
+            rotation={[0, Math.PI / 2, Math.PI / 3]}
+            scale={[100, 10, 1]}
+          />
+        </Environment>
+      </Canvas>
+    </div>
+  );
+}
+function Band({
+  maxSpeed = 50,
+  minSpeed = 0,
+  isMobile = false,
+  frontImage = null,
+  backImage = null,
+  imageFit = 'cover',
+  lanyardImage = null,
+  lanyardWidth = 1
+}) {
+  const band = useRef(),
+    fixed = useRef(),
+    j1 = useRef(),
+    j2 = useRef(),
+    j3 = useRef(),
+    card = useRef();
+  const vec = new THREE.Vector3(),
+    ang = new THREE.Vector3(),
+    rot = new THREE.Vector3(),
+    dir = new THREE.Vector3();
+  const segmentProps = { type: 'dynamic', canSleep: true, colliders: false, angularDamping: 4, linearDamping: 4 };
+  const { nodes, materials } = useGLTF(cardGLB);
+  const texture = useTexture(lanyardImage || lanyard);
+  // useTexture must be called unconditionally; use a blank pixel when an image
+  // isn't supplied for a given face, then skip compositing it below.
+  const frontTex = useTexture(frontImage || BLANK_PIXEL);
+  const backTex = useTexture(backImage || BLANK_PIXEL);
+
+  // Composite the front/back images into the card's texture atlas (front = left
+  // half, back = right half). Each image is drawn aspect-preserving (no stretch).
+  const cardMap = useMemo(() => {
+    const baseMap = materials.base.map;
+    if (!frontImage && !backImage) return baseMap;
+
+    const baseImg = baseMap.image;
+    const W = baseImg.width;
+    const H = baseImg.height;
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return baseMap;
+    // Keep the original baked atlas for the card edges and any untouched face.
+    ctx.drawImage(baseImg, 0, 0, W, H);
+
+    const drawFitted = (img, rect) => {
+      const rx = rect.x * W;
+      const ry = rect.y * H;
+      const rw = rect.w * W;
+      const rh = rect.h * H;
+      const pick = imageFit === 'contain' ? Math.min : Math.max;
+      const scale = pick(rw / img.width, rh / img.height);
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      const dx = rx + (rw - dw) / 2;
+      const dy = ry + (rh - dh) / 2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(rx, ry, rw, rh);
+      ctx.clip();
+      ctx.drawImage(img, dx, dy, dw, dh);
+      ctx.restore();
+    };
+
+    if (frontImage && frontTex.image) drawFitted(frontTex.image, FRONT_UV_RECT);
+    if (backImage && backTex.image) drawFitted(backTex.image, BACK_UV_RECT);
+
+    const composite = new THREE.CanvasTexture(canvas);
+    composite.colorSpace = THREE.SRGBColorSpace;
+    composite.flipY = baseMap.flipY;
+    composite.anisotropy = 16;
+    composite.needsUpdate = true;
+    return composite;
+  }, [frontImage, backImage, imageFit, frontTex, backTex, materials.base.map]);
+  const [curve] = useState(
+    () =>
+      new THREE.CatmullRomCurve3([new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()])
+  );
+  const [dragged, drag] = useState(false);
+  const [hovered, hover] = useState(false);
+
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], 1]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], 1]);
+  useSphericalJoint(j3, card, [
+    [0, 0, 0],
+    [0, 1.5, 0]
+  ]);
+
+  useEffect(() => {
+    if (hovered) {
+      document.body.style.cursor = dragged ? 'grabbing' : 'grab';
+      return () => void (document.body.style.cursor = 'auto');
+    }
+  }, [hovered, dragged]);
+
+  useFrame((state, delta) => {
+    if (dragged) {
+      vec.set(state.pointer.x, state.pointer.y, 0.5).unproject(state.camera);
+      dir.copy(vec).sub(state.camera.position).normalize();
+      vec.add(dir.multiplyScalar(state.camera.position.length()));
+      [card, j1, j2, j3, fixed].forEach(ref => ref.current?.wakeUp());
+      card.current?.setNextKinematicTranslation({ x: vec.x - dragged.x, y: vec.y - dragged.y, z: vec.z - dragged.z });
+    }
+    if (fixed.current) {
+      [j1, j2].forEach(ref => {
+        if (!ref.current.lerped) ref.current.lerped = new THREE.Vector3().copy(ref.current.translation());
+        const clampedDistance = Math.max(0.1, Math.min(1, ref.current.lerped.distanceTo(ref.current.translation())));
+        ref.current.lerped.lerp(
+          ref.current.translation(),
+          delta * (minSpeed + clampedDistance * (maxSpeed - minSpeed))
+        );
+      });
+      curve.points[0].copy(j3.current.translation());
+      curve.points[1].copy(j2.current.lerped);
+      curve.points[2].copy(j1.current.lerped);
+      curve.points[3].copy(fixed.current.translation());
+      band.current.geometry.setPoints(curve.getPoints(isMobile ? 16 : 32));
+      ang.copy(card.current.angvel());
+      rot.copy(card.current.rotation());
+      card.current.setAngvel({ x: ang.x, y: ang.y - rot.y * 0.25, z: ang.z });
+    }
+  });
+
+  curve.curveType = 'chordal';
+  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+
+  return (
+    <>
+      <group position={[0, 4, 0]}>
+        <RigidBody ref={fixed} {...segmentProps} type="fixed" />
+        <RigidBody position={[0.5, 0, 0]} ref={j1} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody position={[1, 0, 0]} ref={j2} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody position={[1.5, 0, 0]} ref={j3} {...segmentProps}>
+          <BallCollider args={[0.1]} />
+        </RigidBody>
+        <RigidBody position={[2, 0, 0]} ref={card} {...segmentProps} type={dragged ? 'kinematicPosition' : 'dynamic'}>
+          <CuboidCollider args={[0.8, 1.125, 0.01]} />
+          <group
+            scale={2.25}
+            position={[0, -1.2, -0.05]}
+            onPointerOver={() => hover(true)}
+            onPointerOut={() => hover(false)}
+            onPointerUp={e => (e.target.releasePointerCapture(e.pointerId), drag(false))}
+            onPointerDown={e => (
+              e.target.setPointerCapture(e.pointerId),
+              drag(new THREE.Vector3().copy(e.point).sub(vec.copy(card.current.translation())))
+            )}
+          >
+            <mesh geometry={nodes.card.geometry}>
+              <meshPhysicalMaterial
+                map={cardMap}
+                map-anisotropy={16}
+                clearcoat={isMobile ? 0 : 1}
+                clearcoatRoughness={0.15}
+                roughness={0.9}
+                metalness={0.8}
+              />
+            </mesh>
+            <mesh geometry={nodes.clip.geometry} material={materials.metal} material-roughness={0.3} />
+            <mesh geometry={nodes.clamp.geometry} material={materials.metal} />
+          </group>
+        </RigidBody>
+      </group>
+      <mesh ref={band}>
+        <meshLineGeometry />
+        <meshLineMaterial
+          color="white"
+          depthTest={false}
+          resolution={isMobile ? [1000, 2000] : [1000, 1000]}
+          useMap
+          map={texture}
+          repeat={[-4, 1]}
+          lineWidth={lanyardWidth}
+        />
+      </mesh>
+    </>
+  );
+}
+
+```
+
+### Component CSS
+```css
+.lanyard-wrapper {
+  position: relative;
+  z-index: 0;
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transform: scale(1);
+  transform-origin: center;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+We can use this integer slider for plugins that have like numbers such as the schedule message plugin.
+
+## Integrate the <Counter /> component from React Bits
+
+You are helping integrate an open-source React component into an existing application.
+
+### Component: Counter
+### Variant: JavaScript + CSS
+### Dependencies: motion
+
+---
+
+### Usage Example
+```jsx
+import Counter from './Counter';
+
+<Counter
+  value={1}
+  places={[100, 10, 1]}
+  fontSize={80}
+  padding={5}
+  gap={10}
+  textColor="white"
+  fontWeight={900}
+/>
+```
+
+### Props
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| value | number | N/A (required) | The numeric value to display in the counter. |
+| fontSize | number | 100 | The base font size used for the counter digits. |
+| padding | number | 0 | Additional padding added to the digit height. |
+| places | number[] | [100, 10, 1 , "." , 0.1] | Defines which digit positions to display. Include whole number and decimal place values (use "." for the decimal point). If omitted, place values will be detected automatically. |
+| gap | number | 8 | The gap (in pixels) between each digit. |
+| borderRadius | number | 4 | The border radius (in pixels) for the counter container. |
+| horizontalPadding | number | 8 | The horizontal padding (in pixels) for the counter container. |
+| textColor | string | 'white' | The text color for the counter digits. |
+| fontWeight | string | number | 'bold' | The font weight of the counter digits. |
+| containerStyle | React.CSSProperties | {} | Custom inline styles for the outer container. |
+| counterStyle | React.CSSProperties | {} | Custom inline styles for the counter element. |
+| digitStyle | React.CSSProperties | {} | Custom inline styles for each digit container. |
+| gradientHeight | number | 16 | The height (in pixels) of the gradient overlays. |
+| gradientFrom | string | 'black' | The starting color for the gradient overlays. |
+| gradientTo | string | 'transparent' | The ending color for the gradient overlays. |
+| topGradientStyle | React.CSSProperties | undefined | Custom inline styles for the top gradient overlay. |
+| bottomGradientStyle | React.CSSProperties | undefined | Custom inline styles for the bottom gradient overlay. |
+
+### Full Component Source
+```jsx
+import { motion, useSpring, useTransform } from 'motion/react';
+import { useEffect } from 'react';
+
+import './Counter.css';
+
+function Number({ mv, number, height }) {
+  let y = useTransform(mv, latest => {
+    let placeValue = latest % 10;
+    let offset = (10 + number - placeValue) % 10;
+    let memo = offset * height;
+    if (offset > 5) {
+      memo -= 10 * height;
+    }
+    return memo;
+  });
+  return (
+    <motion.span className="counter-number" style={{ y }}>
+      {number}
+    </motion.span>
+  );
+}
+
+function normalizeNearInteger(num) {
+  const nearest = Math.round(num);
+  const tolerance = 1e-9 * Math.max(1, Math.abs(num));
+  return Math.abs(num - nearest) < tolerance ? nearest : num;
+}
+
+function getValueRoundedToPlace(value, place) {
+  const scaled = value / place;
+  return Math.floor(normalizeNearInteger(scaled));
+}
+
+function Digit({ place, value, height, digitStyle }) {
+  const isDecimal = place === '.';
+  const valueRoundedToPlace = isDecimal ? 0 : getValueRoundedToPlace(value, place);
+  const animatedValue = useSpring(valueRoundedToPlace);
+
+  useEffect(() => {
+    if (!isDecimal) {
+      animatedValue.set(valueRoundedToPlace);
+    }
+  }, [animatedValue, valueRoundedToPlace, isDecimal]);
+
+  if (isDecimal) {
+    return (
+      <span className="counter-digit" style={{ height, ...digitStyle, width: 'fit-content' }}>
+        .
+      </span>
+    );
+  }
+
+  return (
+    <span className="counter-digit" style={{ height, ...digitStyle }}>
+      {Array.from({ length: 10 }, (_, i) => (
+        <Number key={i} mv={animatedValue} number={i} height={height} />
+      ))}
+    </span>
+  );
+}
+
+export default function Counter({
+  value,
+  fontSize = 100,
+  padding = 0,
+  places = [...value.toString()].map((ch, i, a) => {
+    ch == '.';
+    if (ch === '.') {
+      return '.';
+    } else {
+      return (
+        10 **
+        (a.indexOf('.') === -1 ? a.length - i - 1 : i < a.indexOf('.') ? a.indexOf('.') - i - 1 : -(i - a.indexOf('.')))
+      );
+    }
+  }),
+  gap = 8,
+  borderRadius = 4,
+  horizontalPadding = 8,
+  textColor = 'inherit',
+  fontWeight = 'inherit',
+  containerStyle,
+  counterStyle,
+  digitStyle,
+  gradientHeight = 16,
+  gradientFrom = 'black',
+  gradientTo = 'transparent',
+  topGradientStyle,
+  bottomGradientStyle
+}) {
+  const height = fontSize + padding;
+  const defaultCounterStyle = {
+    fontSize,
+    gap: gap,
+    borderRadius: borderRadius,
+    paddingLeft: horizontalPadding,
+    paddingRight: horizontalPadding,
+    color: textColor,
+    fontWeight: fontWeight,
+    direction: "ltr"
+  };
+  const defaultTopGradientStyle = {
+    height: gradientHeight,
+    background: `linear-gradient(to bottom, ${gradientFrom}, ${gradientTo})`
+  };
+  const defaultBottomGradientStyle = {
+    height: gradientHeight,
+    background: `linear-gradient(to top, ${gradientFrom}, ${gradientTo})`
+  };
+  return (
+    <span className="counter-container" style={containerStyle}>
+      <span className="counter-counter" style={{ ...defaultCounterStyle, ...counterStyle }}>
+        {places.map(place => (
+          <Digit key={place} place={place} value={value} height={height} digitStyle={digitStyle} />
+        ))}
+      </span>
+      <span className="gradient-container">
+        <span className="top-gradient" style={topGradientStyle ? topGradientStyle : defaultTopGradientStyle}></span>
+        <span
+          className="bottom-gradient"
+          style={bottomGradientStyle ? bottomGradientStyle : defaultBottomGradientStyle}
+        ></span>
+      </span>
+    </span>
+  );
+}
+
+```
+
+### Component CSS
+```css
+.counter-container {
+  position: relative;
+  display: inline-block;
+}
+
+.counter-counter {
+  display: flex;
+  overflow: hidden;
+  line-height: 1;
+}
+
+.counter-digit {
+  position: relative;
+  width: 1ch;
+  font-variant-numeric: tabular-nums;
+}
+
+.counter-number {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradient-container {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+.bottom-gradient {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+```
+
+### Integration Instructions
+1. Install any listed dependencies.
+2. Copy the component source into the appropriate directory in the project.
+3. Import the CSS file alongside the component.
+4. Import and render the component using the usage example above as a starting point.
+5. Adjust props as needed for the specific use case — refer to the props table for all available options.
+
+
+Also use animejs for scrolling animations on the wbesite please:
+npm i animejs
+
+Also use sparkles text for support buttons and stuff maybe idk:
+import { SparklesText } from "@/registry/magicui/sparkles-text"
+
+export function SparklesTextDemo() {
+  return <SparklesText>Magic UI</SparklesText>
+}

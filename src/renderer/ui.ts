@@ -57,6 +57,73 @@ export async function patchSettings(patch: Partial<HyaecordSettings>): Promise<v
   applySettingsToDocument();
 }
 
+/**
+ * A toggle row where turning ON is a plain click, but turning OFF requires
+ * holding the switch for `holdMs` — replaces confirmation popups with a
+ * press-and-hold, per project UI direction. Releasing early cancels with no
+ * state change; a filled track shows hold progress.
+ */
+export function holdToggleRow(
+  labelKey: string,
+  descriptionKey: string | null,
+  checked: boolean,
+  holdMs: number,
+  onChange: (next: boolean) => void
+): HTMLElement {
+  let isChecked = checked;
+  let timer: ReturnType<typeof setTimeout> | null = null;
+
+  const fill = el("span", { className: "switch-hold-fill", "aria-hidden": "true" });
+  const thumb = el("span", { className: "switch-thumb", "aria-hidden": "true" }, fill);
+  const button = el("button", {
+    type: "button",
+    className: "switch-btn",
+    role: "switch",
+    "aria-checked": String(isChecked)
+  }, thumb) as HTMLButtonElement;
+
+  const cancelHold = () => {
+    if (!timer) return;
+    clearTimeout(timer);
+    timer = null;
+    fill.style.transitionDuration = "150ms";
+    fill.style.width = "0%";
+  };
+
+  const startHold = () => {
+    if (!isChecked || timer) return;
+    fill.style.transitionDuration = `${holdMs}ms`;
+    requestAnimationFrame(() => (fill.style.width = "100%"));
+    timer = setTimeout(() => {
+      timer = null;
+      fill.style.width = "0%";
+      isChecked = false;
+      button.setAttribute("aria-checked", "false");
+      button.classList.remove("is-on");
+      onChange(false);
+    }, holdMs);
+  };
+
+  button.addEventListener("pointerdown", startHold);
+  button.addEventListener("pointerup", cancelHold);
+  button.addEventListener("pointerleave", cancelHold);
+  button.addEventListener("click", () => {
+    if (isChecked || timer) return; // OFF -> ON is instant; ON -> OFF only via completed hold
+    isChecked = true;
+    button.setAttribute("aria-checked", "true");
+    button.classList.add("is-on");
+    onChange(true);
+  });
+  button.classList.toggle("is-on", isChecked);
+
+  const text = el("span", { className: "row-text" }, el("span", { className: "row-label" }, t(labelKey)));
+  if (descriptionKey) {
+    text.append(el("span", { className: "row-description" }, t(descriptionKey)));
+    text.append(el("span", { className: "row-description hold-hint" }, t("settings.holdToDisable")));
+  }
+  return el("div", { className: "setting-row" }, text, button);
+}
+
 /** Wrap Tab focus inside `container` and return a cleanup function. */
 export function trapFocus(container: HTMLElement): () => void {
   const selector =

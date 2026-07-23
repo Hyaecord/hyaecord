@@ -1,13 +1,14 @@
 import type { ThemeId } from "@shared/types";
-import { el, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
+import { el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
 
 /**
  * Settings panel (modal). Every control applies live via patchSettings.
- * Turning a built-in feature off goes through the confirmation modal
- * required by the brief; turning one on never asks.
+ * Built-in features use a hold-to-disable switch instead of a confirmation
+ * popup (project UI direction — see DESIGN.md); turning one on is instant.
  */
 
 const INTEGRATION_KEYS = ["userPFP", "usrBG", "globalBadges", "rpcBridge"] as const;
+const DISABLE_HOLD_MS = 900;
 
 export function mountSettingsButton(): void {
   const rail = document.getElementById("server-rail")!;
@@ -17,34 +18,6 @@ export function mountSettingsButton(): void {
     "⚙"
   );
   rail.append(button);
-}
-
-/** Ask before disabling a built-in feature; resolves true if the user confirms. */
-function confirmDisable(featureKey: (typeof INTEGRATION_KEYS)[number]): Promise<boolean> {
-  return new Promise(resolve => {
-    const close = (confirmed: boolean) => {
-      cleanup();
-      overlay.remove();
-      resolve(confirmed);
-    };
-    const dialog = el(
-      "div",
-      { className: "modal confirm", role: "alertdialog", "aria-modal": "true", "aria-labelledby": "confirm-title" },
-      el("h2", { id: "confirm-title" }, t("settings.disableFeature.title", { feature: t(`feature.${featureKey}`) })),
-      el("p", {}, t("settings.disableFeature.body")),
-      el("div", { className: "modal-actions" },
-        el("button", { className: "btn ghost", type: "button", onClick: () => close(false) }, t("settings.disableFeature.cancel")),
-        el("button", { className: "btn danger", type: "button", onClick: () => close(true) }, t("settings.disableFeature.confirm"))
-      )
-    );
-    const overlay = el("div", { className: "overlay" }, dialog);
-    overlay.addEventListener("keydown", ev => {
-      if (ev.key === "Escape") close(false);
-    });
-    const cleanup = trapFocus(overlay);
-    document.body.append(overlay);
-    (dialog.querySelector("button") as HTMLButtonElement).focus();
-  });
 }
 
 function selectRow(
@@ -132,10 +105,9 @@ export function openSettings(): void {
       ),
       section("settings.section.integrations",
         ...INTEGRATION_KEYS.map(key =>
-          toggleRow(`feature.${key}`, `feature.${key}.description`, s.integrations[key], async next => {
-            if (!next && !(await confirmDisable(key))) return false;
-            await patchSettings({ integrations: { ...state.settings.integrations, [key]: next } });
-          })
+          holdToggleRow(`feature.${key}`, `feature.${key}.description`, s.integrations[key], DISABLE_HOLD_MS, next =>
+            void patchSettings({ integrations: { ...state.settings.integrations, [key]: next } })
+          )
         )
       ),
       section("settings.section.privacy",

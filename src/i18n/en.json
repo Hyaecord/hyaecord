@@ -67,10 +67,7 @@
   "settings.gamingMode": "Gaming Mode",
   "settings.telemetry": "Anonymous usage stats",
   "settings.telemetry.description": "One anonymous ping a day: random ID, version, OS, desktop environment. Never linked to your Discord account. Off means off — nothing is sent.",
-  "settings.disableFeature.title": "Turn off {feature}?",
-  "settings.disableFeature.body": "This is a built-in Hyaecord feature. You can re-enable it here at any time.",
-  "settings.disableFeature.confirm": "Turn off",
-  "settings.disableFeature.cancel": "Keep on",
+  "settings.holdToDisable": "Hold the switch to turn off.",
   "badge.hyaecordContributor": "Hyaecord Contributor",
   "tray.open": "Open Hyaecord",
   "tray.quit": "Quit"
