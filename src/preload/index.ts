@@ -34,7 +34,8 @@ const bridge: HyaecordBridge = {
   openExternal: url => ipcRenderer.invoke(IPC.openExternal, url),
   deleteChannel: channelId => ipcRenderer.invoke(IPC.discordDeleteChannel, channelId),
   muteGuild: (guildId, muted) => ipcRenderer.invoke(IPC.discordMuteGuild, guildId, muted),
-  getCommunityThemes: () => ipcRenderer.invoke(IPC.getCommunityThemes)
+  getCommunityThemes: () => ipcRenderer.invoke(IPC.getCommunityThemes),
+  isUsingVpn: () => ipcRenderer.invoke(IPC.isUsingVpn)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

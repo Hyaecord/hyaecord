@@ -208,6 +208,17 @@ body {
 }
 .login-qr { display: block; }
 .login-qr-status { text-align: center; }
+.login-vpn-notice {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-s);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 0.8rem;
+}
+.login-vpn-notice .link-button { font-size: inherit; }
 
 .channel-list {
   background: var(--bg-base);

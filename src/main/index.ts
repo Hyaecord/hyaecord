@@ -9,6 +9,7 @@ import { createTray } from "./tray";
 import { startTelemetry } from "./telemetry";
 import { notifyMessage } from "./notifications";
 import { fetchCommunityThemes } from "./community-themes";
+import { isLikelyUsingVpn } from "./vpn-detect";
 import {
   initDiscord,
   login,
@@ -90,6 +91,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
+  ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed
     // and this handler is the one place that can reach outside the app.

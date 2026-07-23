@@ -122,4 +122,5 @@ export interface HyaecordBridge {
   deleteChannel(channelId: string): Promise<boolean>;
   muteGuild(guildId: string, muted: boolean): Promise<boolean>;
   getCommunityThemes(): Promise<CommunityTheme[]>;
+  isUsingVpn(): Promise<boolean>;
 }

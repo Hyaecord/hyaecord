@@ -515,10 +515,26 @@ function welcomeScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HT
     t("login.withBrowser")
   );
 
+  const vpnNotice = el("div", { className: "login-vpn-notice", hidden: true });
+  void window.hyaecord.isUsingVpn().then(detected => {
+    if (!detected) return;
+    vpnNotice.hidden = false;
+    vpnNotice.append(
+      t("login.vpnNotice"),
+      " ",
+      el(
+        "button",
+        { className: "link-button", type: "button", onClick: () => (vpnNotice.hidden = true) },
+        t("login.vpnNotice.dismiss")
+      )
+    );
+  });
+
   return el(
     "div",
     {},
     el("p", { className: "modal-subtitle" }, t("login.welcomeBody")),
+    vpnNotice,
     browserButton,
     browserError,
     el("button", { className: "btn login-big-btn", type: "button", onClick: () => goTo("qr") }, t("login.withQr")),

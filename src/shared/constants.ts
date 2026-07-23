@@ -53,5 +53,6 @@ export const IPC = {
   discordDeleteChannel: "hyaecord:discord-delete-channel",
   discordMuteGuild: "hyaecord:discord-mute-guild",
   openExternal: "hyaecord:open-external",
-  getCommunityThemes: "hyaecord:get-community-themes"
+  getCommunityThemes: "hyaecord:get-community-themes",
+  isUsingVpn: "hyaecord:is-using-vpn"
 } as const;

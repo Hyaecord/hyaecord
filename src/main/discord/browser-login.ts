@@ -1,5 +1,13 @@
 import { BrowserWindow, session } from "electron";
 
+// Electron's default UA identifies itself as Electron (" electron/33.x..."),
+// which Discord/Cloudflare's bot detection routinely blocks or hits with an
+// extra verification wall outright — independent of VPN use. A plain,
+// current desktop Chrome UA is what makes this page behave like it would in
+// a real browser.
+const DESKTOP_CHROME_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
+
 /**
  * Opens a real, unmodified browser window at the actual discord.com login
  * page — no custom form, no injected script into the page itself. This is
@@ -54,6 +62,7 @@ export function openBrowserLogin(): Promise<string | null> {
       callback({ requestHeaders: details.requestHeaders });
     });
 
+    win.webContents.setUserAgent(DESKTOP_CHROME_UA);
     win.on("closed", () => finish(null));
     win.loadURL("https://discord.com/login");
   });
