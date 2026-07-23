@@ -49,6 +49,10 @@ commits, changes, chatting, or support.
 > unvarnished per-feature status, updated as things ship rather than
 > written up front and left stale.
 
+### Multi-Platform
+
+- **Stoat.chat support started**: a real, separate integration talking to Stoat's own public REST/WebSocket API (`api.stoat.chat`, `events.stoat.chat`) — not a guess, verified against Stoat's own published OpenAPI spec and protocol docs. Login (real embedded stoat.chat page, same trustworthy pattern as Discord's), server/channel listing, and plain-text messaging work today. Connect an account from Settings → Accounts; a "Merge accounts into one sidebar" toggle shows Discord and Stoat servers together, each with a small platform badge, or lets you view one platform at a time. Fluxer support is not started yet. See `BUILD_PROMPT.md` for exactly what's built vs. deliberately deferred (DMs, friends, reactions, voice, and more of Stoat's real feature set).
+
 ### Ecosystem & Plugins
 
 - **A real plugin API**, sandboxed via Node `vm` with a restricted API surface — ergonomically modeled on Vencord's `definePlugin` shape so a simple message-hook plugin ports easily, but **not** a byte-compatible runner for existing Equicord/Vencord plugin files (those patch Discord's real webpack bundle, which this client's original GUI doesn't have). See [Plugin Guidelines](PLUGIN_GUIDELINES.md) and `src/main/plugins/` for exactly what's supported today.

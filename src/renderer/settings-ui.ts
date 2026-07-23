@@ -1,6 +1,7 @@
 import type { PluginInfo, ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, showToast, state, t, toggleRow, trapFocus } from "./ui";
-import { refreshChomperViews, getCurrentUser } from "./session";
+import { refreshChomperViews, getCurrentUser, renderRail } from "./session";
+import { loginStoat, logoutStoat, getStoatSessionState } from "./stoat-session";
 import { openThemeStore } from "./theme-store";
 import { loadAvatarOverrides } from "./avatar-overrides";
 import { refreshPluginCommands } from "./slash-commands";
@@ -80,6 +81,81 @@ function voiceVideoSection(): HTMLElement {
     el("p", { className: "step-hint" }, t("settings.voice.description")),
     el("div", { className: "voice-video-buttons" }, cameraButton, micButton, screenButton)
   );
+}
+
+/**
+ * Multi-platform account management — owner ask: connect a Stoat.chat
+ * account alongside Discord, merge both into one rail (with a small
+ * platform badge per server, see session.ts's buildGuildPill/
+ * buildStoatGuildPill), or switch to viewing one platform at a time.
+ * Fluxer isn't built yet (only Stoat was asked for this pass) — no entry
+ * for it here, rather than a dead "coming soon" row.
+ */
+function accountsSection(): HTMLElement {
+  const stoatStatus = el("p", { className: "row-description" }, t("settings.accounts.checking"));
+  const stoatRow = el(
+    "div",
+    { className: "setting-row" },
+    el("span", { className: "row-text" },
+      el("span", { className: "row-label" }, "Stoat.chat"),
+      stoatStatus
+    )
+  );
+  const refreshStoatRow = async () => {
+    const session = await getStoatSessionState();
+    const existingButton = stoatRow.querySelector(".account-action-btn");
+    existingButton?.remove();
+    if (session.state === "ready" && session.user) {
+      stoatStatus.textContent = t("settings.accounts.connectedAs", { name: session.user.displayName ?? session.user.username });
+      stoatRow.append(
+        el(
+          "button",
+          {
+            className: "btn ghost account-action-btn",
+            type: "button",
+            onClick: async () => {
+              await logoutStoat();
+              renderRail();
+              void refreshStoatRow();
+            }
+          },
+          t("settings.accounts.disconnect")
+        )
+      );
+    } else {
+      stoatStatus.textContent = t("settings.accounts.notConnected");
+      stoatRow.append(
+        el(
+          "button",
+          {
+            className: "btn account-action-btn",
+            type: "button",
+            onClick: async () => {
+              stoatStatus.textContent = t("settings.accounts.connecting");
+              const res = await loginStoat();
+              if (!res.ok && res.error !== "cancelled") showToast(t("settings.accounts.connectFailed"));
+              renderRail();
+              void refreshStoatRow();
+            }
+          },
+          t("settings.accounts.connect")
+        )
+      );
+    }
+  };
+  void refreshStoatRow();
+
+  const mergeToggle = toggleRow(
+    "settings.accounts.merge",
+    "settings.accounts.merge.description",
+    state.settings.mergeSidebar,
+    next => {
+      void patchSettings({ mergeSidebar: next });
+      renderRail();
+    }
+  );
+
+  return el("div", { className: "accounts-section" }, stoatRow, mergeToggle);
 }
 
 function avatarSection(): HTMLElement {
@@ -409,6 +485,7 @@ export function openSettings(): void {
       el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
     ),
     el("div", { className: "settings-scroll" },
+      section("settings.section.accounts", accountsSection()),
       ...(getCurrentUser() ? [section("settings.section.account", avatarSection())] : []),
       section("settings.section.appearance",
         selectRow("settings.theme", themeOptions, s.theme, value => void patchSettings({ theme: value as ThemeId })),

@@ -13,6 +13,17 @@ const bridge: HyaecordBridge = {
     ipcRenderer.on(IPC.themeChanged, (_e, prefersDark: boolean) => cb(prefersDark));
   },
   discordLoginBrowser: () => ipcRenderer.invoke(IPC.discordLoginBrowser),
+  stoatLoginBrowser: () => ipcRenderer.invoke(IPC.stoatLoginBrowser),
+  stoatLogout: () => ipcRenderer.invoke(IPC.stoatLogout),
+  getStoatSession: () => ipcRenderer.invoke(IPC.stoatGetSession),
+  onStoatState: cb => {
+    ipcRenderer.on(IPC.stoatState, (_e, session) => cb(session));
+  },
+  onStoatEvent: cb => {
+    ipcRenderer.on(IPC.stoatEvent, (_e, event: string, data: unknown) => cb(event, data));
+  },
+  stoatFetchMessages: channelId => ipcRenderer.invoke(IPC.stoatFetchMessages, channelId),
+  stoatSendMessage: (channelId, content) => ipcRenderer.invoke(IPC.stoatSendMessage, channelId, content),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

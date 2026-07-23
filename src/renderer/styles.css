@@ -129,6 +129,7 @@ body {
 }
 
 .server-rail .server-pill {
+  position: relative;
   width: 48px;
   height: 48px;
   border-radius: var(--radius-l);
@@ -140,6 +141,23 @@ body {
   transition: border-radius var(--dur-base) var(--ease-standard),
               transform var(--dur-fast) var(--ease-standard);
 }
+
+.platform-badge {
+  position: absolute;
+  inset-inline-end: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-base);
+  display: grid;
+  place-items: center;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+}
+.platform-badge-discord { background: #5865f2; }
+.platform-badge-stoat { background: #e05a4e; }
 .server-rail .server-pill:hover,
 .server-rail .server-pill:focus-visible {
   border-radius: var(--radius-m);

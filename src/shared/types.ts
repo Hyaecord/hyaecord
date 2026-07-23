@@ -70,6 +70,9 @@ export interface HyaecordSettings {
   }>;
   /** The applied theme (built-in "Default" or a community theme), cached in full so it still works offline; null = the built-in default theme, untouched. */
   communityTheme: CommunityTheme | null;
+  /** When on (default), every connected platform's servers show together in one rail, each badged with its platform. When off, the rail shows only `activeSidebarPlatform`. */
+  mergeSidebar: boolean;
+  activeSidebarPlatform: "discord" | "stoat";
 }
 
 export interface DesktopEnvironmentInfo {
@@ -80,6 +83,20 @@ export interface DesktopEnvironmentInfo {
 }
 
 export type DiscordSessionState = "logged-out" | "connecting" | "ready" | "reconnecting";
+
+export type StoatSessionState = "logged-out" | "connecting" | "ready";
+
+export interface StoatUserSummary {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatar: string | null;
+}
+
+export interface StoatSession {
+  state: StoatSessionState;
+  user: StoatUserSummary | null;
+}
 
 export interface DiscordUserSummary {
   id: string;
@@ -164,6 +181,13 @@ export interface HyaecordBridge {
   getPluginCommands(): Promise<Array<{ name: string; description: string }>>;
   /** Runs a plugin-registered command by name; returns the message content to send, or null if the command doesn't exist/declined to produce one. */
   runPluginCommand(name: string, args: string): Promise<string | null>;
+  stoatLoginBrowser(): Promise<LoginResult>;
+  stoatLogout(): Promise<void>;
+  getStoatSession(): Promise<StoatSession>;
+  onStoatState(cb: (session: StoatSession) => void): void;
+  onStoatEvent(cb: (event: string, data: unknown) => void): void;
+  stoatFetchMessages(channelId: string): Promise<unknown[]>;
+  stoatSendMessage(channelId: string, content: string): Promise<boolean>;
 }
 
 export interface UserProfile {

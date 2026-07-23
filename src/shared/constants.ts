@@ -30,7 +30,10 @@ export const DEFAULT_SETTINGS = {
     showHidden: false
   },
   serverFolders: [] as Array<{ id: string; name: string; color: string | null; guildIds: string[]; collapsed: boolean }>,
-  communityTheme: null
+  communityTheme: null,
+  /** When on (default), every connected platform's servers show together in one rail, each badged with its platform. When off, the rail shows only `activeSidebarPlatform`. */
+  mergeSidebar: true,
+  activeSidebarPlatform: "discord" as "discord" | "stoat"
 } as const;
 
 export const TELEMETRY_ENDPOINT = "https://hyaecord.vercel.app/api/telemetry";
@@ -84,5 +87,12 @@ export const IPC = {
   discordJoinVoice: "hyaecord:discord-join-voice",
   discordLeaveVoice: "hyaecord:discord-leave-voice",
   discordVoiceState: "hyaecord:discord-voice-state",
-  getScreenShareSources: "hyaecord:get-screen-share-sources"
+  getScreenShareSources: "hyaecord:get-screen-share-sources",
+  stoatLoginBrowser: "hyaecord:stoat-login-browser",
+  stoatLogout: "hyaecord:stoat-logout",
+  stoatGetSession: "hyaecord:stoat-get-session",
+  stoatState: "hyaecord:stoat-state",
+  stoatEvent: "hyaecord:stoat-event",
+  stoatFetchMessages: "hyaecord:stoat-fetch-messages",
+  stoatSendMessage: "hyaecord:stoat-send-message"
 } as const;

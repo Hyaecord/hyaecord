@@ -13,6 +13,15 @@ import { openFriendsList } from "./friends";
 import { tryExecuteSlashCommand, showSlashSuggestions, closeSlashSuggestions } from "./slash-commands";
 import { openPinsPanel } from "./pins";
 import { initVoiceUI, setVoiceChannelNameResolver } from "./voice-ui";
+import {
+  getStoatGuilds,
+  onStoatGuildsChanged,
+  initStoatSession,
+  selectStoatGuild,
+  selectStoatChannel,
+  sendStoatMessage,
+  stoatMessageRow
+} from "./stoat-session";
 
 /**
  * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
@@ -152,6 +161,8 @@ let loginOverlay: HTMLElement | null = null;
 let activeChannelId: string | null = null;
 let activeGuildId: string | null = null;
 let selfUserId: string | null = null;
+/** Which backend the currently-open chat pane belongs to — routes the composer's send and the message list's fetch/render to the right platform. */
+let activeChatPlatform: "discord" | "stoat" = "discord";
 let currentUser: DiscordSession["user"] = null;
 
 /** The logged-in user's own summary (id/username/avatar), for UI like the avatar picker that needs to show/act on it. */
@@ -178,6 +189,8 @@ export function initSession(): void {
   wireMessageSearch();
   initVoiceUI();
   setVoiceChannelNameResolver(resolveChannelName);
+  initStoatSession();
+  onStoatGuildsChanged(renderRail);
 }
 
 function resolveChannelName(channelId: string): string {
@@ -285,6 +298,15 @@ function wireComposer(): void {
 
   input.addEventListener("keydown", async ev => {
     if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
+
+    if (activeChatPlatform === "stoat") {
+      const content = input.value;
+      input.value = "";
+      const ok = await sendStoatMessage(activeChannelId, content);
+      if (!ok) input.value = content;
+      return;
+    }
+
     closeSlashSuggestions();
     const original = input.value;
     const result = await tryExecuteSlashCommand(original);
@@ -737,6 +759,9 @@ function buildGuildPill(guild: GuildSummary, inFolder: ServerFolder | null): HTM
       .join("")
       .slice(0, 3);
   }
+  if (state.settings.mergeSidebar) {
+    pill.append(el("span", { className: "platform-badge platform-badge-discord", "aria-hidden": "true" }, "D"));
+  }
   if (inFolder) {
     const removeBtn = el(
       "button",
@@ -847,18 +872,54 @@ export function renderRail(): void {
   );
   rail.insertBefore(friendsPill, settingsButton);
 
-  const renderedFolders = new Set<string>();
-  for (const guild of guilds) {
-    if (isChomperHidden(guild.id)) continue;
-    const folder = folderOf(guild.id);
-    if (folder) {
-      if (renderedFolders.has(folder.id)) continue;
-      renderedFolders.add(folder.id);
-      rail.insertBefore(buildFolderElement(folder), settingsButton);
-      continue;
+  const showDiscord = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "discord";
+  const showStoat = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "stoat";
+
+  if (showDiscord) {
+    const renderedFolders = new Set<string>();
+    for (const guild of guilds) {
+      if (isChomperHidden(guild.id)) continue;
+      const folder = folderOf(guild.id);
+      if (folder) {
+        if (renderedFolders.has(folder.id)) continue;
+        renderedFolders.add(folder.id);
+        rail.insertBefore(buildFolderElement(folder), settingsButton);
+        continue;
+      }
+      rail.insertBefore(buildGuildPill(guild, null), settingsButton);
     }
-    rail.insertBefore(buildGuildPill(guild, null), settingsButton);
   }
+
+  if (showStoat) {
+    for (const guild of getStoatGuilds()) {
+      rail.insertBefore(buildStoatGuildPill(guild), settingsButton);
+    }
+  }
+}
+
+/** Same visual shape as buildGuildPill, tagged with a small platform badge in the corner (only shown when both platforms are merged into one rail — redundant, and thus omitted, in single-platform mode). */
+function buildStoatGuildPill(guild: { id: string; name: string; icon: string | null }): HTMLElement {
+  const pill = el("button", {
+    className: "server-pill",
+    type: "button",
+    title: guild.name,
+    "aria-label": guild.name,
+    "data-stoat-guild": guild.id,
+    onClick: () => selectStoatGuildUI(guild.id)
+  });
+  if (guild.icon) {
+    pill.append(el("img", { src: guild.icon, alt: "", loading: "lazy" }));
+  } else {
+    pill.textContent = guild.name
+      .split(/\s+/)
+      .map(w => w[0] ?? "")
+      .join("")
+      .slice(0, 3);
+  }
+  if (state.settings.mergeSidebar) {
+    pill.append(el("span", { className: "platform-badge platform-badge-stoat", "aria-hidden": "true" }, "S"));
+  }
+  return pill;
 }
 
 function markActivePill(guildId: string | null): void {
@@ -1094,15 +1155,57 @@ function messageRow(msg: MessageSummary): HTMLElement {
 }
 
 async function loadMessages(channelId: string): Promise<void> {
+  activeChatPlatform = "discord";
   const container = document.getElementById("messages")!;
   container.replaceChildren();
   const raw = await window.hyaecord.fetchMessages(channelId);
-  if (channelId !== activeChannelId) return; // user moved on while we fetched
+  if (channelId !== activeChannelId || activeChatPlatform !== "discord") return; // user moved on while we fetched
   for (const entry of raw) {
     const msg = toSummary(entry);
     if (msg) container.append(messageRow(msg));
   }
   container.scrollTop = container.scrollHeight;
+}
+
+/** Stoat's half of loadMessages() — deliberately separate rather than a shared generic function, since the two platforms' message shapes and rendering (stoatMessageRow vs messageRow) don't overlap. */
+async function loadStoatMessages(guildId: string, channelId: string, channelName: string): Promise<void> {
+  activeGuildId = guildId;
+  activeChannelId = channelId;
+  activeChatPlatform = "stoat";
+  document.getElementById("chat-header")!.textContent = `# ${channelName}`;
+  const input = document.getElementById("composer-input") as HTMLInputElement;
+  input.placeholder = t("shell.chat.placeholder").replace("#general", `#${channelName}`);
+  const container = document.getElementById("messages")!;
+  container.replaceChildren();
+  const messages = await selectStoatChannel(channelId);
+  if (channelId !== activeChannelId || activeChatPlatform !== "stoat") return;
+  for (const msg of messages) container.append(stoatMessageRow(msg));
+  container.scrollTop = container.scrollHeight;
+}
+
+function selectStoatGuildUI(id: string): void {
+  const guild = selectStoatGuild(id);
+  if (!guild) return;
+  markActivePill(null);
+  document.querySelectorAll<HTMLElement>(`.server-pill[data-stoat-guild="${id}"]`).forEach(p => p.setAttribute("aria-current", "true"));
+  applyServerHeaderBanner(null, guild.name, null);
+  clearMemberList();
+
+  const list = document.getElementById("channels")!;
+  list.replaceChildren();
+  for (const channel of guild.channels) {
+    const li = el("li", { tabindex: "0", "data-channel": channel.id }, `# ${channel.name}`);
+    const select = () => {
+      list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
+      li.setAttribute("aria-current", "true");
+      void loadStoatMessages(id, channel.id, channel.name);
+    };
+    li.addEventListener("click", select);
+    li.addEventListener("keydown", ev => {
+      if ((ev as KeyboardEvent).key === "Enter") select();
+    });
+    list.append(li);
+  }
 }
 
 function onMessageCreate(data: unknown): void {
