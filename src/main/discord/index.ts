@@ -7,6 +7,8 @@ import {
   type RawMessage
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
+import { openBrowserLogin } from "./browser-login";
+import { startRemoteAuth } from "./remote-auth";
 import type { DiscordSessionState, DiscordUserSummary } from "@shared/types";
 
 /**
@@ -181,6 +183,41 @@ export async function submitMfa(code: string, ticket: string): Promise<Credentia
 
   if (!res.token) return { ok: false, error: "network" };
   return completeLogin(res.token);
+}
+
+/** The trustworthy default: opens the real discord.com login page. */
+export async function loginWithBrowser(): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
+  const token = await openBrowserLogin();
+  if (!token) return { ok: false, error: "cancelled" };
+  return completeLogin(token);
+}
+
+export type QrEvent =
+  | { type: "url"; url: string }
+  | { type: "confirming" }
+  | { type: "expired" }
+  | { type: "error"; error: string };
+
+type QrSender = (event: QrEvent) => void;
+let cancelQr: (() => void) | null = null;
+
+/** Discord's official QR-code login. Cancel any in-flight attempt with `cancelQrLogin()`. */
+export function startQrLogin(onEvent: QrSender): void {
+  cancelQr?.();
+  cancelQr = startRemoteAuth({
+    onQrUrl: url => onEvent({ type: "url", url }),
+    onConfirming: () => onEvent({ type: "confirming" }),
+    onToken: token => {
+      void completeLogin(token);
+    },
+    onError: error => onEvent({ type: "error", error }),
+    onExpired: () => onEvent({ type: "expired" })
+  });
+}
+
+export function cancelQrLogin(): void {
+  cancelQr?.();
+  cancelQr = null;
 }
 
 /** Try the stored token on startup; quietly stays logged-out if there is none. */

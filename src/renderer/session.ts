@@ -1,4 +1,5 @@
-import type { DiscordSession } from "@shared/types";
+import type { DiscordSession, QrLoginEvent } from "@shared/types";
+import QRCode from "qrcode";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 
@@ -56,6 +57,8 @@ let loginOverlay: HTMLElement | null = null;
 let activeChannelId: string | null = null;
 let activeGuildId: string | null = null;
 let selfUserId: string | null = null;
+/** Set only while the QR login screen is mounted; the IPC listener itself is registered once, in initSession(). */
+let qrEventHandler: ((event: QrLoginEvent) => void) | null = null;
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 const DM_TYPES = new Set([1, 3]);
@@ -66,6 +69,7 @@ export function initSession(): void {
     if (event === "READY") onReady(data);
     if (event === "MESSAGE_CREATE") onMessageCreate(data);
   });
+  window.hyaecord.onDiscordQrLoginEvent(event => qrEventHandler?.(event));
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
   wireChannelProximity();
@@ -443,20 +447,19 @@ function onMessageCreate(data: unknown): void {
 }
 
 /* ---------- login view ----------
- * Three screens: the normal Discord email/password login (default), the
- * TOTP step when that account has 2FA, and a token-paste fallback for
- * advanced use. Token login used to be the *only* option, which reasonably
- * read as "sus" — pasting a secret into a random client with no other way
- * in — so the credential flow (same endpoint the official client uses) is
- * now the primary path, with token paste one click away for anyone who
- * already has one (e.g. session imported from another tool). */
+ * Leads with the two trustworthy paths — a real embedded discord.com login
+ * page, and Discord's own QR-code scan flow — so it's unmistakable this is
+ * genuine Discord and not a phishing-shaped custom form. Typing an email
+ * and password into our own UI, or pasting a token, are both still here
+ * (some people prefer them, and they hit the exact same real endpoints),
+ * but demoted to secondary links rather than the default screen. */
 
-type LoginScreen = "credentials" | "mfa" | "token";
+type LoginScreen = "welcome" | "credentials" | "mfa" | "token" | "qr";
 
 function showLogin(): void {
   if (loginOverlay) return;
 
-  let screen: LoginScreen = "credentials";
+  let screen: LoginScreen = "welcome";
   let mfaTicket = "";
 
   const body = el("div", { className: "login-body" });
@@ -470,6 +473,10 @@ function showLogin(): void {
   document.body.append(loginOverlay);
 
   function goTo(next: LoginScreen, ticket = ""): void {
+    if (screen === "qr" && next !== "qr") {
+      window.hyaecord.discordCancelQrLogin();
+      qrEventHandler = null;
+    }
     screen = next;
     if (ticket) mfaTicket = ticket;
     render();
@@ -477,13 +484,82 @@ function showLogin(): void {
 
   function render(): void {
     body.replaceChildren();
-    if (screen === "credentials") body.append(credentialsScreen(goTo));
+    if (screen === "welcome") body.append(welcomeScreen(goTo));
+    else if (screen === "credentials") body.append(credentialsScreen(goTo));
     else if (screen === "mfa") body.append(mfaScreen(mfaTicket, goTo));
+    else if (screen === "qr") body.append(qrScreen(goTo));
     else body.append(tokenScreen(goTo));
     body.querySelector("input")?.focus();
   }
 
   render();
+}
+
+function welcomeScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HTMLElement {
+  const browserError = el("p", { className: "login-error", role: "alert" });
+  const browserButton = el(
+    "button",
+    {
+      className: "btn primary login-big-btn",
+      type: "button",
+      onClick: async () => {
+        browserError.textContent = "";
+        browserButton.setAttribute("disabled", "");
+        const result = await window.hyaecord.discordLoginBrowser();
+        browserButton.removeAttribute("disabled");
+        if (!result.ok && result.error !== "cancelled") {
+          browserError.textContent = t(`login.error.${result.error}`);
+        }
+      }
+    },
+    t("login.withBrowser")
+  );
+
+  return el(
+    "div",
+    {},
+    el("p", { className: "modal-subtitle" }, t("login.welcomeBody")),
+    browserButton,
+    browserError,
+    el("button", { className: "btn login-big-btn", type: "button", onClick: () => goTo("qr") }, t("login.withQr")),
+    el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.useCredentials")),
+      " · ",
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
+    )
+  );
+}
+
+function qrScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
+  const canvas = el("canvas", { className: "login-qr", width: "220", height: "220" }) as HTMLCanvasElement;
+  const status = el("p", { className: "step-hint login-qr-status" }, t("login.qr.waiting"));
+  const error = el("p", { className: "login-error", role: "alert" });
+
+  qrEventHandler = event => {
+    if (event.type === "url") {
+      void QRCode.toCanvas(canvas, event.url, { width: 220, margin: 1 });
+      status.textContent = t("login.qr.waiting");
+    } else if (event.type === "confirming") {
+      status.textContent = t("login.qr.confirming");
+    } else if (event.type === "expired") {
+      error.textContent = t("login.qr.expired");
+    } else if (event.type === "error") {
+      error.textContent = t(`login.error.${event.error}`);
+    }
+  };
+  window.hyaecord.discordStartQrLogin();
+
+  return el(
+    "div",
+    {},
+    el("p", { className: "modal-subtitle" }, t("login.qr.body")),
+    el("div", { className: "login-qr-wrap" }, canvas),
+    status,
+    error,
+    el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back"))
+    )
+  );
 }
 
 function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HTMLElement {
@@ -535,6 +611,8 @@ function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void)
     el("p", { className: "modal-subtitle" }, t("login.body")),
     form,
     el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back")),
+      " · ",
       el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
     )
   );
@@ -625,7 +703,7 @@ function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
     el("p", { className: "modal-subtitle" }, t("login.tokenBody")),
     form,
     el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.useCredentials"))
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back"))
     )
   );
 }
@@ -633,4 +711,5 @@ function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
 function hideLogin(): void {
   loginOverlay?.remove();
   loginOverlay = null;
+  qrEventHandler = null;
 }

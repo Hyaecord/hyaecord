@@ -15,6 +15,12 @@ const bridge: HyaecordBridge = {
   discordLoginCredentials: (login, password) =>
     ipcRenderer.invoke(IPC.discordLoginCredentials, login, password),
   discordSubmitMfa: (code, ticket) => ipcRenderer.invoke(IPC.discordSubmitMfa, code, ticket),
+  discordLoginBrowser: () => ipcRenderer.invoke(IPC.discordLoginBrowser),
+  discordStartQrLogin: () => ipcRenderer.send(IPC.discordStartQrLogin),
+  discordCancelQrLogin: () => ipcRenderer.send(IPC.discordCancelQrLogin),
+  onDiscordQrLoginEvent: cb => {
+    ipcRenderer.on(IPC.discordQrLoginEvent, (_e, event) => cb(event));
+  },
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

@@ -92,6 +92,12 @@ export type CredentialLoginResult =
       error: string;
     };
 
+export type QrLoginEvent =
+  | { type: "url"; url: string }
+  | { type: "confirming" }
+  | { type: "expired" }
+  | { type: "error"; error: string };
+
 /** API surface exposed to the renderer via contextBridge */
 export interface HyaecordBridge {
   getSettings(): Promise<HyaecordSettings>;
@@ -102,6 +108,10 @@ export interface HyaecordBridge {
   discordLogin(token: string): Promise<LoginResult>;
   discordLoginCredentials(login: string, password: string): Promise<CredentialLoginResult>;
   discordSubmitMfa(code: string, ticket: string): Promise<CredentialLoginResult>;
+  discordLoginBrowser(): Promise<LoginResult>;
+  discordStartQrLogin(): void;
+  discordCancelQrLogin(): void;
+  onDiscordQrLoginEvent(cb: (event: QrLoginEvent) => void): void;
   discordLogout(): Promise<void>;
   getDiscordSession(): Promise<DiscordSession>;
   onDiscordState(cb: (session: DiscordSession) => void): void;
