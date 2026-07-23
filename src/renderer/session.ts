@@ -9,6 +9,7 @@ import { getPfpOverride } from "./avatar-overrides";
 import { openContextMenu, copyIdItem, mentionItem, userUrlItem, type ContextMenuItem } from "./context-menu";
 import { openMessageSearch } from "./message-search";
 import { openFriendsList } from "./friends";
+import { tryExecuteSlashCommand, showSlashSuggestions, closeSlashSuggestions } from "./slash-commands";
 
 /**
  * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
@@ -229,9 +230,26 @@ function wireComposer(): void {
     silentButton.title = silentModeEnabled ? t("composer.silentOn") : t("composer.silentOff");
   });
 
+  input.addEventListener("input", () => {
+    const match = input.value.match(/^\/(\w*)$/);
+    if (match) {
+      showSlashSuggestions(input, match[1] ?? "", name => {
+        input.value = `/${name} `;
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.focus();
+        closeSlashSuggestions();
+      });
+    } else {
+      closeSlashSuggestions();
+    }
+  });
+  input.addEventListener("blur", () => closeSlashSuggestions());
+
   input.addEventListener("keydown", async ev => {
     if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
-    const content = input.value;
+    closeSlashSuggestions();
+    const original = input.value;
+    const content = tryExecuteSlashCommand(original) ?? original;
     const silent = silentModeEnabled;
     input.value = "";
     if (silent) {
@@ -241,7 +259,7 @@ function wireComposer(): void {
     }
     const ok = await window.hyaecord.sendMessage(activeChannelId, content, silent);
     if (!ok) {
-      input.value = content; // don't lose what they typed
+      input.value = original; // don't lose what they typed
     }
   });
 
