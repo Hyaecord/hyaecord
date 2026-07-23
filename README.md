@@ -100,7 +100,8 @@ An honest status table, not an aspirational one — updated as features actually
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
 | Emoji picker                          |    Supported     | Search-and-browse picker backed by real Unicode emoji data              |
 | Sticker picker                        |   Not yet built   | No verified Discord sticker endpoint looked up yet                      |
-| Friends list (add/accept/decline/block/remove) | Supported | Real relationships API; no live-updating while open (fetched fresh on open) and no online-status filtering (this app doesn't track presence outside an open guild's member list) |
+| Friends list (add/accept/decline/block/remove) | Supported | Real relationships API; the friend/pending/blocked list itself is fetched fresh on open, not kept live |
+| Friend online status                  |    Supported     | Real gateway PRESENCE_UPDATE tracking for friends (not guild members you haven't opened) — Online tab and status dots update live even while the list is open |
 | Built-in text commands (`/shrug`, `/tableflip`, `/unflip`, `/me`) | Supported | Discord's own real built-in commands, reimplemented locally |
 | Plugin-registered slash commands              |    Supported     | `api.registerCommand()`; merges into the same "/name" autocomplete as the built-ins above |
 | Multi-account switching               |   Not yet built   |                                                                           |

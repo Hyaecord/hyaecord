@@ -1305,6 +1305,20 @@ body {
   border-radius: var(--radius-s);
 }
 .friend-row:hover { background: var(--bg-hover); }
+.friend-avatar-wrap { position: relative; flex-shrink: 0; }
+.friend-status-dot {
+  position: absolute;
+  inset-inline-end: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-raise);
+  background: var(--text-dim);
+}
+.friend-status-dot.status-online { background: #23a55a; }
+.friend-status-dot.status-idle { background: #f0b232; }
+.friend-status-dot.status-dnd { background: #f23f43; }
 .friend-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .friend-avatar-fallback {
   display: grid;

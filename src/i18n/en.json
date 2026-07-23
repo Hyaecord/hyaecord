@@ -39,6 +39,7 @@
   "messageSearch.empty": "No messages found.",
   "messageSearch.noContent": "(no text content)",
   "friends.title": "Friends",
+  "friends.tab.online": "Online",
   "friends.tab.all": "All Friends",
   "friends.tab.pending": "Pending",
   "friends.tab.blocked": "Blocked",

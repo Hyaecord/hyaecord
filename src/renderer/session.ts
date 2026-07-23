@@ -148,6 +148,7 @@ export function initSession(): void {
     if (event === "READY") onReady(data);
     if (event === "MESSAGE_CREATE") onMessageCreate(data);
     if (event === "GUILD_MEMBER_LIST_UPDATE") applyMemberListUpdate(data);
+    if (event === "PRESENCE_UPDATE") applyPresenceUpdate(data);
   });
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
@@ -348,13 +349,50 @@ function showFreshLoginNotice(): void {
 
 /* ---------- READY → guild rail + channels ---------- */
 
+/**
+ * Global presence tracking — friends and implicit relationships only, not
+ * a general "everyone's status" store. Per docs.discord.food's gateway
+ * events reference: a user-account gateway session automatically
+ * receives PRESENCE_UPDATE for its friends (no explicit subscription
+ * needed, unlike guild member lists' OP 14), and READY's own `presences`
+ * field gives the initial snapshot for whoever's already non-offline —
+ * both confirmed there, not assumed. Anyone not in this map is presumed
+ * offline (the safe default — Discord only sends non-offline presences
+ * in READY, per that same doc).
+ */
+const presenceMap = new Map<string, string>();
+const presenceListeners = new Set<() => void>();
+
+export function getPresenceStatus(userId: string): string {
+  return presenceMap.get(userId) ?? "offline";
+}
+
+/** Called by anything that wants to re-render when a tracked presence changes (e.g. the Friends list, while open). */
+export function onPresenceChange(cb: () => void): () => void {
+  presenceListeners.add(cb);
+  return () => presenceListeners.delete(cb);
+}
+
+function applyPresenceUpdate(data: unknown): void {
+  const p = data as { user?: { id?: string }; status?: string };
+  if (!p.user?.id || !p.status) return;
+  presenceMap.set(p.user.id, p.status);
+  presenceListeners.forEach(cb => cb());
+}
+
 function onReady(data: unknown): void {
   const payload = data as {
     user?: { id?: string };
     guilds?: unknown[];
     private_channels?: unknown[];
+    presences?: Array<{ user?: { id?: string }; status?: string }>;
   };
   selfUserId = payload.user?.id ?? selfUserId;
+
+  presenceMap.clear();
+  for (const p of payload.presences ?? []) {
+    if (p.user?.id && p.status) presenceMap.set(p.user.id, p.status);
+  }
 
   const raw = payload.guilds ?? [];
   guilds = raw.map(entry => {

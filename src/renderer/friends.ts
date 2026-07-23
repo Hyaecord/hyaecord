@@ -2,6 +2,7 @@ import type { RelationshipSummary } from "@shared/types";
 import { el, showToast, t, trapFocus } from "./ui";
 import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
+import { getPresenceStatus, onPresenceChange } from "./session";
 
 /**
  * The Friends list — real friends/blocked-users API
@@ -11,13 +12,14 @@ import { openProfilePopout } from "./profile-popout";
  * deliberate scope cut, not an oversight: correct on open, just doesn't
  * update itself if left open while something changes elsewhere.
  *
- * Deliberately has no "Online" tab/presence dots: Discord's real client
- * shows online status per friend, but this app doesn't track presence
- * for anyone outside a currently-open guild's member list (see
- * member-list.ts's GUILD_MEMBER_LIST_UPDATE-driven status dots) — adding
- * a fake "everyone's offline" status would be worse than not showing one
- * at all. All Friends / Pending / Blocked tabs only, matching what's
- * actually known.
+ * Presence (Online tab, status dots) is real: confirmed via
+ * docs.discord.food's gateway events reference that a user-account
+ * session automatically receives PRESENCE_UPDATE for friends (no
+ * explicit subscription, unlike guild member lists) and that READY's own
+ * `presences` field is the initial snapshot — see session.ts's
+ * presenceMap. Only friend-type relationships get a status dot; pending
+ * requests and blocked users don't show one (their presence isn't
+ * meaningful in that context).
  */
 
 const RELATIONSHIP_FRIEND = 1;
@@ -25,9 +27,9 @@ const RELATIONSHIP_BLOCKED = 2;
 const RELATIONSHIP_INCOMING = 3;
 const RELATIONSHIP_OUTGOING = 4;
 
-type Tab = "all" | "pending" | "blocked";
+type Tab = "online" | "all" | "pending" | "blocked";
 
-let currentTab: Tab = "all";
+let currentTab: Tab = "online";
 let relationships: RelationshipSummary[] = [];
 
 function avatarEl(rel: RelationshipSummary): HTMLElement {
@@ -53,6 +55,13 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   avatar.classList.add("clickable-profile");
   avatar.addEventListener("click", () => openProfilePopout(rel.id, avatar));
 
+  const avatarWrap = el("span", { className: "friend-avatar-wrap" }, avatar);
+  if (rel.type === RELATIONSHIP_FRIEND) {
+    avatarWrap.append(
+      el("span", { className: `friend-status-dot status-${getPresenceStatus(rel.id)}`, "aria-hidden": "true" })
+    );
+  }
+
   const actions: HTMLElement[] = [];
   if (rel.type === RELATIONSHIP_INCOMING) {
     actions.push(
@@ -70,7 +79,7 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   return el(
     "div",
     { className: "friend-row" },
-    avatar,
+    avatarWrap,
     el("span", { className: "friend-name" }, name),
     el("span", { className: "friend-status" }, t(`friends.type.${relationshipLabel(rel.type)}`)),
     el("div", { className: "friend-actions" }, ...actions)
@@ -99,6 +108,7 @@ function renderList(list: HTMLElement): void {
   const filtered = relationships.filter(r => {
     if (currentTab === "blocked") return r.type === RELATIONSHIP_BLOCKED;
     if (currentTab === "pending") return r.type === RELATIONSHIP_INCOMING || r.type === RELATIONSHIP_OUTGOING;
+    if (currentTab === "online") return r.type === RELATIONSHIP_FRIEND && getPresenceStatus(r.id) !== "offline";
     return r.type === RELATIONSHIP_FRIEND;
   });
   if (filtered.length === 0) {
@@ -109,7 +119,9 @@ function renderList(list: HTMLElement): void {
 }
 
 export function openFriendsList(): void {
+  const unsubscribePresence = onPresenceChange(() => renderList(list));
   const close = () => {
+    unsubscribePresence();
     cleanup();
     overlay.remove();
   };
@@ -118,6 +130,7 @@ export function openFriendsList(): void {
 
   const tabsBar = el("div", { className: "friend-tabs", role: "tablist" });
   const tabs: Array<{ id: Tab; label: string }> = [
+    { id: "online", label: t("friends.tab.online") },
     { id: "all", label: t("friends.tab.all") },
     { id: "pending", label: t("friends.tab.pending") },
     { id: "blocked", label: t("friends.tab.blocked") }

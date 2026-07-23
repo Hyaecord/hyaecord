@@ -109,7 +109,7 @@ per plugin if ever revisited, not a blanket unlock.
 - `streaks` — calls a live third-party API (`streaks.equicord.org`) with its own OAuth flow, not local computation (see Category B note above — this was mis-triaged from its description alone originally, corrected after reading the actual source)
 - `animalese`, `keyboardSounds`, `moyai`, `soggy`, `partyMode`, `snowfall`, `cursorBuddy` — audio/visual effects (no audio API, no arbitrary DOM overlay API in the sandbox)
 - `autoZipper`, `downloadAllAttachments` — filesystem access
-- `lastActive`, `pingNotifications` — read Discord's internal webpack stores (`RelationshipStore`, `UserGuildSettingsStore`, `PresenceStore`) for data that's now *partially* available: a real friends list exists (`src/renderer/friends.ts`, see "Next candidates" below), but `UserGuildSettingsStore` (mute state) and `PresenceStore` (online status) still aren't. Still blocked, just on a smaller remaining gap than before.
+- `lastActive`, `pingNotifications` — read Discord's internal webpack stores (`RelationshipStore`, `UserGuildSettingsStore`, `PresenceStore`) for data that's now *mostly* available: a real friends list exists (`src/renderer/friends.ts`) *and* real presence tracking for friends now exists too (`session.ts`'s `presenceMap`, fed by READY's `presences` field and live `PRESENCE_UPDATE` events — see "Next candidates" below). Only `UserGuildSettingsStore` (mute state) is still missing — Chomper's mute tracking is Hyaecord's own local model (item 16/21), not a general "is this muted" query the way the original plugins expect.
 
 ### Category D — needs UI Hyaecord doesn't have a hook for (not "impossible," just not built)
 Modals, custom settings panes beyond boolean/number/string, chat-bar
@@ -156,20 +156,19 @@ the moment they're actually built.
 2. ~~`silentMessageToggle`~~ — ✅ done, see Category B above.
 3. ~~Re-read `sendTimestamps` closely for a modal-free auto-replace path~~ — ✅ done, see the ported-plugins table above.
 4. ~~A plugin key-value store API addition~~ — ✅ built (`api.getData`/`api.setData`); the four plugins that motivated it didn't pan out on closer inspection (see Category B), but the primitive is real and available now.
-5. ~~A "friends list" data model~~ — ✅ built (`src/renderer/friends.ts`, real relationships API, not the READY payload) as a standalone Friends feature in its own right, not just plugin plumbing — see README's checklist. `lastActive`/`pingNotifications` are now only blocked on presence/mute-state data, not the friends concept itself; still not unblocked outright, since Chomper's mute tracking is Hyaecord's own local model (item 16/21) and doesn't read `UserGuildSettingsStore`'s mute state the way the original plugins expect, and there's still no presence tracking outside an open guild's member list.
+5. ~~A "friends list" data model~~ — ✅ built (`src/renderer/friends.ts`, real relationships API, not the READY payload) as a standalone Friends feature in its own right, not just plugin plumbing — see README's checklist.
 6. ~~`unsuppressEmbeds`~~ — ✅ done, see Category A above.
 7. ~~Discord's own built-in text commands~~ — ✅ built: `/shrug`, `/tableflip`, `/unflip`, `/me` (`src/renderer/slash-commands.ts`), a small local composer autocomplete + transform system.
 8. ~~Plugin-facing slash-command registration~~ — ✅ built (`api.registerCommand`) directly following item 7, and used immediately by the `googleThat` port in Category A above rather than shipped speculatively.
+9. ~~Presence tracking for friends~~ — ✅ built (`session.ts`'s `presenceMap`, fed by READY's `presences` field plus live `PRESENCE_UPDATE` gateway events — confirmed via docs.discord.food that a user-account session receives these automatically for friends, no explicit subscription needed unlike guild member lists). Powers the Friends list's Online tab and real status dots, both live-updating while the list is open. Deliberately scoped to friends/implicit relationships only, matching what Discord's own gateway actually sends unprompted — presence for an arbitrary guild member you haven't opened the member list for still isn't tracked, and was never claimed to be.
 
-Every item that was here has shipped as of this pass. The next real
-frontier is **presence tracking outside an open guild's member list**
-(a global `PRESENCE_UPDATE` gateway listener, not just the
-per-subscription data `GUILD_MEMBER_LIST_UPDATE` already provides) —
-it's what's actually blocking `lastActive`/`pingNotifications` now
-(item 5 above), and it would also let the Friends list show real
-online status instead of no status at all. This is a standalone,
-non-trivial feature in its own right (global presence state, wired
-into both the Friends list and anywhere else a status dot could show),
-not a small hook — worth scoping deliberately before starting, same
-reasoning applied to every other "genuinely new feature area" in this
-document rather than backing into it via one more plugin.
+Every item that was here has shipped as of this pass. `lastActive`/
+`pingNotifications` are now blocked on just one remaining piece —
+`UserGuildSettingsStore`'s mute-state query, which Chomper's own local
+mute model (item 16/21) doesn't provide the way the original plugins
+expect. Nothing else in this document currently has a scoped,
+ready-to-start next step; further work here means either exposing mute
+state as a real query, or picking up one of the Category C/D items
+that were deliberately left alone (network/audio/filesystem access,
+modals, message-render hooks) — each already flagged above with why it
+wasn't done casually.
