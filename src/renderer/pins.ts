@@ -29,7 +29,13 @@ function onEscape(ev: KeyboardEvent): void {
   if (ev.key === "Escape") closePinsPanel();
 }
 
-function pinRow(pin: PinSummary, list: HTMLElement, channelId: string, canUnpin: boolean): HTMLElement {
+export interface PinsSource {
+  listPins: () => Promise<PinSummary[]>;
+  unpin: (messageId: string) => Promise<boolean>;
+  canUnpin: boolean;
+}
+
+function pinRow(pin: PinSummary, list: HTMLElement, source: PinsSource): HTMLElement {
   const time = pin.timestamp ? new Date(pin.timestamp).toLocaleDateString() : "";
   const contentEl = el("p", { className: "pin-item-content" }, pin.content || t("messageSearch.noContent"));
   applyTwemoji(contentEl);
@@ -40,7 +46,7 @@ function pinRow(pin: PinSummary, list: HTMLElement, channelId: string, canUnpin:
     ),
     contentEl
   ];
-  if (canUnpin) {
+  if (source.canUnpin) {
     children.push(
       el(
         "button",
@@ -48,12 +54,12 @@ function pinRow(pin: PinSummary, list: HTMLElement, channelId: string, canUnpin:
           type: "button",
           className: "btn ghost pin-item-unpin",
           onClick: async () => {
-            const ok = await window.hyaecord.unpinMessage(channelId, pin.id);
+            const ok = await source.unpin(pin.id);
             if (!ok) {
               showToast(t("pins.actionFailed"));
               return;
             }
-            void renderPins(list, channelId, canUnpin);
+            void renderPins(list, source);
           }
         },
         t("pins.unpin")
@@ -63,19 +69,19 @@ function pinRow(pin: PinSummary, list: HTMLElement, channelId: string, canUnpin:
   return el("div", { className: "pin-item" }, ...children);
 }
 
-async function renderPins(list: HTMLElement, channelId: string, canUnpin: boolean): Promise<void> {
+async function renderPins(list: HTMLElement, source: PinsSource): Promise<void> {
   list.replaceChildren(el("p", { className: "pins-panel-empty" }, t("pins.loading")));
-  const pins = await window.hyaecord.listMessagePins(channelId);
+  const pins = await source.listPins();
   if (openPanel === null) return; // closed while loading
   list.replaceChildren();
   if (pins.length === 0) {
     list.append(el("p", { className: "pins-panel-empty" }, t("pins.empty")));
     return;
   }
-  for (const pin of pins) list.append(pinRow(pin, list, channelId, canUnpin));
+  for (const pin of pins) list.append(pinRow(pin, list, source));
 }
 
-export function openPinsPanel(anchor: HTMLElement, channelId: string, canUnpin: boolean): void {
+export function openPinsPanel(anchor: HTMLElement, source: PinsSource): void {
   if (openPanel) {
     closePinsPanel();
     return;
@@ -98,5 +104,5 @@ export function openPinsPanel(anchor: HTMLElement, channelId: string, canUnpin: 
   document.addEventListener("pointerdown", onOutsideClick, true);
   document.addEventListener("keydown", onEscape, true);
 
-  void renderPins(list, channelId, canUnpin);
+  void renderPins(list, source);
 }

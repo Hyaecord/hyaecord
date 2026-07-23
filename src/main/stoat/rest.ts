@@ -67,6 +67,27 @@ export class StoatRestClient {
   }
 
   /**
+   * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
+   * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
+   * gateway's own Ready payload does NOT include every server's full
+   * member list (only ever carried the current user's own membership in
+   * practice), so a real member list needs this REST call per server,
+   * fetched when a server is actually opened rather than upfront for all
+   * of them.
+   */
+  getServerMembers(serverId: string): Promise<RawStoatBulkMembers> {
+    return this.request("GET", `/servers/${serverId}/members`);
+  }
+
+  pinMessage(channelId: string, messageId: string): Promise<void> {
+    return this.request("POST", `/channels/${channelId}/messages/${messageId}/pin`);
+  }
+
+  unpinMessage(channelId: string, messageId: string): Promise<void> {
+    return this.request("DELETE", `/channels/${channelId}/messages/${messageId}/pin`);
+  }
+
+  /**
    * The unauthenticated "Query Node" root endpoint — returns real, live
    * server configuration including the actual file/CDN service ("autumn")
    * base URL. Confirmed live: `curl https://api.stoat.chat/` returns
@@ -88,6 +109,10 @@ export interface RawStoatUser {
   avatar?: { _id: string; tag: string } | null;
   /** Only present on users returned via READY/bulk-message-response's `users` array — per docs, describes the *current user's* relationship with this user. */
   relationship?: string;
+  /** Required on the real `User` schema — whether the user is currently online at all. */
+  online?: boolean;
+  /** `status.presence`: "Online" | "Idle" | "Focus" | "Busy" | "Invisible" — confirmed real via the OpenAPI `Presence` schema. */
+  status?: { text?: string | null; presence?: string | null } | null;
 }
 
 export interface RawStoatMessage {
@@ -96,10 +121,23 @@ export interface RawStoatMessage {
   author: string;
   content?: string | null;
   user?: RawStoatUser | null;
+  /** Real field on the Message schema — confirmed via the OpenAPI spec, not derived. */
+  pinned?: boolean;
 }
 
 export interface RawStoatBulkMessages {
   messages: RawStoatMessage[];
+  users: RawStoatUser[];
+}
+
+export interface RawStoatMember {
+  _id: { server: string; user: string };
+  nickname?: string | null;
+  avatar?: { _id: string } | null;
+}
+
+export interface RawStoatBulkMembers {
+  members: RawStoatMember[];
   users: RawStoatUser[];
 }
 

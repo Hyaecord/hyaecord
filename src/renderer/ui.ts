@@ -80,8 +80,16 @@ export function applySettingsToDocument(): void {
 }
 
 export async function patchSettings(patch: Partial<HyaecordSettings>): Promise<void> {
-  state.settings = await window.hyaecord.setSettings(patch);
-  applySettingsToDocument();
+  try {
+    state.settings = await window.hyaecord.setSettings(patch);
+    applySettingsToDocument();
+  } catch (err) {
+    // A failure here previously left the UI showing the old value with no
+    // sign anything went wrong — surfacing it is the difference between
+    // "I clicked a theme and nothing happened" being debuggable (open
+    // devtools, see this) versus a silent no-op.
+    console.error("patchSettings failed", patch, err);
+  }
 }
 
 /**

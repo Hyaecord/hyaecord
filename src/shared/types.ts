@@ -189,15 +189,29 @@ export interface HyaecordBridge {
   stoatFetchMessages(channelId: string): Promise<unknown[]>;
   stoatSendMessage(channelId: string, content: string): Promise<boolean>;
   stoatGetDMs(): Promise<StoatDMSummary[]>;
+  stoatGetServerMembers(serverId: string): Promise<StoatMemberSummary[]>;
+  stoatPinMessage(channelId: string, messageId: string): Promise<boolean>;
+  stoatUnpinMessage(channelId: string, messageId: string): Promise<boolean>;
 }
 
 export interface StoatDMSummary {
   id: string;
-  /** "DirectMessage" | "Group" — Stoat's real channel_type values for DM-like channels. */
+  /** "DirectMessage" | "Group" | "SavedMessages" — Stoat's real channel_type values for DM-like channels. */
   channelType: string;
   name: string | null;
   icon: string | null;
   recipientIds: string[];
+}
+
+export interface StoatMemberSummary {
+  userId: string;
+  nickname: string | null;
+  avatar: string | null;
+  username: string;
+  displayName: string | null;
+  online: boolean;
+  /** Raw Presence enum value ("Online" | "Idle" | "Focus" | "Busy" | "Invisible"), null if the user has none set — mapped to Discord-style status-dot classes client-side, see stoat-session.ts. */
+  presence: string | null;
 }
 
 export interface UserProfile {
@@ -226,6 +240,9 @@ export interface RelationshipSummary {
   avatar: string | null;
   /** Omitted (defaults to Discord) for real Discord relationships; "stoat" for entries merged in from Stoat's own Ready-embedded relationship field. */
   platform?: "discord" | "stoat";
+  /** Only set for `platform: "stoat"` rows — Discord rows use the existing global `presenceMap`/`getPresenceStatus()` instead (see session.ts). */
+  stoatOnline?: boolean;
+  stoatPresence?: string | null;
 }
 
 export interface ScreenShareSource {

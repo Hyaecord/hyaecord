@@ -166,22 +166,30 @@ body {
               transform var(--dur-fast) var(--ease-standard);
 }
 
+/*
+ * Deliberately NOT a small circle in the bottom-right corner: that's the
+ * exact position/shape a real unread-mention count badge would use (a
+ * real one isn't built yet — see BUILD_PROMPT.md), and a red circle with
+ * a bare letter in it was being read as one. This is a small top-left
+ * square tag instead — a clearly different shape/position/color so it
+ * reads as "which platform" rather than "how many pings".
+ */
 .platform-badge {
   position: absolute;
-  inset-inline-end: -3px;
-  bottom: -3px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
+  inset-inline-start: -3px;
+  top: -3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
   border: 2px solid var(--bg-base);
   display: grid;
   place-items: center;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   font-weight: 800;
   color: #fff;
 }
 .platform-badge-discord { background: #5865f2; }
-.platform-badge-stoat { background: #e05a4e; }
+.platform-badge-stoat { background: #6b7280; }
 .server-rail .server-pill:hover,
 .server-rail .server-pill:focus-visible {
   border-radius: var(--radius-m);
@@ -359,6 +367,9 @@ body {
 .channel-list ul { list-style: none; padding: 0.5rem; }
 .channel-list li {
   --effect: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   padding: 0.4rem 0.6rem;
   border-radius: var(--radius-s);
   color: color-mix(in srgb, var(--accent) calc(var(--effect) * 55%), var(--text-dim));
@@ -368,6 +379,24 @@ body {
   transition: background var(--dur-fast) var(--ease-standard),
               color var(--dur-fast) var(--ease-standard),
               transform var(--dur-fast) var(--ease-standard);
+}
+/* Real hash/speaker SVGs (icons.ts) replacing the old literal "#"/🔊 glyphs — `currentColor` means they pick up this same color-mix, same as the text next to them. */
+.channel-icon { width: 18px; height: 18px; flex-shrink: 0; opacity: 0.75; }
+.dm-row-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.dm-row-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 .channel-list li:hover,
 .channel-list li:focus-visible { background: var(--bg-hover); color: var(--text); }
@@ -570,6 +599,36 @@ body {
 }
 .profile-loading { padding: 1rem; color: var(--text-dim); margin: 0; }
 .profile-popout-body { display: flex; flex-direction: column; }
+
+/* Stoat's minimal profile popout — stoat-profile-popout.ts */
+.profile-popout-header { position: relative; padding: 1rem 1rem 0.5rem; }
+.profile-popout-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+.profile-popout-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+.profile-popout-status {
+  position: absolute;
+  left: 52px;
+  top: 52px;
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--bg-raise);
+}
+.profile-popout-name { margin: 0.5rem 1rem 0; font-size: 1.1rem; }
+.profile-popout-username { margin: 0.1rem 1rem 0; color: var(--text-dim); font-size: 0.85rem; }
+.profile-popout-status-text { margin: 0.4rem 1rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
 .profile-banner {
   height: 80px;
   background: var(--bg-hover);
@@ -891,6 +950,7 @@ body {
   overflow: hidden;
 }
 .emoji-picker-search {
+  flex-shrink: 0;
   margin: 0.6rem 0.6rem 0;
   padding: 0.55rem 0.8rem;
   border-radius: var(--radius-m);
@@ -900,6 +960,7 @@ body {
   font: inherit;
 }
 .emoji-picker-tabs {
+  flex-shrink: 0;
   display: flex;
   gap: 0.15rem;
   padding: 0.5rem 0.5rem 0;
@@ -918,11 +979,24 @@ body {
 }
 .emoji-tab:hover { opacity: 0.85; background: var(--bg-hover); }
 .emoji-tab.is-active { opacity: 1; background: var(--bg-hover); }
+
+.credits-list { list-style: none; padding: 0; margin: 0.5rem 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.credits-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+.credits-license { color: var(--text-dim); font-size: 0.8rem; }
+.credits-disclaimer { font-size: 0.75rem; margin-top: 0.75rem; }
 .emoji-picker-grid {
+  /* Same flex-column + inner-scroll-region pattern as the server rail's
+     settings-button fix earlier: without flex:1 + min-height:0 here, this
+     grid can't create its own scrollbar inside `.emoji-picker`'s
+     max-height — the outer `overflow:hidden` just clips it instead,
+     leaving only the first couple of rows reachable at all. */
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 0.5rem;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
+  align-content: start;
 }
 .emoji-picker-empty { color: var(--text-dim); padding: 1rem; margin: 0; text-align: center; grid-column: 1 / -1; }
 .emoji-tile {
@@ -1509,6 +1583,7 @@ body {
 .friend-status-dot.status-online { background: #23a55a; }
 .friend-status-dot.status-idle { background: #f0b232; }
 .friend-status-dot.status-dnd { background: #f23f43; }
+.friend-status-dot.status-offline { background: var(--text-dim); opacity: 0.5; }
 .friend-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .friend-avatar-fallback {
   display: grid;
@@ -1667,7 +1742,10 @@ body {
   background: #000;
   margin-bottom: 0.6rem;
 }
-.media-preview-frame video { width: 100%; display: block; max-height: 360px; object-fit: contain; }
+/* aspect-ratio + object-fit:cover crops to a real 16:9 frame (matching the
+   getUserMedia aspectRatio constraint requested in settings-ui.ts) instead
+   of contain's letterboxing, same as Discord's own camera preview. */
+.media-preview-frame video { width: 100%; aspect-ratio: 16 / 9; display: block; object-fit: cover; }
 .mic-meter-track {
   width: 100%;
   height: 14px;

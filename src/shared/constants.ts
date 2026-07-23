@@ -95,5 +95,8 @@ export const IPC = {
   stoatEvent: "hyaecord:stoat-event",
   stoatFetchMessages: "hyaecord:stoat-fetch-messages",
   stoatSendMessage: "hyaecord:stoat-send-message",
-  stoatGetDMs: "hyaecord:stoat-get-dms"
+  stoatGetDMs: "hyaecord:stoat-get-dms",
+  stoatGetServerMembers: "hyaecord:stoat-get-server-members",
+  stoatPinMessage: "hyaecord:stoat-pin-message",
+  stoatUnpinMessage: "hyaecord:stoat-unpin-message"
 } as const;

@@ -16,6 +16,8 @@ import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
 import { loadPlugins, listPlugins, setPluginEnabled, setPluginSetting, listPluginCommands, runPluginCommand } from "./plugins/manager";
 import { startRpcBridge, stopRpcBridge } from "./rpc-bridge";
+import { loadEnvFile } from "./env";
+import { giphySearchGifs } from "./gifs/giphy";
 import {
   initDiscord,
   loginWithBrowser,
@@ -55,8 +57,30 @@ import {
   getSessionState as getStoatSessionState,
   fetchMessages as stoatFetchMessages,
   sendMessage as stoatSendMessage,
-  getDMs as stoatGetDMs
+  getDMs as stoatGetDMs,
+  getServerMembers as stoatGetServerMembers,
+  pinMessage as stoatPinMessage,
+  unpinMessage as stoatUnpinMessage
 } from "./stoat";
+
+loadEnvFile();
+
+// Without this, Chromium's screen/window capture on a native Wayland
+// session (no XWayland framebuffer access — modern compositors, KDE's
+// KWin included, block that path entirely for security) returns empty or
+// garbage thumbnails from desktopCapturer.getSources() rather than real
+// ones, which is what was actually forcing screen share to fall back to
+// some other, unembedded picker rather than Hyaecord's own. This is the
+// standard, documented flag other Electron apps use for real Wayland
+// screen capture (Chromium's PipeWire-backed desktopCapturer backend).
+// It does not, and cannot, remove the OS's own one-time portal permission
+// dialog — that prompt is Wayland's security model itself (an app is not
+// allowed to silently enumerate what's on screen), not something any
+// Electron app can bypass; this only makes the *result* (real
+// thumbnails, real capture) work correctly once granted, matching what a
+// real Discord desktop client looks like on the same session.
+app.commandLine.appendSwitch("enable-features", "WebRTCPipeWireCapturer");
+app.commandLine.appendSwitch("ozone-platform-hint", "auto");
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -149,6 +173,9 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatFetchMessages, (_e, channelId: string) => stoatFetchMessages(channelId));
   ipcMain.handle(IPC.stoatSendMessage, (_e, channelId: string, content: string) => stoatSendMessage(channelId, content));
   ipcMain.handle(IPC.stoatGetDMs, () => stoatGetDMs());
+  ipcMain.handle(IPC.stoatGetServerMembers, (_e, serverId: string) => stoatGetServerMembers(serverId));
+  ipcMain.handle(IPC.stoatPinMessage, (_e, channelId: string, messageId: string) => stoatPinMessage(channelId, messageId));
+  ipcMain.handle(IPC.stoatUnpinMessage, (_e, channelId: string, messageId: string) => stoatUnpinMessage(channelId, messageId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));
@@ -158,7 +185,15 @@ app.whenReady().then(() => {
   );
   ipcMain.handle(IPC.getUserPfpMap, () => (loadSettings().integrations.userPFP ? fetchUserPfpMap() : {}));
   ipcMain.handle(IPC.getUserBgMap, () => (loadSettings().integrations.usrBG ? fetchUserBgMap() : {}));
-  ipcMain.handle(IPC.discordSearchGifs, (_e, query: string) => searchGifs(query));
+  // Discord's own Tenor proxy first (works for any query, no separate key
+  // needed) — only falls back to the Giphy key (see gifs/giphy.ts) when
+  // there's no logged-in Discord session to proxy through, e.g. a
+  // Stoat-only login.
+  ipcMain.handle(IPC.discordSearchGifs, async (_e, query: string) => {
+    const discordResults = await searchGifs(query);
+    if (discordResults.length > 0) return discordResults;
+    return giphySearchGifs(query);
+  });
   ipcMain.handle(IPC.discordSetAvatar, (_e, dataUri: string | null) => updateAvatar(dataUri));
   ipcMain.on(IPC.discordSubscribeMembers, (_e, guildId: string, channelId: string) =>
     subscribeMemberList(guildId, channelId)

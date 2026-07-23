@@ -2,7 +2,7 @@ import { StoatGatewayClient, type StoatGatewayState } from "./gateway";
 import { StoatRestClient, StoatRestError, type RawStoatMessage, type RawStoatUser } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
-import type { StoatSessionState, StoatUserSummary, StoatDMSummary } from "@shared/types";
+import type { StoatSessionState, StoatUserSummary, StoatDMSummary, StoatMemberSummary } from "@shared/types";
 
 /**
  * Stoat session manager — deliberately structured like discord/index.ts
@@ -124,7 +124,7 @@ export function getSessionState(): { state: StoatSessionState; user: StoatUserSu
 function toSummary(
   raw: RawStoatMessage,
   users: Map<string, RawStoatUser>
-): { id: string; channelId: string; authorId: string; authorName: string; avatar: string | null; content: string } {
+): { id: string; channelId: string; authorId: string; authorName: string; avatar: string | null; content: string; pinned: boolean } {
   const author = raw.user ?? users.get(raw.author);
   return {
     id: raw._id,
@@ -132,7 +132,8 @@ function toSummary(
     authorId: raw.author,
     authorName: author?.display_name || author?.username || "?",
     avatar: author?.avatar ? stoatFileUrl("avatars", author.avatar._id) : null,
-    content: raw.content ?? ""
+    content: raw.content ?? "",
+    pinned: raw.pinned ?? false
   };
 }
 
@@ -153,6 +154,48 @@ export async function sendMessage(channelId: string, content: string): Promise<b
   if (!rest || !content.trim()) return false;
   try {
     await rest.createMessage(channelId, content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function getServerMembers(serverId: string): Promise<StoatMemberSummary[]> {
+  if (!rest) return [];
+  try {
+    const { members, users } = await rest.getServerMembers(serverId);
+    const userMap = new Map(users.map(u => [u._id, u]));
+    return members.map(m => {
+      const u = userMap.get(m._id.user);
+      return {
+        userId: m._id.user,
+        nickname: m.nickname ?? null,
+        avatar: m.avatar ? stoatFileUrl("avatars", m.avatar._id) : u?.avatar ? stoatFileUrl("avatars", u.avatar._id) : null,
+        username: u?.username ?? "?",
+        displayName: u?.display_name ?? null,
+        online: u?.online ?? false,
+        presence: u?.status?.presence ?? null
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+export async function pinMessage(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.pinMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function unpinMessage(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.unpinMessage(channelId, messageId);
     return true;
   } catch {
     return false;

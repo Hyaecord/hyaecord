@@ -16,11 +16,16 @@ import { icon } from "./icons";
  */
 
 let openPicker: HTMLElement | null = null;
+let deviceChangeListener: (() => void) | null = null;
 
 function closePicker(): void {
   if (!openPicker) return;
   const cleanup = (openPicker as HTMLElement & { __cleanup?: () => void }).__cleanup;
   cleanup?.();
+  if (deviceChangeListener) {
+    navigator.mediaDevices.removeEventListener("devicechange", deviceChangeListener);
+    deviceChangeListener = null;
+  }
   openPicker.remove();
   openPicker = null;
 }
@@ -76,7 +81,7 @@ export function openDevicePicker(kind: "audioinput" | "videoinput", onPick: (dev
   openPicker = overlay;
   (dialog.querySelector(".close") as HTMLButtonElement).focus();
 
-  void requestLabelsThenEnumerate().then(devices => {
+  const renderList = (devices: MediaDeviceInfo[]) => {
     if (openPicker !== overlay) return;
     const matching = devices.filter(d => d.kind === kind);
     list.replaceChildren();
@@ -92,5 +97,17 @@ export function openDevicePicker(kind: "audioinput" | "videoinput", onPick: (dev
         })
       )
     );
-  });
+  };
+
+  void requestLabelsThenEnumerate().then(renderList);
+
+  // Re-enumerate live while the picker is open, so plugging in/unplugging
+  // a device shows up immediately instead of needing to close and reopen
+  // the menu. Labels are already unlocked from the initial permission
+  // grant above, so this re-enumerate alone (no new getUserMedia prompt)
+  // is enough to pick up real labels on newly connected devices too.
+  deviceChangeListener = () => {
+    void navigator.mediaDevices.enumerateDevices().then(renderList);
+  };
+  navigator.mediaDevices.addEventListener("devicechange", deviceChangeListener);
 }

@@ -4,7 +4,7 @@ import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
 import { getPresenceStatus, onPresenceChange } from "./session";
 import { icon } from "./icons";
-import { getStoatFriends, isStoatReady } from "./stoat-session";
+import { getStoatFriends, isStoatReady, stoatPresenceStatus } from "./stoat-session";
 
 /**
  * The Friends list — real friends/blocked-users API
@@ -67,9 +67,9 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
 
   const avatarWrap = el("span", { className: "friend-avatar-wrap" }, avatar);
   if (rel.type === RELATIONSHIP_FRIEND) {
-    avatarWrap.append(
-      el("span", { className: `friend-status-dot status-${getPresenceStatus(rel.id)}`, "aria-hidden": "true" })
-    );
+    const status =
+      rel.platform === "stoat" ? stoatPresenceStatus({ online: rel.stoatOnline ?? false, presence: rel.stoatPresence ?? null }) : getPresenceStatus(rel.id);
+    avatarWrap.append(el("span", { className: `friend-status-dot status-${status}`, "aria-hidden": "true" }));
   }
 
   const actions: HTMLElement[] = [];
@@ -131,7 +131,10 @@ function renderList(list: HTMLElement): void {
   const filtered = relationships.filter(r => {
     if (currentTab === "blocked") return r.type === RELATIONSHIP_BLOCKED;
     if (currentTab === "pending") return r.type === RELATIONSHIP_INCOMING || r.type === RELATIONSHIP_OUTGOING;
-    if (currentTab === "online") return r.type === RELATIONSHIP_FRIEND && getPresenceStatus(r.id) !== "offline";
+    if (currentTab === "online") {
+      if (r.type !== RELATIONSHIP_FRIEND) return false;
+      return r.platform === "stoat" ? (r.stoatOnline ?? false) : getPresenceStatus(r.id) !== "offline";
+    }
     return r.type === RELATIONSHIP_FRIEND;
   });
   if (filtered.length === 0) {
@@ -224,7 +227,9 @@ export function openFriendsList(): void {
           username: f.username,
           globalName: f.displayName,
           avatar: f.avatar,
-          platform: "stoat" as const
+          platform: "stoat" as const,
+          stoatOnline: f.online,
+          stoatPresence: f.presence
         }))
       : [];
     relationships = [...rels, ...stoatFriends];

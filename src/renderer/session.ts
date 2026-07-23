@@ -27,7 +27,11 @@ import {
   onStoatStateChange,
   loginStoat,
   getStoatMembers,
+  fetchStoatMembers,
   fetchStoatDMs,
+  fetchStoatPins,
+  pinStoatMessage,
+  unpinStoatMessage,
   type StoatChannelSummary
 } from "./stoat-session";
 
@@ -144,11 +148,13 @@ interface DmSummary {
   /** Comma-joined recipient names; "?" for a DM with no recipients (shouldn't happen). */
   name: string;
   type: number;
+  avatar: string | null;
 }
 
 interface StoatDmSummary {
   id: string;
   name: string;
+  icon: string | null;
 }
 
 let stoatDms: StoatDmSummary[] = [];
@@ -237,7 +243,34 @@ function wireMessageSearch(): void {
   const pinsButton = document.getElementById("pins-button") as HTMLButtonElement;
   pinsButton.addEventListener("click", () => {
     if (!activeChannelId) return;
-    openPinsPanel(pinsButton, activeChannelId, canManageMessagesIn(activeChannelId));
+    const channelId = activeChannelId;
+    if (activeChatPlatform === "stoat") {
+      // No dedicated "list pins" endpoint on Stoat (see stoat-session.ts's
+      // fetchStoatPins) — this only finds pins within the channel's most
+      // recently fetched messages, a real but narrower scope than
+      // Discord's actual pins API below.
+      openPinsPanel(pinsButton, {
+        listPins: async () =>
+          (await fetchStoatPins(channelId)).map(m => ({
+            id: m.id,
+            channelId: m.channelId,
+            authorName: m.authorName,
+            authorId: m.authorId,
+            avatar: m.avatar,
+            content: m.content,
+            timestamp: m.timestamp ? new Date(m.timestamp).toISOString() : "",
+            pinnedAt: m.timestamp ? new Date(m.timestamp).toISOString() : ""
+          })),
+        unpin: messageId => unpinStoatMessage(channelId, messageId),
+        canUnpin: true
+      });
+      return;
+    }
+    openPinsPanel(pinsButton, {
+      listPins: () => window.hyaecord.listMessagePins(channelId),
+      unpin: messageId => window.hyaecord.unpinMessage(channelId, messageId),
+      canUnpin: canManageMessagesIn(channelId)
+    });
   });
 }
 
@@ -534,10 +567,18 @@ function onReady(data: unknown): void {
     const d = entry as {
       id: string;
       type?: number;
-      recipients?: Array<{ global_name?: string | null; username?: string }>;
+      icon?: string | null;
+      recipients?: Array<{ id?: string; global_name?: string | null; username?: string; avatar?: string | null }>;
     };
     const names = (d.recipients ?? []).map(r => r.global_name ?? r.username ?? "?").join(", ");
-    return { id: d.id, type: d.type ?? 1, name: names || "?" };
+    // Group DMs (type 3) can have their own icon; a 1-1 DM (type 1) shows
+    // the other recipient's own avatar as its icon — same convention
+    // Discord's real client uses, and the same one applied to Stoat's DM
+    // list below (fetchStoatDMs).
+    const groupIcon = d.type === 3 && d.icon ? `https://cdn.discordapp.com/channel-icons/${d.id}/${d.icon}.png?size=64` : null;
+    const recipient = d.recipients?.[0];
+    const recipientAvatar = recipient?.id && recipient.avatar ? `https://cdn.discordapp.com/avatars/${recipient.id}/${recipient.avatar}.png?size=64` : null;
+    return { id: d.id, type: d.type ?? 1, name: names || "?", avatar: groupIcon ?? recipientAvatar };
   });
 
   renderRail();
@@ -965,8 +1006,15 @@ function markActivePill(guildId: string | null): void {
   });
 }
 
+/** Same small-avatar-in-list convention Discord's own DM list uses; a plain `#`/hash icon would be wrong here since a DM isn't a channel with a name, it's a person (or group). */
+function dmRowAvatar(name: string, avatar: string | null): HTMLElement {
+  return avatar
+    ? el("img", { className: "dm-row-avatar", src: avatar, alt: "", loading: "lazy" })
+    : el("span", { className: "dm-row-avatar dm-row-avatar-fallback", "aria-hidden": "true" }, name[0] ?? "?");
+}
+
 function renderStoatDmRow(list: HTMLElement, dm: StoatDmSummary): void {
-  const li = el("li", { tabindex: "0", "data-channel": dm.id, className: "platform-row-stoat" }, dm.name);
+  const li = el("li", { tabindex: "0", "data-channel": dm.id, className: "platform-row-stoat" }, dmRowAvatar(dm.name, dm.icon), dm.name);
   const select = () => {
     list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
     li.setAttribute("aria-current", "true");
@@ -982,18 +1030,23 @@ function renderStoatDmRow(list: HTMLElement, dm: StoatDmSummary): void {
 function selectDms(): void {
   activeGuildId = null;
   markActivePill(null);
-  applyServerHeaderBanner(null, t("shell.directMessages"), null);
+  applyServerHeaderBanner(t("shell.directMessages"), null);
   clearMemberList();
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();
   for (const dm of dms) {
     if (isChomperHidden(dm.id)) continue;
-    const li = el("li", {
-      tabindex: "0",
-      "data-channel": dm.id,
-      className: isChomperTracked(dm.id) ? "chomper-restored" : ""
-    }, dm.name);
+    const li = el(
+      "li",
+      {
+        tabindex: "0",
+        "data-channel": dm.id,
+        className: isChomperTracked(dm.id) ? "chomper-restored" : ""
+      },
+      dmRowAvatar(dm.name, dm.avatar),
+      dm.name
+    );
     const select = () => {
       if (li.dataset.suppressClick) {
         delete li.dataset.suppressClick;
@@ -1036,17 +1089,19 @@ function selectDms(): void {
  * channel-list header — Discord's own client shows this same image as a
  * thin, heavily-cropped sliver; this gives it real visual room instead
  * (see BUILD_PROMPT.md's "server banner rendering" item). CSS `cover` +
- * a fixed-height strip is deliberate: Discord doesn't publish a banner
- * aspect ratio anywhere (checked docs.discord.com and docs.discord.food,
- * neither states one), so `cover` sidesteps needing that fact at all
- * rather than guessing at it.
+ * a fixed-height strip is deliberate: neither Discord nor Stoat publish a
+ * banner aspect ratio anywhere, so `cover` sidesteps needing that fact at
+ * all rather than guessing at it. `bannerUrl` must already be a complete,
+ * usable URL — Discord's is a hash the caller builds into a CDN URL first
+ * (see selectGuild), Stoat's arrives from stoat-session.ts already fully
+ * resolved, so this function itself stays platform-agnostic.
  */
-function applyServerHeaderBanner(guildId: string | null, name: string, banner: string | null): void {
+function applyServerHeaderBanner(name: string, bannerUrl: string | null): void {
   const header = document.getElementById("server-header")!;
   header.textContent = name;
-  if (guildId && banner) {
+  if (bannerUrl) {
     header.classList.add("has-banner");
-    header.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(https://cdn.discordapp.com/banners/${guildId}/${banner}.png?size=512)`;
+    header.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.55)), url(${bannerUrl})`;
   } else {
     header.classList.remove("has-banner");
     header.style.backgroundImage = "";
@@ -1059,7 +1114,7 @@ function selectGuild(id: string): void {
 
   activeGuildId = id;
   markActivePill(id);
-  applyServerHeaderBanner(guild.id, guild.name, guild.banner);
+  applyServerHeaderBanner(guild.name, guild.banner ? `https://cdn.discordapp.com/banners/${guild.id}/${guild.banner}.png?size=512` : null);
   setActiveGuildRoles(guild.roles);
 
   const list = document.getElementById("channels")!;
@@ -1068,7 +1123,7 @@ function selectGuild(id: string): void {
     .filter(ch => TEXT_CHANNEL_TYPES.has(ch.type))
     .sort((a, b) => a.position - b.position);
   for (const channel of channels) {
-    const li = el("li", { tabindex: "0", "data-channel": channel.id }, `# ${channel.name}`);
+    const li = el("li", { tabindex: "0", "data-channel": channel.id }, icon("hash", "channel-icon"), channel.name);
     const select = () => {
       list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
       li.setAttribute("aria-current", "true");
@@ -1090,8 +1145,12 @@ function selectGuild(id: string): void {
 
   const voiceChannels = guild.channels.filter(ch => ch.type === VOICE_CHANNEL_TYPE).sort((a, b) => a.position - b.position);
   for (const channel of voiceChannels) {
-    const li = el("li", { className: "voice-channel-item", tabindex: "0", "data-voice-channel": channel.id }, `🔊 ${channel.name}`);
-    applyTwemoji(li);
+    const li = el(
+      "li",
+      { className: "voice-channel-item", tabindex: "0", "data-voice-channel": channel.id },
+      icon("volume-2", "channel-icon"),
+      channel.name
+    );
     li.addEventListener("click", () => window.hyaecord.joinVoiceChannel(id, channel.id));
     li.addEventListener("keydown", ev => {
       if ((ev as KeyboardEvent).key === "Enter") window.hyaecord.joinVoiceChannel(id, channel.id);
@@ -1253,8 +1312,14 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
   container.scrollTop = container.scrollHeight;
 }
 
-function stoatChannelLabel(channel: StoatChannelSummary): string {
-  return channel.hasVoice ? `🔊 ${channel.name}` : `# ${channel.name}`;
+/** Same leading-glyph convention Discord's own channel list uses (see buildChannelRow) — a real `hash`/`volume-2` SVG icon, not a `#`/🔊 character, so both platforms read identically at a glance. */
+function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
+  return el(
+    "li",
+    { tabindex: "0", "data-channel": channel.id, className: channel.hasVoice ? "voice-channel-item" : "" },
+    icon(channel.hasVoice ? "volume-2" : "hash", "channel-icon"),
+    channel.name
+  );
 }
 
 function selectStoatGuildUI(id: string): void {
@@ -1262,34 +1327,47 @@ function selectStoatGuildUI(id: string): void {
   if (!guild) return;
   markActivePill(null);
   document.querySelectorAll<HTMLElement>(`.server-pill[data-stoat-guild="${id}"]`).forEach(p => p.setAttribute("aria-current", "true"));
-  applyServerHeaderBanner(null, guild.name, null);
+  applyServerHeaderBanner(guild.name, guild.banner);
   renderStoatMembers(getStoatMembers(id));
+  // Ready's own payload never carries a server's full member list (only
+  // ever the current user's own membership) — this is the real fetch
+  // (GET /servers/{id}/members) that was missing before, re-rendering
+  // once it resolves so the panel doesn't stay stuck on stale/self-only
+  // data if the server was already cached from a previous visit.
+  void fetchStoatMembers(id).then(members => {
+    if (activeGuildId === id) renderStoatMembers(members);
+  });
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();
-  for (const channel of guild.channels) {
-    // Stoat has no separate voice-channel type — voice capability is just
-    // a nullable field on an ordinary text channel (its `voice` property),
-    // so a voice-capable channel is still a real text channel to click
-    // into, just visually flagged (voice-channel-item, same class Discord's
-    // dedicated voice channels use) rather than routed to a join action
-    // Stoat's LiveKit voice isn't wired up for yet.
-    const li = el(
-      "li",
-      { tabindex: "0", "data-channel": channel.id, className: channel.hasVoice ? "voice-channel-item" : "" },
-      stoatChannelLabel(channel)
-    );
-    applyTwemoji(li);
-    const select = () => {
-      list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
-      li.setAttribute("aria-current", "true");
-      void loadStoatMessages(id, channel.id, channel.name);
-    };
-    li.addEventListener("click", select);
-    li.addEventListener("keydown", ev => {
-      if ((ev as KeyboardEvent).key === "Enter") select();
-    });
-    list.append(li);
+  try {
+    for (const channel of guild.channels) {
+      // Stoat has no separate voice-channel type — voice capability is
+      // just a nullable field on an ordinary text channel (its `voice`
+      // property), so a voice-capable channel is still a real text
+      // channel to click into, just visually flagged (voice-channel-item,
+      // same class Discord's dedicated voice channels use) rather than
+      // routed to a join action Stoat's LiveKit voice isn't wired up for
+      // yet.
+      const li = stoatChannelRow(channel);
+      const select = () => {
+        list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
+        li.setAttribute("aria-current", "true");
+        void loadStoatMessages(id, channel.id, channel.name);
+      };
+      li.addEventListener("click", select);
+      li.addEventListener("keydown", ev => {
+        if ((ev as KeyboardEvent).key === "Enter") select();
+      });
+      list.append(li);
+    }
+  } catch (err) {
+    // A render exception here must not silently take the composer or
+    // settings button down with it — they're separate, already-mounted
+    // DOM elements untouched by this function, but surfacing the error
+    // rather than swallowing it is what actually helps track down a
+    // "some things just don't show up" report like this one.
+    console.error("Failed to render Stoat channel list", err);
   }
 }
 

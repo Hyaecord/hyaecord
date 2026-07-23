@@ -2,6 +2,8 @@ import { el, t } from "./ui";
 import { openProfilePopout } from "./profile-popout";
 import { getPfpOverride } from "./avatar-overrides";
 import { wireUserContextMenu } from "./context-menu";
+import { openStoatProfilePopout } from "./stoat-profile-popout";
+import { stoatPresenceStatus } from "./stoat-session";
 
 /**
  * The member-list sidebar, driven by Discord's gateway "lazy guild loading"
@@ -112,6 +114,8 @@ interface StoatMemberEntry {
   avatar: string | null;
   username: string;
   displayName: string | null;
+  online: boolean;
+  presence: string | null;
 }
 
 /**
@@ -132,11 +136,16 @@ export function renderStoatMembers(members: StoatMemberEntry[]): void {
     const avatar = m.avatar
       ? el("img", { className: "member-avatar", src: m.avatar, alt: "", loading: "lazy" })
       : el("span", { className: "member-avatar member-avatar-fallback", "aria-hidden": "true" }, name[0] ?? "?");
+    const status = stoatPresenceStatus(m);
     const row = el(
       "button",
       { type: "button", className: "member-row", title: name },
+      el("span", { className: `member-status-dot status-${status}`, "aria-hidden": "true" }),
       avatar,
       el("span", { className: "member-name" }, name)
+    );
+    row.addEventListener("click", () =>
+      openStoatProfilePopout(row, { username: m.username, displayName: m.displayName, avatar: m.avatar, online: m.online, presence: m.presence })
     );
     list.append(row);
   }

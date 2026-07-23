@@ -38,7 +38,14 @@ function voiceVideoSection(): HTMLElement {
       type: "button",
       onClick: () =>
         openDevicePicker("videoinput", async deviceId => {
-          const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+          // 16:9 is a request, not a guarantee — getUserMedia's `aspectRatio`
+          // constraint is "ideal" by default (not `exact`), so a camera that
+          // can't produce it falls back to its own native ratio rather than
+          // failing outright. Discord's own client requests the same 16:9 for
+          // its camera preview/call video.
+          const stream = await navigator.mediaDevices.getUserMedia({
+            video: { deviceId: { exact: deviceId }, aspectRatio: { ideal: 16 / 9 }, width: { ideal: 1280 }, height: { ideal: 720 } }
+          });
           openMediaPreview(stream, t("settings.voice.testCamera"));
         })
     },
@@ -235,6 +242,41 @@ function avatarSection(): HTMLElement {
 }
 
 const REPO_URL = "https://github.com/Hyaecord/hyaecord";
+
+/** Real dependency names/licenses pulled from package.json, not guessed — kept in sync manually since there's no build step that generates this. */
+const CREDITS = [
+  { name: "Electron", url: "https://electronjs.org", license: "MIT" },
+  { name: "lucide-static", url: "https://lucide.dev", license: "ISC" },
+  { name: "@twemoji/api", url: "https://github.com/twitter/twemoji", license: "MIT + CC-BY 4.0" },
+  { name: "unicode-emoji-json", url: "https://github.com/muan/unicode-emoji-json", license: "MIT" },
+  { name: "ws", url: "https://github.com/websockets/ws", license: "MIT" }
+];
+
+function creditsSection(): HTMLElement {
+  const list = el(
+    "ul",
+    { className: "credits-list" },
+    ...CREDITS.map(dep =>
+      el(
+        "li",
+        {},
+        el(
+          "button",
+          { type: "button", className: "link-button", onClick: () => void window.hyaecord.openExternal(dep.url) },
+          dep.name
+        ),
+        el("span", { className: "credits-license" }, dep.license)
+      )
+    )
+  );
+  return el(
+    "div",
+    { className: "credits-body" },
+    el("p", { className: "row-description" }, t("settings.credits.intro")),
+    list,
+    el("p", { className: "row-description credits-disclaimer" }, t("settings.credits.disclaimer"))
+  );
+}
 
 function starRepoButton(): HTMLElement {
   const button = el(
@@ -552,7 +594,8 @@ export function openSettings(): void {
           refreshChomperViews();
         })
       ),
-      section("settings.section.support", starRepoButton())
+      section("settings.section.support", starRepoButton()),
+      section("settings.section.credits", creditsSection())
     )
   );
 
