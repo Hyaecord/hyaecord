@@ -55,14 +55,16 @@
 }
 
 [data-theme="light"] {
-  /* near-white with a warm hint; cream reserved for accents, not the canvas */
-  --bg-deep: #f3ede1;
-  --bg-base: #faf7f0;
-  --bg-raise: #ffffff;
-  --bg-hover: #f0e9da;
-  --border: #e2d8c2;
-  --text: var(--brand-brown);
-  --text-dim: #5f5240;
+  /* True neutral grey, not the brand cream — cream is a website-only accent.
+     Structure mirrors the website's Discord-modeled light neutrals so the
+     client and site don't disagree on what "light mode" looks like. */
+  --bg-deep: #e3e5e8;
+  --bg-base: #ffffff;
+  --bg-raise: #f2f3f5;
+  --bg-hover: #e3e5e8;
+  --border: #d4d7dc;
+  --text: #060607;
+  --text-dim: #5c5e66;
   --accent: var(--amber-600);
   --accent-strong: var(--amber-700);
   --danger: var(--red-600);

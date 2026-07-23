@@ -59,4 +59,4 @@ Please don't open public issues for vulnerabilities — see [SECURITY.md](SECURI
 
 ## License
 
-By contributing you agree your contributions are licensed under [GPL-3.0-or-later](LICENSE). Brand assets are separately licensed — see `assets/branding/LICENSE.md` and [TRADEMARK.md](TRADEMARK.md).
+By contributing you agree your contributions are licensed under the [Hyaecord Public License](LICENSE) (GPL-3.0-derived, non-commercial, copyleft). Brand assets are separately licensed — see `assets/branding/LICENSE.md` and [TRADEMARK.md](TRADEMARK.md).

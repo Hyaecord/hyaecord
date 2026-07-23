@@ -187,7 +187,7 @@ and for the plugin ecosystem that makes it worth targeting.
 
 - **Discord ToS:** Hyaecord is a third-party client modification. Using client modifications is against Discord's Terms of Service. Use at your own discretion.
 - **Anti-abuse policy:** Hyaecord does not contain tools for automation, self-bots, spamming, or scraping. Features that enable disruptive or abusive behavior are strictly out of scope.
-- **Branding & logo usage:** Hyaecord's source code is open source under GPL-3.0, but the logo, mascot, and project branding are protected separately. See the [Trademark Policy](TRADEMARK.md).
+- **Branding & logo usage:** Hyaecord's source code is source-available under the [Hyaecord Public License](LICENSE) (GPL-3.0-derived, non-commercial), but the logo, mascot, and project branding are protected separately. See the [Trademark Policy](TRADEMARK.md).
 - **Plugin guidelines:** Plugins must remain free of paywalls and subscription locks. See the [Plugin Guidelines](PLUGIN_GUIDELINES.md).
 - **Trademarks:** "Discord" is a registered trademark of Discord Inc. Hyaecord is not affiliated with or endorsed by Discord Inc.
 
@@ -213,11 +213,15 @@ posting screenshots of Hyaecord in servers where that could get you banned.
 
 ## License
 
-Hyaecord's source code is licensed under the
-[GNU General Public License v3.0](LICENSE).
+Hyaecord's source code is source-available under the
+[Hyaecord Public License](LICENSE) — a GPL-3.0-derived license with two
+conditions on top of the GPL: **no commercial use** (no selling, paywalling,
+or charging access fees for the software, forks, or plugins; voluntary tips
+and donations are fine) and **no closing the source** (forks and derivatives
+must stay open and carry the same license terms).
 
 For rules regarding logos, branding, and third-party extensions, see:
 
 - [TRADEMARK.md](TRADEMARK.md) — Branding and trademark usage guidelines
 - [PLUGIN_GUIDELINES.md](PLUGIN_GUIDELINES.md) — Extension rules and monetization policy
-- [assets/branding/LICENSE.md](assets/branding/LICENSE.md) — Brand assets are **not** GPL-licensed; all rights reserved
+- [assets/branding/LICENSE.md](assets/branding/LICENSE.md) — Brand assets are **not** covered by the source license; all rights reserved

@@ -1,9 +1,13 @@
 # Hyaecord Trademark & Branding Policy
 
-Hyaecord's source code is open-source under the GNU General Public License
-v3.0 (GPL-3.0). **The Hyaecord name and brand assets are licensed separately
-and are not covered by the GPL.** This document explains what that means in
-practice.
+Hyaecord's source code is source-available under the [Hyaecord Public
+License](LICENSE) — a GPL-3.0-derived license that adds two conditions on
+top of the GPL: no commercial use (no selling, paywalling, or charging
+access fees for the software, forks, or plugins — voluntary tips/donations
+are fine), and no closing the source (forks and derivatives must stay open
+and carry the same license terms). **The Hyaecord name and brand assets are
+licensed separately from the code and are not covered by that license.**
+This document explains what that means in practice.
 
 ## 1. What Is Covered
 
@@ -30,11 +34,14 @@ practice.
 
 ## 3. Uses That Require Written Permission
 
-> **Relationship to the GPL:** Nothing in this policy limits the rights
-> granted by the GPL-3.0 over Hyaecord's source code. You may always fork,
-> modify, and redistribute the code. This policy governs only the Hyaecord
-> **name and brand assets** — a fork never needs permission to exist, only
-> to keep our branding. Rebranded forks need no permission at all.
+> **Relationship to the source license:** Nothing in this policy limits the
+> rights granted by the [Hyaecord Public License](LICENSE) over Hyaecord's
+> source code. You may always fork, modify, and redistribute the code —
+> subject to that license's own terms (stay open-source, stay
+> non-commercial), which apply regardless of branding. This policy governs
+> only the Hyaecord **name and brand assets** on top of that — a compliant
+> fork never needs permission to exist, only to keep our branding.
+> Rebranded forks that follow the source license need no permission at all.
 
 * **Forks and derivative builds.** Any publicly distributed build that
   modifies Hyaecord's source code, configuration, or default branding beyond
@@ -47,7 +54,11 @@ practice.
   that suggests official endorsement, partnership, or sponsorship where
   none exists.
 * **Commercial or promotional use.** Using Hyaecord branding on merchandise,
-  in advertising, or in the name of a commercial product or service.
+  in advertising, or in the name of a commercial product or service. Note
+  this is separate from, and narrower than, the source license's own
+  blanket ban on commercializing the *software* itself (Section 1 of
+  [LICENSE](LICENSE)) — that restriction applies with or without our
+  branding involved.
 
 If you're unsure whether your use case needs permission, ask first — see
 Section 5.
@@ -55,10 +66,14 @@ Section 5.
 ## 4. Code Attribution (Separate From Branding)
 
 Porting plugins, features, or UI components from Hyaecord into another
-project is permitted under GPL-3.0, provided you:
+project is permitted under the [Hyaecord Public License](LICENSE), provided
+you:
 
-1. Keep the ported code open-source under GPL-3.0 (or a GPL-3.0-compatible
-   license, per the terms of the GPL itself).
+1. Keep the ported code open-source under the same license terms — a plain
+   GPL-3.0-compatible license is **not** sufficient on its own, since it
+   would drop the non-commercial condition; the ported code needs the
+   Hyaecord Public License itself, or another license with equivalent
+   non-commercial and copyleft terms.
 2. Give clear, visible credit to Hyaecord and the original authors in your
    project's documentation or about page.
 3. Remove all Hyaecord branding assets (logo, wordmark, mascot, name) from

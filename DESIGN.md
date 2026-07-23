@@ -49,24 +49,24 @@ Never reference ramp steps directly in component code — reference these:
 
 | Token | Dark (default) | Light | AMOLED | Role |
 |---|---|---|---|---|
-| `--bg-deep` | `#16130e` | `#f3ede1` | `#000000` | window chrome, rails |
-| `--bg-base` | `#1c1812` | `#faf7f0` | `#000000` | main content surface |
-| `--bg-raise` | `#241f16` | `#ffffff` | `#0d0b07` | cards, inputs, popovers |
-| `--bg-hover` | `#2d271c` | `#f0e9da` | `#1a160e` | hover/selected fills |
-| `--border` | `#3a3325` | `#e2d8c2` | `#2a2416` | hairlines, outlines |
-
-> Light surfaces are **near-white with a warm hint**, not full brand cream — cream as a page background reads dated and heavy; as an accent surface (chrome, footers) it keeps the brand warmth without carrying every pixel.
-| `--text` | `#f1e9d5` | `#2e1d11` | `#f1e9d5` | primary text |
-| `--text-dim` | `#b3a98d` | `#5f5240` | `#a89e83` | secondary text |
+| `--bg-deep` | `#16130e` | `#e3e5e8` | `#000000` | window chrome, rails |
+| `--bg-base` | `#1c1812` | `#ffffff` | `#000000` | main content surface |
+| `--bg-raise` | `#241f16` | `#f2f3f5` | `#0d0b07` | cards, inputs, popovers |
+| `--bg-hover` | `#2d271c` | `#e3e5e8` | `#1a160e` | hover/selected fills |
+| `--border` | `#3a3325` | `#d4d7dc` | `#2a2416` | hairlines, outlines |
+| `--text` | `#f1e9d5` | `#060607` | `#f1e9d5` | primary text |
+| `--text-dim` | `#b3a98d` | `#5c5e66` | `#a89e83` | secondary text |
 | `--accent` | `#c88633` | `#835000` | `#c88633` | brand accent, focus rings |
 | `--accent-strong` | `#e8a962` | `#653e05` | `#e8a962` | links, emphasized accent text |
 | `--danger` | `#fb5760` | `#a82231` | `#fb5760` | destructive, errors |
 | `--danger-text` | `#ff9593` | `#a82231` | `#ff9593` | error copy on base surfaces |
 
+> **Light surfaces are true neutral grey, never the brand cream.** Cream (`#f1e9d5`) is reserved for the website's chrome accents — as a *client* background it read dated and heavy, and the owner asked it be dropped from the app entirely (23 July 2026). The client's light theme now uses the same neutral scale as the website's Discord-modeled light theme, so the two surfaces agree on what "light mode" looks like even though their component systems are separate.
+
 Notes on why these work:
 
-- **No pure black text on pure white** (and vice versa). 21:1 contrast causes halation for astigmatic readers (a large minority). Cream-on-brown (14.6:1) and brown-on-cream (13.4:1) are comfortably above AA/AAA without the glare.
-- **The accent shifts per theme.** Raw brand amber (`#c88633`) reads beautifully on dark (5.82:1) but fails on cream (2.9:1). Light mode substitutes amber-600 (`#835000`, 5.58:1). Same identity, correct contrast — this per-theme remapping is the single most common thing naive theming gets wrong.
+- **Prefer near-black/near-white over pure black-on-white where the choice is ours** — 21:1 contrast causes halation for astigmatic readers (a large minority) — but the client's light theme deliberately breaks this rule to match Discord's own light theme exactly (`#060607` text on `#ffffff`, ~19:1), because "looks like Discord's light mode" was an explicit requirement and users already tolerate that choice in the app they're switching from.
+- **The accent shifts per theme.** Raw brand amber (`#c88633`) reads beautifully on dark (5.82:1) but fails at body-text size on light backgrounds (2.9:1 on white). Light mode substitutes amber-600 (`#835000`, 6.75:1+ on white). Same identity, correct contrast — this per-theme remapping is the single most common thing naive theming gets wrong.
 - **AMOLED is not "dark but blacker".** True-black base for OLED power savings, but raised surfaces still step up in lightness, otherwise nothing has edges.
 
 ### 2.4 Verified contrast (computed, WCAG 2.x)
@@ -80,19 +80,19 @@ Notes on why these work:
 | danger text red-300 on base (dark) | 8.39 | AAA |
 | button label brown on amber-400 | 5.43 | AA |
 | white on red-600 button | 7.09 | AAA |
-| text on cream (light) | 13.35 | AAA |
-| dim text on cream (light) | 6.27 | AA |
-| amber-600 text on cream (light) | 5.58 | AA |
-| red-600 link on cream (light) | 5.91 | AA |
+| text on white (light) | 20.25 | AAA |
+| dim text on white (light) | 6.47 | AA |
+| amber-600 text on white (light) | 6.75 | AA |
+| red-600 link on white (light) | 7.15 | AAA |
 | text on black (AMOLED) | 17.36 | AAA |
 | focus ring on deep (dark) | 9.07 | ≥3:1 non-text |
-| focus ring amber-500 on cream (light) | 3.64 | ≥3:1 non-text |
+| focus ring amber-600 on bg-deep (light) | 5.35 | ≥3:1 non-text |
 
 **Rules derived from the numbers:**
 
 - Body text: ≥ 4.5:1 always. Large text (≥ 24px, or ≥ 18.7px bold): ≥ 3:1. Non-text UI (borders of inputs, focus rings, icons that carry meaning): ≥ 3:1.
-- amber-500 and brighter fail body-text contrast on cream — on light surfaces they are **fill/border/large-heading colours only**.
-- Never pair saturated brand colours with each other for text (red on amber, pink on red, amber on cream body copy). Saturated-on-saturated vibrates.
+- amber-500 and brighter fail body-text contrast on light backgrounds — on light surfaces they are **fill/border/large-heading colours only**.
+- Never pair saturated brand colours with each other for text (red on amber, pink on red, amber on light body copy). Saturated-on-saturated vibrates.
 - **Colour is never the only signal.** Errors get an icon + text, not just redness; unread states get a dot/weight change, not just a hue shift; links inside prose get underlines.
 
 ### 2.5 Using colour meaningfully

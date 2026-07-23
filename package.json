@@ -3,7 +3,7 @@
   "productName": "Hyaecord",
   "version": "0.1.0",
   "description": "A performance-focused, native-feeling Discord desktop client for Linux and Windows.",
-  "license": "GPL-3.0-or-later",
+  "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "main": "dist/main/index.js",
   "homepage": "https://hyaecord.vercel.app",

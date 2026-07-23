@@ -2,8 +2,8 @@
 
 The files in this directory (`assets/branding/`) — including the Hyaecord
 logo, app icon, mascot artwork, wordmark, and all related vector/raster
-brand assets — are **not** licensed under the GPL-3.0 that covers
-Hyaecord's source code.
+brand assets — are **not** licensed under the [Hyaecord Public
+License](../../LICENSE) that covers Hyaecord's source code.
 
 These assets are copyright © 2026 the Hyaecord project, **all rights
 reserved**, and may only be used as described in the project's
