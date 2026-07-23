@@ -136,6 +136,22 @@ export interface HyaecordBridge {
   getCommunityThemes(): Promise<CommunityTheme[]>;
   isUsingVpn(): Promise<boolean>;
   onGamingModeState(cb: (state: GamingModeState) => void): void;
+  getUserProfile(userId: string): Promise<UserProfile | null>;
+}
+
+export interface UserProfile {
+  id: string;
+  username: string;
+  globalName: string | null;
+  avatar: string | null;
+  bot: boolean;
+  bio: string | null;
+  pronouns: string | null;
+  banner: string | null;
+  accentColor: number | null;
+  badges: Array<{ id: string; description: string; icon: string; link?: string }>;
+  connectedAccounts: Array<{ type: string; name: string; verified: boolean }>;
+  premiumType: number | null;
 }
 
 export interface GamingModeState {

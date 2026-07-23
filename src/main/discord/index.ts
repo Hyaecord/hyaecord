@@ -6,11 +6,12 @@ import {
   submitMfaCode as restSubmitMfaCode,
   requestMfaSms as restRequestMfaSms,
   type RawMessage,
+  type RawUserProfile,
   type MfaMethod
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
-import type { DiscordSessionState, DiscordUserSummary } from "@shared/types";
+import type { DiscordSessionState, DiscordUserSummary, UserProfile } from "@shared/types";
 
 /**
  * Discord session manager: owns the REST client and gateway connection,
@@ -300,5 +301,32 @@ export async function muteDm(channelId: string, muted: boolean): Promise<boolean
     return true;
   } catch {
     return false;
+  }
+}
+
+function toUserProfile(raw: RawUserProfile): UserProfile {
+  return {
+    id: raw.user.id,
+    username: raw.user.username,
+    globalName: raw.user.global_name,
+    avatar: raw.user.avatar,
+    bot: raw.user.bot ?? false,
+    bio: raw.user_profile?.bio ?? null,
+    pronouns: raw.user_profile?.pronouns ?? null,
+    banner: raw.banner ?? null,
+    accentColor: raw.accent_color ?? null,
+    badges: (raw.badges ?? []).map(b => ({ id: b.id, description: b.description, icon: b.icon, link: b.link })),
+    connectedAccounts: (raw.connected_accounts ?? []).map(c => ({ type: c.type, name: c.name, verified: c.verified })),
+    premiumType: raw.premium_type ?? null
+  };
+}
+
+/** Powers the profile popout — same endpoint Discord's own client hits when you click a username. */
+export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
+  if (!rest) return null;
+  try {
+    return toUserProfile(await rest.getUserProfile(userId));
+  } catch {
+    return null;
   }
 }

@@ -35,7 +35,8 @@ const bridge: HyaecordBridge = {
   isUsingVpn: () => ipcRenderer.invoke(IPC.isUsingVpn),
   onGamingModeState: cb => {
     ipcRenderer.on(IPC.gamingModeState, (_e, state) => cb(state));
-  }
+  },
+  getUserProfile: userId => ipcRenderer.invoke(IPC.discordGetUserProfile, userId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

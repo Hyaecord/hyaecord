@@ -90,6 +90,39 @@ export class RestClient {
       ]
     });
   }
+
+  /**
+   * The profile popout endpoint — same data/request Discord's own client
+   * uses when you click a username. Per docs.discord.food/resources/user:
+   * `GET /users/{id}/profile`. Mutual guilds/friends aren't shown by this
+   * app yet, so both are turned off rather than fetched and discarded.
+   */
+  getUserProfile(userId: string): Promise<RawUserProfile> {
+    return this.request(
+      "GET",
+      `/users/${userId}/profile?with_mutual_guilds=false&with_mutual_friends=false&with_mutual_friends_count=false`
+    );
+  }
+}
+
+export interface RawUserProfile {
+  user: {
+    id: string;
+    username: string;
+    global_name: string | null;
+    avatar: string | null;
+    bot?: boolean;
+  };
+  user_profile?: {
+    bio?: string | null;
+    pronouns?: string | null;
+  };
+  badges?: Array<{ id: string; description: string; icon: string; link?: string }>;
+  connected_accounts?: Array<{ type: string; id: string; name: string; verified: boolean }>;
+  banner?: string | null;
+  accent_color?: number | null;
+  premium_type?: number | null;
+  premium_since?: string | null;
 }
 
 /**

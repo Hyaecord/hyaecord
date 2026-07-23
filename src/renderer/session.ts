@@ -1,6 +1,7 @@
 import type { DiscordSession, MfaMethod } from "@shared/types";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
+import { openProfilePopout } from "./profile-popout";
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -689,6 +690,12 @@ function messageRow(msg: MessageSummary): HTMLElement {
       })
     : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" },
         msg.authorName[0] ?? "?");
+  avatar.classList.add("clickable-profile");
+  avatar.addEventListener("click", () => openProfilePopout(msg.authorId, avatar));
+
+  const authorName = el("span", { className: "msg-author clickable-profile" }, msg.authorName);
+  authorName.addEventListener("click", () => openProfilePopout(msg.authorId, authorName));
+
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
@@ -698,7 +705,7 @@ function messageRow(msg: MessageSummary): HTMLElement {
     avatar,
     el("div", { className: "msg-body" },
       el("header", { className: "msg-meta" },
-        el("span", { className: "msg-author" }, msg.authorName),
+        authorName,
         el("time", { className: "msg-time" }, time)
       ),
       // textContent path only — message content must never become HTML

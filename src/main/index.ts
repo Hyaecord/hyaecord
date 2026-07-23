@@ -25,7 +25,8 @@ import {
   sendMessage,
   deleteChannel,
   muteGuild,
-  muteDm
+  muteDm,
+  fetchUserProfile
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -108,6 +109,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));
+  ipcMain.handle(IPC.discordGetUserProfile, (_e, userId: string) => fetchUserProfile(userId));
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
