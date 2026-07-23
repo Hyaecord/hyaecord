@@ -54,50 +54,51 @@ Never reference ramp steps directly in component code — reference these:
 | `--bg-raise` | `#241f16` | `#f2f3f5` | `#0d0b07` | cards, inputs, popovers |
 | `--bg-hover` | `#2d271c` | `#e3e5e8` | `#1a160e` | hover/selected fills |
 | `--border` | `#3a3325` | `#d4d7dc` | `#2a2416` | hairlines, outlines |
-| `--text` | `#f1e9d5` | `#060607` | `#f1e9d5` | primary text |
-| `--text-dim` | `#b3a98d` | `#5c5e66` | `#a89e83` | secondary text |
-| `--accent` | `#c88633` | `#835000` | `#c88633` | brand accent, focus rings |
-| `--accent-strong` | `#e8a962` | `#653e05` | `#e8a962` | links, emphasized accent text |
+| `--text` | `#f2f3f5` | `#060607` | `#f2f3f5` | primary text |
+| `--text-dim` | `#949ba4` | `#5c5e66` | `#949ba4` | secondary text |
+| `--accent` | `#2dd4bf` | `#115e59` | `#2dd4bf` | default-theme accent, focus rings |
+| `--accent-strong` | `#5eead4` | `#0d4f4a` | `#5eead4` | links, emphasized accent text |
 | `--danger` | `#fb5760` | `#a82231` | `#fb5760` | destructive, errors |
 | `--danger-text` | `#ff9593` | `#a82231` | `#ff9593` | error copy on base surfaces |
 
 > **Light surfaces are true neutral grey, never the brand cream.** Cream (`#f1e9d5`) is reserved for the website's chrome accents — as a *client* background it read dated and heavy, and the owner asked it be dropped from the app entirely (23 July 2026). The client's light theme now uses the same neutral scale as the website's Discord-modeled light theme, so the two surfaces agree on what "light mode" looks like even though their component systems are separate.
 
+> **The default-theme accent is a neutral teal, not the brand amber (24 July 2026).** Amber/cream is the *logo and website* identity; branding the app you stare at for hours in it read as gaudy, and the owner asked default themes stay accent-neutral instead. The teal is also deliberately not Discord's blurple — same reasoning that kept the logo off Discord's colours in the first place. Brand amber/cream remain fully defined as CSS custom properties (`--brand-amber`, `--amber-*`, `--brand-cream`) for a future optional "Hyaecord" branded theme (§9), just not wired to any *default* theme's `--accent`.
+
 Notes on why these work:
 
 - **Prefer near-black/near-white over pure black-on-white where the choice is ours** — 21:1 contrast causes halation for astigmatic readers (a large minority) — but the client's light theme deliberately breaks this rule to match Discord's own light theme exactly (`#060607` text on `#ffffff`, ~19:1), because "looks like Discord's light mode" was an explicit requirement and users already tolerate that choice in the app they're switching from.
-- **The accent shifts per theme.** Raw brand amber (`#c88633`) reads beautifully on dark (5.82:1) but fails at body-text size on light backgrounds (2.9:1 on white). Light mode substitutes amber-600 (`#835000`, 6.75:1+ on white). Same identity, correct contrast — this per-theme remapping is the single most common thing naive theming gets wrong.
+- **The accent shifts per theme, same as before, just with a different base hue.** Teal-400 (`#2dd4bf`) reads beautifully on dark (9.5:1+) but is too light for body-text size on white. Light mode substitutes teal-800 (`#115e59`, 7.6:1 on white). Same principle as the old amber remapping — this per-theme swap is the single most common thing naive theming gets wrong, brand hue or not.
 - **AMOLED is not "dark but blacker".** True-black base for OLED power savings, but raised surfaces still step up in lightness, otherwise nothing has edges.
 
 ### 2.4 Verified contrast (computed, WCAG 2.x)
 
 | Pair | Ratio | Passes |
 |---|---|---|
-| text on base (dark) | 14.60 | AAA |
-| dim text on base (dark) | 7.55 | AAA |
-| link amber-300 on base (dark) | 8.65 | AAA |
-| brand amber on base (dark) | 5.82 | AA |
+| text on base (dark) | 15.91 | AAA |
+| dim text on base (dark) | 6.30 | AA |
+| accent teal-400 on base (dark) | 9.49 | AAA |
 | danger text red-300 on base (dark) | 8.39 | AAA |
-| button label brown on amber-400 | 5.43 | AA |
+| button label (bg-deep) on teal-400 fill | 9.95 | AAA |
 | white on red-600 button | 7.09 | AAA |
 | text on white (light) | 20.25 | AAA |
 | dim text on white (light) | 6.47 | AA |
-| amber-600 text on white (light) | 6.75 | AA |
+| accent teal-800 text on white (light) | 7.58 | AAA |
 | red-600 link on white (light) | 7.15 | AAA |
-| text on black (AMOLED) | 17.36 | AAA |
-| focus ring on deep (dark) | 9.07 | ≥3:1 non-text |
-| focus ring amber-600 on bg-deep (light) | 5.35 | ≥3:1 non-text |
+| text on black (AMOLED) | 18.91 | AAA |
+| focus ring teal-400 on bg-deep (dark) | 9.95 | ≥3:1 non-text |
+| focus ring teal-800 on bg-deep (light) | 4.34 | ≥3:1 non-text |
 
 **Rules derived from the numbers:**
 
 - Body text: ≥ 4.5:1 always. Large text (≥ 24px, or ≥ 18.7px bold): ≥ 3:1. Non-text UI (borders of inputs, focus rings, icons that carry meaning): ≥ 3:1.
-- amber-500 and brighter fail body-text contrast on light backgrounds — on light surfaces they are **fill/border/large-heading colours only**.
-- Never pair saturated brand colours with each other for text (red on amber, pink on red, amber on light body copy). Saturated-on-saturated vibrates.
+- Whatever hue the accent is, its brighter steps fail body-text contrast on light backgrounds — on light surfaces they're **fill/border/large-heading colours only**, never small text.
+- Never pair saturated colours with each other for text (red on teal, pink on red). Saturated-on-saturated vibrates.
 - **Colour is never the only signal.** Errors get an icon + text, not just redness; unread states get a dot/weight change, not just a hue shift; links inside prose get underlines.
 
 ### 2.5 Using colour meaningfully
 
-- **One accent per view does the pointing.** The primary action is amber; everything else on that screen is neutral. Two competing primary buttons means the design hasn't decided what it wants the user to do.
+- **One accent per view does the pointing.** The primary action uses the theme's accent colour; everything else on that screen is neutral. Two competing primary buttons means the design hasn't decided what it wants the user to do.
 - **Red is spent carefully.** It marks destruction and errors. If red also decorates, users stop flinching at it. (The brand's red sticker-shadow is decoration — that's fine *in branding*; in UI chrome, red = danger, full stop.)
 - **Pink is the "fun" secondary** — mentions, celebratory moments, the odd highlight — used sparingly so it stays special.
 - **States map to ramps predictably:** hover = one surface step up; active/pressed = one step down or 10% darker fill; selected = `--bg-hover` + accent indicator; disabled = 40% opacity on the whole control (not a colour swap, which breaks contrast math).
@@ -155,7 +156,7 @@ Every interactive element has all five states, always:
 
 ## 8. Components
 
-- **Buttons:** one primary (amber fill, brown label) per view; secondary = outlined neutral; ghost = borderless for low-stakes actions; danger = red-600 fill with white label, only inside confirmation contexts. Labels are verbs ("Turn off", "Get started"), never "OK/Yes".
+- **Buttons:** one primary (accent fill) per view; secondary = outlined neutral; ghost = borderless for low-stakes actions; danger = red-600 fill with white label, only inside confirmation contexts. Labels are verbs ("Turn off", "Get started"), never "OK/Yes".
 - **Forms:** labels above inputs (not placeholders-as-labels — they vanish on input and fail recall); helper text below in `--text-dim`; errors in `--danger-text` **with an icon and specific guidance**, shown on blur or submit, never while someone is still typing. Inputs are `--bg-raise` + `--border`, focus ring on the ring token.
 - **Modals:** max 560–640px, one purpose each, Esc + outside-click to dismiss (except flows that would lose data — then ask). Never stack more than two layers.
 - **Empty states teach:** what this area is, why it's empty, one action to fill it — with the mascot allowed here (this is where brand personality lives, not in the chrome).
@@ -166,7 +167,7 @@ Every interactive element has all five states, always:
 
 **Website:** dark-first with `prefers-color-scheme` light support; hero uses brand anchors at full saturation (large text passes at 3:1); marketing may be more generous with colour-coded accents (the card top-border cycling amber/red/pink) because scan-reading, not hours-long use, is the job. Static HTML, no framework, no external fonts/scripts — speed *is* a design feature, and the accessibility bar is identical to the client's.
 
-**Client:** people live in it for hours, so it sits closer to the quiet end — neutrals everywhere, amber only on the active/selected/primary, pink for mentions, red for danger. Long-session comfort beats first-glance wow: when in doubt, remove colour from the chrome and let message content be the most colourful thing on screen. Theme accents may later remap `--accent` to the user's GNOME/KDE accent colour — the semantic-token layer exists precisely so that's a five-line change.
+**Client:** people live in it for hours, so it sits closer to the quiet end — neutrals everywhere, the accent colour only on the active/selected/primary, red for danger. Long-session comfort beats first-glance wow: when in doubt, remove colour from the chrome and let message content be the most colourful thing on screen. Default themes use a neutral teal accent, not the brand amber (§2.3) — theme accents may remap `--accent` to the user's GNOME/KDE accent colour, or to the brand amber/cream in an optional "Hyaecord" branded theme, once the community theme system lands (see BUILD_PROMPT.md) — the semantic-token layer exists precisely so that's a small, contained change per theme.
 
 ## 10. Review checklist
 
