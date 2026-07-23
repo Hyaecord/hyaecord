@@ -26,6 +26,7 @@
   "profile.error": "Couldn't load this profile.",
   "composer.silentOn": "Sending silently (recipients get no notification for the next message)",
   "composer.silentOff": "Send silently",
+  "composer.readOnly": "You don't have permission to send messages in this channel",
   "gifPicker.title": "GIF picker",
   "gifPicker.searchPlaceholder": "Search GIFs",
   "gifPicker.loading": "Loading…",

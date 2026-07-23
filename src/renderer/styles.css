@@ -507,6 +507,16 @@ body {
 
 .messages {
   flex: 1;
+  /* Without this, a flex item's default min-height is its content size, not
+     0 — so a channel with enough messages to exceed the available height
+     just grew `.chat` itself instead of scrolling internally, pushing the
+     composer down below the visible window entirely rather than showing a
+     scrollbar. Same flex+scroll bug class fixed twice elsewhere this
+     session (the settings-button rail split, the emoji picker grid) — this
+     was the real cause of "the composer only shows up in channels with few
+     messages", not any permission-based hide/show logic (there wasn't
+     any). */
+  min-height: 0;
   overflow-y: auto;
   padding: 1rem;
   display: flex;
@@ -713,6 +723,12 @@ body {
 .composer input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+.composer input.is-read-only {
+  color: var(--text-dim);
+  font-style: italic;
+  cursor: not-allowed;
+  background: var(--bg-base);
 }
 .gif-picker-button {
   flex-shrink: 0;

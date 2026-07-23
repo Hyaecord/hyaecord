@@ -320,6 +320,30 @@ function wireChannelProximity(): void {
  */
 let silentModeEnabled = false;
 
+/**
+ * The composer bar itself is always visible now — the actual root cause of
+ * "it only shows up in channels you can't talk in or DMs" was a CSS
+ * flex/scroll bug (see `.messages`'s `min-height: 0` fix), not any
+ * show/hide logic; there wasn't any before this. What genuinely should
+ * differ per channel is whether typing is *allowed* — this disables the
+ * real input and swaps its placeholder for an explanation, matching
+ * Discord's own read-only-channel composer, instead of letting someone
+ * type a message that would just fail to send.
+ */
+function setComposerReadOnly(readOnly: boolean, placeholder: string): void {
+  const input = document.getElementById("composer-input") as HTMLInputElement;
+  input.disabled = readOnly;
+  input.placeholder = readOnly ? t("composer.readOnly") : placeholder;
+  input.classList.toggle("is-read-only", readOnly);
+  // The GIF/sticker/emoji buttons each send independently of the text
+  // input (a click sends immediately, no Enter/typing involved) — disabling
+  // just the input wouldn't stop those from still firing a real send in a
+  // channel with no SEND_MESSAGES permission.
+  for (const id of ["gif-picker-button", "sticker-picker-button", "emoji-picker-button", "silent-toggle-button"]) {
+    (document.getElementById(id) as HTMLButtonElement | null)?.toggleAttribute("disabled", readOnly);
+  }
+}
+
 function wireComposer(): void {
   const input = document.getElementById("composer-input") as HTMLInputElement;
   const silentButton = document.getElementById("silent-toggle-button") as HTMLButtonElement;
@@ -1055,8 +1079,7 @@ function selectDms(): void {
       list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
       li.setAttribute("aria-current", "true");
       document.getElementById("chat-header")!.textContent = dm.name;
-      const input = document.getElementById("composer-input") as HTMLInputElement;
-      input.placeholder = t("shell.chat.placeholder").replace("#general", dm.name);
+      setComposerReadOnly(false, t("shell.chat.placeholder").replace("#general", dm.name)); // DMs have no permission model to gate on
       activeChannelId = dm.id;
       void loadMessages(dm.id);
     };
@@ -1128,8 +1151,10 @@ function selectGuild(id: string): void {
       list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
       li.setAttribute("aria-current", "true");
       document.getElementById("chat-header")!.textContent = `# ${channel.name}`;
-      const input = document.getElementById("composer-input") as HTMLInputElement;
-      input.placeholder = t("shell.chat.placeholder").replace("#general", `#${channel.name}`);
+      setComposerReadOnly(
+        !hasPermission(channel.permissions, Permission.SEND_MESSAGES),
+        t("shell.chat.placeholder").replace("#general", `#${channel.name}`)
+      );
       activeChannelId = channel.id;
       void loadMessages(channel.id);
       beginSubscription(id);
@@ -1302,8 +1327,12 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
   activeChannelId = channelId;
   activeChatPlatform = "stoat";
   document.getElementById("chat-header")!.textContent = `# ${channelName}`;
-  const input = document.getElementById("composer-input") as HTMLInputElement;
-  input.placeholder = t("shell.chat.placeholder").replace("#general", `#${channelName}`);
+  // Stoat channels do have a real permission model (default_permissions /
+  // role_permissions on TextChannel), but this app doesn't compute
+  // effective per-channel permissions for Stoat yet the way it does for
+  // Discord (permissions.ts) — always-enabled here is a real, stated scope
+  // cut, not a guess at Stoat's permission bits.
+  setComposerReadOnly(false, t("shell.chat.placeholder").replace("#general", `#${channelName}`));
   const container = document.getElementById("messages")!;
   container.replaceChildren();
   const messages = await selectStoatChannel(channelId);
