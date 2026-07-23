@@ -43,6 +43,16 @@ export interface PluginRuntimeApi {
   onMessageSend(fn: (content: string, channelId: string) => string | null | Promise<string | null>): void;
   /** Registers a read-only callback for every incoming MESSAGE_CREATE dispatch (the raw Discord payload). */
   onMessageCreate(fn: (message: unknown) => void): void;
+  /**
+   * A small persisted key-value store, separate from settings — for
+   * plugins that need to remember something across messages/restarts
+   * (e.g. "have I DMed this person today") without a settings-schema
+   * entry for it. Only JSON-serializable values survive a save (the same
+   * write-then-rename file `settings` is persisted to). Returns
+   * `undefined` for a key that's never been set.
+   */
+  getData(key: string): unknown;
+  setData(key: string, value: unknown): void;
 }
 
 export interface PortedFrom {

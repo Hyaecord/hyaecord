@@ -45,7 +45,14 @@ function buildApi(id: string, schema: PluginDefinition["settings"], state: () =>
     },
     showToast: message => toastFn(`${plugin().def.name}: ${message}`),
     onMessageSend: fn => plugin().sendHooks.push(fn),
-    onMessageCreate: fn => plugin().createHooks.push(fn)
+    onMessageCreate: fn => plugin().createHooks.push(fn),
+    getData: key => loadPluginState()[id]?.data?.[key],
+    setData: (key, value) => {
+      const map = loadPluginState();
+      const current = map[id] ?? { enabled: false, settings: {}, data: {} };
+      map[id] = { ...current, data: { ...current.data, [key]: value } };
+      savePluginState(map);
+    }
   };
 }
 
@@ -137,7 +144,7 @@ export function setPluginEnabled(id: string, enabled: boolean): boolean {
   if (!plugin || plugin.error) return false;
 
   const state = loadPluginState();
-  state[id] = { enabled, settings: state[id]?.settings ?? {} };
+  state[id] = { enabled, settings: state[id]?.settings ?? {}, data: state[id]?.data ?? {} };
   savePluginState(state);
 
   if (enabled && !plugin.enabled) {
@@ -155,7 +162,11 @@ export function setPluginSetting(id: string, key: string, value: boolean | numbe
   if (!plugin?.def.settings?.[key]) return false;
 
   const state = loadPluginState();
-  state[id] = { enabled: state[id]?.enabled ?? false, settings: { ...state[id]?.settings, [key]: value } };
+  state[id] = {
+    enabled: state[id]?.enabled ?? false,
+    settings: { ...state[id]?.settings, [key]: value },
+    data: state[id]?.data ?? {}
+  };
   savePluginState(state);
   return true;
 }

@@ -5,6 +5,8 @@ import { join } from "node:path";
 export interface PluginState {
   enabled: boolean;
   settings: Record<string, boolean | number | string>;
+  /** Free-form per-plugin persisted data, separate from settings — see PluginRuntimeApi.getData/setData in sandbox.ts. Only JSON-serializable values survive a save. */
+  data: Record<string, unknown>;
 }
 
 type PluginStateMap = Record<string, PluginState>;

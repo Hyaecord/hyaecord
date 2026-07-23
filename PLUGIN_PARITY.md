@@ -90,7 +90,12 @@ text via something equivalent to `onBeforeMessageSend`.
 ### Category B — needs a plugin-API extension that doesn't exist yet, but is a reasonable one to add
 - ~~`silentMessageToggle`~~ — ✅ built, but as a **native composer feature**, not a plugin: the plugin API's `onMessageSend` can only transform the content *string*, and this needed to set the real `flags` field on the REST request (`SUPPRESS_NOTIFICATIONS`, `1 << 12`) — confirmed via docs.discord.food that this is genuine request-body surface, not the `"@silent "` content-prefix trick the original plugin uses (that trick only works because Discord's *own* official composer parses and strips it client-side before building the request; a client hitting the REST API directly, like this one, has to set the real flag). A 🔕 toggle button next to the composer sets it for the next message only, auto-disabling after send (matches the original's default `autoDisable: true`; its optional cross-channel/cross-restart persistence wasn't ported — no state store for it).
 - ~~`sendTimestamps`~~ — ✅ built (`plugins/send-timestamps.js`): the auto-replace-on-send half (`onBeforeMessageSend`'s regex + `parseTime`, both self-contained and independent of the file's `PickerModal` UI) ported faithfully. Type a time in backticks (`` `3:51` ``, `` `17:59` ``, `` `0:13PM` ``) and it becomes a real `<t:...:t>` timestamp. The chat-bar date-picker button/modal isn't ported (no modal API in the sandbox).
-- `messageBurst`, `streaks`, `lastActive`, `pingNotifications` — need per-user/per-channel state persisted across messages (e.g. "have I DMed this person today"). `onMessageCreate` gives the raw events; the plugin API has no persistent structured storage beyond flat settings values today. Feasible with a small "plugin key-value store" API addition, not built yet.
+- ~~A plugin key-value store~~ — ✅ built: `api.getData(key)`/`api.setData(key, value)`, persisted alongside settings in the same `plugins.json` write-then-rename file. Re-checked the four plugins this was meant to unlock, by actually reading their source rather than assuming from the description — the picture was less clean than it first looked:
+  - `messageBurst` — needs to change how messages *render* (grouping consecutive ones, hiding repeated avatars), not just track state. No message-render hook exists; reclassified to Category D.
+  - `streaks` — actually calls a live third-party API (`streaks.equicord.org`, with its own OAuth flow) for cross-device sync, not local computation. Reclassified to Category C (network) — the original mis-triage here just went off the description, not the source.
+  - `lastActive`, `pingNotifications` — both read Discord's internal webpack stores directly (`RelationshipStore` for the friends list, `UserGuildSettingsStore` for mute state, `PresenceStore`), none of which Hyaecord's gateway parsing currently exposes as a concept (there's no "friends list" anywhere in this app yet). Reclassified: blocked on that missing data model, not on storage.
+  
+  So the four original targets didn't pan out, but the store itself is real, tested infrastructure now — available to any future bundled port *and* to third-party plugins dropped into `userData/plugins`, not just the four that motivated building it.
 
 ### Category C — needs a capability the plugin sandbox deliberately doesn't grant
 Not a gap to close casually — network/audio/filesystem access would weaken
@@ -100,16 +105,22 @@ per plugin if ever revisited, not a blanket unlock.
 - `clearURLs` — fetches a live tracking-rules JSON at startup (network)
 - `translate`, `translatePlus` — call an external translation API (network)
 - `triviaAI` — calls an AI backend (network)
+- `streaks` — calls a live third-party API (`streaks.equicord.org`) with its own OAuth flow, not local computation (see Category B note above — this was mis-triaged from its description alone originally, corrected after reading the actual source)
 - `animalese`, `keyboardSounds`, `moyai`, `soggy`, `partyMode`, `snowfall`, `cursorBuddy` — audio/visual effects (no audio API, no arbitrary DOM overlay API in the sandbox)
 - `autoZipper`, `downloadAllAttachments` — filesystem access
+- `lastActive`, `pingNotifications` — read Discord's internal webpack stores (`RelationshipStore`, `UserGuildSettingsStore`, `PresenceStore`) for data Hyaecord's gateway parsing doesn't expose as a concept yet (there's no "friends list" anywhere in this app) — blocked on a missing data model, not sandbox restrictions specifically, but grouped here since the fix is "build a whole feature," same weight as the others in this category
 
 ### Category D — needs UI Hyaecord doesn't have a hook for (not "impossible," just not built)
 Modals, custom settings panes beyond boolean/number/string, chat-bar
 buttons beyond a plain toggle, context-menu injection beyond the
-existing Copy-ID system, command-palette-style overlays:
+existing Copy-ID system, command-palette-style overlays, or a
+message-render hook (grouping/annotating how a message displays, not
+just its outgoing content):
 `commandPalette`, `keyboardNavigation`, `previewMessage`, `quoter`,
-`petpet`, `expressionCloner`, `iconViewer`, `themeLibrary` (Hyaecord
-already has its own real Theme Store, see `BUILD_PROMPT.md` item 17),
+`petpet`, `expressionCloner`, `iconViewer`, `messageBurst` (needs to
+change how consecutive messages render, not just their content — no
+message-render hook exists), `themeLibrary` (Hyaecord already has its
+own real Theme Store, see `BUILD_PROMPT.md` item 17),
 `friendInvites`, `inRole`, `serverSearch`, `jumpTo` (Hyaecord's message
 search already covers part of this, see item 44), `reviewDB`,
 `richPresence` (Hyaecord's own RPC Bridge, item 40, already covers the
@@ -142,4 +153,5 @@ the moment they're actually built.
 1. ~~Native "Copy Mention" / "Copy User URL" context-menu items~~ — ✅ done, see Category A above.
 2. ~~`silentMessageToggle`~~ — ✅ done, see Category B above.
 3. ~~Re-read `sendTimestamps` closely for a modal-free auto-replace path~~ — ✅ done, see the ported-plugins table above.
-4. A plugin key-value store API addition, unlocking the Category B "needs state across messages" group as a batch.
+4. ~~A plugin key-value store API addition~~ — ✅ built (`api.getData`/`api.setData`); the four plugins that motivated it didn't pan out on closer inspection (see Category B), but the primitive is real and available now.
+5. A "friends list" data model (parse Discord's real relationships from the gateway/REST) would unblock `lastActive`/`pingNotifications` — a genuinely new feature area, not a small extension, so scope it deliberately before starting rather than backing into it via one plugin port.
