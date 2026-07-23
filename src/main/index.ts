@@ -12,6 +12,8 @@ import { fetchCommunityThemes } from "./community-themes";
 import {
   initDiscord,
   login,
+  loginWithCredentials,
+  submitMfa,
   logout,
   autoLogin,
   getSessionState,
@@ -66,6 +68,10 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.getDesktopEnvironment, () => detectDesktopEnvironment());
   ipcMain.handle(IPC.getLocaleStrings, () => getLocaleStrings());
   ipcMain.handle(IPC.discordLogin, (_e, token: string) => login(token));
+  ipcMain.handle(IPC.discordLoginCredentials, (_e, loginField: string, password: string) =>
+    loginWithCredentials(loginField, password)
+  );
+  ipcMain.handle(IPC.discordSubmitMfa, (_e, code: string, ticket: string) => submitMfa(code, ticket));
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());
   ipcMain.handle(IPC.discordFetchMessages, (_e, channelId: string) => fetchMessages(channelId));

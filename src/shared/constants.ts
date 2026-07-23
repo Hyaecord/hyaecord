@@ -38,6 +38,8 @@ export const IPC = {
   getLocaleStrings: "hyaecord:get-locale",
   themeChanged: "hyaecord:theme-changed",
   discordLogin: "hyaecord:discord-login",
+  discordLoginCredentials: "hyaecord:discord-login-credentials",
+  discordSubmitMfa: "hyaecord:discord-submit-mfa",
   discordLogout: "hyaecord:discord-logout",
   discordGetSession: "hyaecord:discord-get-session",
   discordState: "hyaecord:discord-state",

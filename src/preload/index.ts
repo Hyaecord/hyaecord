@@ -12,6 +12,9 @@ const bridge: HyaecordBridge = {
     ipcRenderer.on(IPC.themeChanged, (_e, prefersDark: boolean) => cb(prefersDark));
   },
   discordLogin: token => ipcRenderer.invoke(IPC.discordLogin, token),
+  discordLoginCredentials: (login, password) =>
+    ipcRenderer.invoke(IPC.discordLoginCredentials, login, password),
+  discordSubmitMfa: (code, ticket) => ipcRenderer.invoke(IPC.discordSubmitMfa, code, ticket),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

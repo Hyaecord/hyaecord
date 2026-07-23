@@ -1,5 +1,11 @@
 import { GatewayClient, type GatewayState } from "./gateway";
-import { RestClient, DiscordRestError, type RawMessage } from "./rest";
+import {
+  RestClient,
+  DiscordRestError,
+  loginWithCredentials as restLoginWithCredentials,
+  submitMfaTotp as restSubmitMfaTotp,
+  type RawMessage
+} from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import type { DiscordSessionState, DiscordUserSummary } from "@shared/types";
 
@@ -98,14 +104,12 @@ async function startGateway(token: string): Promise<void> {
   gateway.connect();
 }
 
-export async function login(
+async function completeLogin(
   token: string
-): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
-  const trimmed = token.trim();
-  if (!trimmed) return { ok: false, error: "empty" };
+): Promise<{ ok: true; persisted?: boolean } | { ok: false; error: string }> {
   setState("connecting");
   try {
-    await startGateway(trimmed);
+    await startGateway(token);
   } catch (err) {
     setState("logged-out");
     if (err instanceof DiscordRestError && err.status === 401) {
@@ -113,8 +117,70 @@ export async function login(
     }
     return { ok: false, error: "network" };
   }
-  const persisted = setToken(trimmed);
+  const persisted = setToken(token);
   return { ok: true, persisted };
+}
+
+/** Advanced/fallback path: paste a token directly. */
+export async function login(
+  token: string
+): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
+  const trimmed = token.trim();
+  if (!trimmed) return { ok: false, error: "empty" };
+  return completeLogin(trimmed);
+}
+
+export type CredentialLoginResult =
+  | { ok: true; persisted?: boolean }
+  | { ok: false; mfaRequired: true; ticket: string }
+  | { ok: false; mfaRequired?: false; error: string };
+
+/**
+ * The normal Discord login: email/phone + password, same endpoint the
+ * official client uses. Handles the TOTP-authenticator-app MFA case; SMS
+ * and backup-code MFA, and hCaptcha challenges, aren't implemented yet and
+ * surface as a clear error rather than failing silently.
+ */
+export async function loginWithCredentials(loginField: string, password: string): Promise<CredentialLoginResult> {
+  const trimmedLogin = loginField.trim();
+  if (!trimmedLogin || !password) return { ok: false, error: "empty" };
+
+  let res;
+  try {
+    res = await restLoginWithCredentials(trimmedLogin, password);
+  } catch (err) {
+    if (err instanceof DiscordRestError && (err.status === 400 || err.status === 401)) {
+      return { ok: false, error: "invalid-credentials" };
+    }
+    return { ok: false, error: "network" };
+  }
+
+  if (res.captcha_key) return { ok: false, error: "captcha-unsupported" };
+  if (res.mfa) {
+    if (!res.totp || !res.ticket) return { ok: false, error: "mfa-unsupported" };
+    return { ok: false, mfaRequired: true, ticket: res.ticket };
+  }
+  if (!res.token) return { ok: false, error: "network" };
+  return completeLogin(res.token);
+}
+
+/** Second step after `loginWithCredentials` returns `mfaRequired`. */
+export async function submitMfa(code: string, ticket: string): Promise<CredentialLoginResult> {
+  const trimmedCode = code.trim();
+  if (!trimmedCode) return { ok: false, error: "empty" };
+
+  let res;
+  try {
+    res = await restSubmitMfaTotp(trimmedCode, ticket);
+  } catch (err) {
+    if (err instanceof DiscordRestError && (err.status === 400 || err.status === 401)) {
+      return { ok: false, error: "invalid-code" };
+    }
+    return { ok: false, error: "network" };
+  }
+
+  if (!res.token) return { ok: false, error: "network" };
+  return completeLogin(res.token);
 }
 
 /** Try the stored token on startup; quietly stays logged-out if there is none. */

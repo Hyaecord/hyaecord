@@ -82,6 +82,16 @@ export interface LoginResult {
   persisted?: boolean;
 }
 
+export type CredentialLoginResult =
+  | { ok: true; persisted?: boolean }
+  | { ok: false; mfaRequired: true; ticket: string }
+  | {
+      ok: false;
+      mfaRequired?: false;
+      /** "empty" | "invalid-credentials" | "invalid-code" | "network" | "captcha-unsupported" | "mfa-unsupported" */
+      error: string;
+    };
+
 /** API surface exposed to the renderer via contextBridge */
 export interface HyaecordBridge {
   getSettings(): Promise<HyaecordSettings>;
@@ -90,6 +100,8 @@ export interface HyaecordBridge {
   getLocaleStrings(): Promise<Record<string, string>>;
   onThemeChanged(cb: (prefersDark: boolean) => void): void;
   discordLogin(token: string): Promise<LoginResult>;
+  discordLoginCredentials(login: string, password: string): Promise<CredentialLoginResult>;
+  discordSubmitMfa(code: string, ticket: string): Promise<CredentialLoginResult>;
   discordLogout(): Promise<void>;
   getDiscordSession(): Promise<DiscordSession>;
   onDiscordState(cb: (session: DiscordSession) => void): void;

@@ -176,6 +176,18 @@ body {
 .login-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .login-error { color: var(--danger-text); min-height: 1.2em; margin: 0; }
 .login-form .modal-actions { justify-content: flex-end; }
+.login-switch { margin-top: 0.9rem; text-align: center; }
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--accent-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.link-button:hover { color: var(--accent); }
+.link-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
 
 .channel-list {
   background: var(--bg-base);

@@ -442,11 +442,148 @@ function onMessageCreate(data: unknown): void {
   if (atBottom) container.scrollTop = container.scrollHeight;
 }
 
-/* ---------- login view ---------- */
+/* ---------- login view ----------
+ * Three screens: the normal Discord email/password login (default), the
+ * TOTP step when that account has 2FA, and a token-paste fallback for
+ * advanced use. Token login used to be the *only* option, which reasonably
+ * read as "sus" — pasting a secret into a random client with no other way
+ * in — so the credential flow (same endpoint the official client uses) is
+ * now the primary path, with token paste one click away for anyone who
+ * already has one (e.g. session imported from another tool). */
+
+type LoginScreen = "credentials" | "mfa" | "token";
 
 function showLogin(): void {
   if (loginOverlay) return;
 
+  let screen: LoginScreen = "credentials";
+  let mfaTicket = "";
+
+  const body = el("div", { className: "login-body" });
+  const dialog = el(
+    "div",
+    { className: "modal login", role: "dialog", "aria-modal": "true", "aria-labelledby": "login-title" },
+    el("h1", { id: "login-title" }, t("login.title")),
+    body
+  );
+  loginOverlay = el("div", { className: "overlay" }, dialog);
+  document.body.append(loginOverlay);
+
+  function goTo(next: LoginScreen, ticket = ""): void {
+    screen = next;
+    if (ticket) mfaTicket = ticket;
+    render();
+  }
+
+  function render(): void {
+    body.replaceChildren();
+    if (screen === "credentials") body.append(credentialsScreen(goTo));
+    else if (screen === "mfa") body.append(mfaScreen(mfaTicket, goTo));
+    else body.append(tokenScreen(goTo));
+    body.querySelector("input")?.focus();
+  }
+
+  render();
+}
+
+function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HTMLElement {
+  const emailInput = el("input", {
+    type: "text",
+    id: "login-email",
+    className: "login-input",
+    autocomplete: "username",
+    placeholder: t("login.emailPlaceholder")
+  }) as HTMLInputElement;
+  const passwordInput = el("input", {
+    type: "password",
+    id: "login-password",
+    className: "login-input",
+    autocomplete: "current-password"
+  }) as HTMLInputElement;
+  const error = el("p", { className: "login-error", role: "alert" });
+  const button = el("button", { className: "btn primary", type: "submit" }, t("login.connect"));
+
+  const form = el(
+    "form",
+    { className: "login-form" },
+    el("label", { for: "login-email", className: "row-label" }, t("login.emailLabel")),
+    emailInput,
+    el("label", { for: "login-password", className: "row-label" }, t("login.passwordLabel")),
+    passwordInput,
+    error,
+    el("div", { className: "modal-actions" }, button)
+  ) as HTMLFormElement;
+
+  form.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    error.textContent = "";
+    button.setAttribute("disabled", "");
+    const result = await window.hyaecord.discordLoginCredentials(emailInput.value, passwordInput.value);
+    button.removeAttribute("disabled");
+    if (result.ok) return;
+    if (result.mfaRequired) {
+      goTo("mfa", result.ticket);
+      return;
+    }
+    error.textContent = t(`login.error.${result.error}`);
+    passwordInput.focus();
+  });
+
+  return el(
+    "div",
+    {},
+    el("p", { className: "modal-subtitle" }, t("login.body")),
+    form,
+    el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
+    )
+  );
+}
+
+function mfaScreen(ticket: string, goTo: (screen: LoginScreen) => void): HTMLElement {
+  const codeInput = el("input", {
+    type: "text",
+    id: "login-mfa-code",
+    className: "login-input",
+    inputmode: "numeric",
+    autocomplete: "one-time-code",
+    placeholder: t("login.mfaPlaceholder")
+  }) as HTMLInputElement;
+  const error = el("p", { className: "login-error", role: "alert" });
+  const button = el("button", { className: "btn primary", type: "submit" }, t("login.verify"));
+
+  const form = el(
+    "form",
+    { className: "login-form" },
+    el("label", { for: "login-mfa-code", className: "row-label" }, t("login.mfaLabel")),
+    codeInput,
+    error,
+    el("div", { className: "modal-actions" }, button)
+  ) as HTMLFormElement;
+
+  form.addEventListener("submit", async ev => {
+    ev.preventDefault();
+    error.textContent = "";
+    button.setAttribute("disabled", "");
+    const result = await window.hyaecord.discordSubmitMfa(codeInput.value, ticket);
+    button.removeAttribute("disabled");
+    if (result.ok) return;
+    error.textContent = t(`login.error.${result.mfaRequired ? "mfa-unsupported" : result.error}`);
+    codeInput.focus();
+  });
+
+  return el(
+    "div",
+    {},
+    el("p", { className: "modal-subtitle" }, t("login.mfaBody")),
+    form,
+    el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.back"))
+    )
+  );
+}
+
+function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
   const input = el("input", {
     type: "password",
     id: "login-token",
@@ -482,16 +619,15 @@ function showLogin(): void {
     if (result.persisted === false) note.textContent = t("login.sessionOnly");
   });
 
-  const dialog = el(
+  return el(
     "div",
-    { className: "modal login", role: "dialog", "aria-modal": "true", "aria-labelledby": "login-title" },
-    el("h1", { id: "login-title" }, t("login.title")),
-    el("p", { className: "modal-subtitle" }, t("login.body")),
-    form
+    {},
+    el("p", { className: "modal-subtitle" }, t("login.tokenBody")),
+    form,
+    el("p", { className: "login-switch" },
+      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.useCredentials"))
+    )
   );
-  loginOverlay = el("div", { className: "overlay" }, dialog);
-  document.body.append(loginOverlay);
-  input.focus();
 }
 
 function hideLogin(): void {
