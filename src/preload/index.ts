@@ -47,7 +47,12 @@ const bridge: HyaecordBridge = {
   subscribeMemberList: (guildId, channelId) => ipcRenderer.send(IPC.discordSubscribeMembers, guildId, channelId),
   searchMessages: (query, guildId, channelId) => ipcRenderer.invoke(IPC.discordSearchMessages, query, guildId, channelId),
   toggleEmbedSuppression: (channelId, messageId, currentFlags) =>
-    ipcRenderer.invoke(IPC.discordToggleEmbedSuppression, channelId, messageId, currentFlags)
+    ipcRenderer.invoke(IPC.discordToggleEmbedSuppression, channelId, messageId, currentFlags),
+  listRelationships: () => ipcRenderer.invoke(IPC.discordListRelationships),
+  sendFriendRequest: username => ipcRenderer.invoke(IPC.discordSendFriendRequest, username),
+  acceptFriendRequest: userId => ipcRenderer.invoke(IPC.discordAcceptFriendRequest, userId),
+  blockUser: userId => ipcRenderer.invoke(IPC.discordBlockUser, userId),
+  removeRelationship: userId => ipcRenderer.invoke(IPC.discordRemoveRelationship, userId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

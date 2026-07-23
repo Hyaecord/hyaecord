@@ -33,7 +33,12 @@ import {
   subscribeMemberList,
   setActivity,
   searchMessages,
-  toggleEmbedSuppression
+  toggleEmbedSuppression,
+  listRelationships,
+  sendFriendRequest,
+  acceptFriendRequest,
+  blockUser,
+  removeRelationship
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -138,6 +143,11 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordToggleEmbedSuppression, (_e, channelId: string, messageId: string, currentFlags: number) =>
     toggleEmbedSuppression(channelId, messageId, currentFlags)
   );
+  ipcMain.handle(IPC.discordListRelationships, () => listRelationships());
+  ipcMain.handle(IPC.discordSendFriendRequest, (_e, username: string) => sendFriendRequest(username));
+  ipcMain.handle(IPC.discordAcceptFriendRequest, (_e, userId: string) => acceptFriendRequest(userId));
+  ipcMain.handle(IPC.discordBlockUser, (_e, userId: string) => blockUser(userId));
+  ipcMain.handle(IPC.discordRemoveRelationship, (_e, userId: string) => removeRelationship(userId));
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.getPlugins, () => listPlugins());
   ipcMain.handle(IPC.setPluginEnabled, (_e, id: string, enabled: boolean) => setPluginEnabled(id, enabled));

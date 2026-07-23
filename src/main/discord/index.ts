@@ -5,12 +5,20 @@ import {
   type RawMessage,
   type RawUserProfile,
   type RawGif,
-  type RawSearchResponse
+  type RawSearchResponse,
+  type RawRelationship
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
 import { runMessageSendHooks, runMessageCreateHooks } from "../plugins/manager";
-import type { DiscordSessionState, DiscordUserSummary, UserProfile, GifResult, MessageSearchResult } from "@shared/types";
+import type {
+  DiscordSessionState,
+  DiscordUserSummary,
+  UserProfile,
+  GifResult,
+  MessageSearchResult,
+  RelationshipSummary
+} from "@shared/types";
 
 /**
  * Discord session manager: owns the REST client and gateway connection,
@@ -344,6 +352,68 @@ export async function updateAvatar(dataUri: string | null): Promise<boolean> {
     const res = await rest.updateAvatar(dataUri);
     user = { ...user, avatar: res.avatar };
     send("state", { state, user, freshLogin });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function toRelationship(raw: RawRelationship): RelationshipSummary {
+  return {
+    id: raw.id,
+    type: raw.type,
+    username: raw.user.username,
+    globalName: raw.user.global_name ?? null,
+    avatar: raw.user.avatar ?? null
+  };
+}
+
+/** Powers the Friends list — friends, pending in/out, and blocked users all come back in one list, split by `type` in the renderer. */
+export async function listRelationships(): Promise<RelationshipSummary[]> {
+  if (!rest) return [];
+  try {
+    return (await rest.listRelationships()).map(toRelationship);
+  } catch {
+    return [];
+  }
+}
+
+export async function sendFriendRequest(username: string): Promise<{ ok: boolean; error?: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  try {
+    await rest.sendFriendRequest(username);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof DiscordRestError ? err.message : "network" };
+  }
+}
+
+/** Accepts an incoming request, or completes a mutual add. */
+export async function acceptFriendRequest(userId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.acceptRelationship(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function blockUser(userId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.blockUser(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Also used to decline an incoming request, cancel an outgoing one, or unblock — all the same "remove the relationship" call. */
+export async function removeRelationship(userId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.removeRelationship(userId);
     return true;
   } catch {
     return false;

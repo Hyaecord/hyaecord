@@ -68,5 +68,10 @@ export const IPC = {
   discordSubscribeMembers: "hyaecord:discord-subscribe-members",
   gamingModeState: "hyaecord:gaming-mode-state",
   discordSearchMessages: "hyaecord:discord-search-messages",
-  discordToggleEmbedSuppression: "hyaecord:discord-toggle-embed-suppression"
+  discordToggleEmbedSuppression: "hyaecord:discord-toggle-embed-suppression",
+  discordListRelationships: "hyaecord:discord-list-relationships",
+  discordSendFriendRequest: "hyaecord:discord-send-friend-request",
+  discordAcceptFriendRequest: "hyaecord:discord-accept-friend-request",
+  discordBlockUser: "hyaecord:discord-block-user",
+  discordRemoveRelationship: "hyaecord:discord-remove-relationship"
 } as const;

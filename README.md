@@ -100,6 +100,7 @@ An honest status table, not an aspirational one — updated as features actually
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
 | Emoji picker                          |    Supported     | Search-and-browse picker backed by real Unicode emoji data              |
 | Sticker picker                        |   Not yet built   | No verified Discord sticker endpoint looked up yet                      |
+| Friends list (add/accept/decline/block/remove) | Supported | Real relationships API; no live-updating while open (fetched fresh on open) and no online-status filtering (this app doesn't track presence outside an open guild's member list) |
 | Multi-account switching               |   Not yet built   |                                                                           |
 | Auto-updater                          |   Not yet built   |                                                                           |
 | Session import (Discord/Vesktop/Equibop) | Declined for now | Requires decrypting another app's local session storage — see `BUILD_PROMPT.md` for why this is a deliberate hold, not an oversight |

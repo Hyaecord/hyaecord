@@ -1270,3 +1270,51 @@ body {
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+.modal.friends-modal { width: min(560px, calc(100vw - 2rem)); }
+.friend-add-row { display: flex; gap: 0.5rem; margin-bottom: 0.3rem; }
+.friend-add-input {
+  flex: 1;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text);
+  font: inherit;
+}
+.friend-add-caution { font-size: 0.78rem; margin-bottom: 0.9rem; }
+.friend-tabs { display: flex; gap: 0.4rem; margin-bottom: 0.6rem; border-bottom: 1px solid var(--border); }
+.friend-tab {
+  padding: 0.5rem 0.2rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.friend-tab:hover { color: var(--text); }
+.friend-tab.is-active { color: var(--text); border-bottom-color: var(--accent); }
+.friend-list { display: flex; flex-direction: column; gap: 0.2rem; max-height: 50vh; overflow-y: auto; }
+.friend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem;
+  border-radius: var(--radius-s);
+}
+.friend-row:hover { background: var(--bg-hover); }
+.friend-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.friend-avatar-fallback {
+  display: grid;
+  place-items: center;
+  background: var(--bg-raise);
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.friend-name { font-weight: 600; }
+.friend-status { color: var(--text-dim); font-size: 0.78rem; }
+.friend-actions { display: flex; gap: 0.4rem; margin-inline-start: auto; }
+.friend-action { padding: 0.35rem 0.6rem; font-size: 0.8rem; }

@@ -151,6 +151,39 @@ export class RestClient {
   }
 
   /**
+   * Real friends/blocked-users API — per docs.discord.food/resources/relationships,
+   * a dedicated resource, not something guessed from the READY payload.
+   * `GET /users/@me/relationships` returns every relationship type
+   * together (friends, pending in/out, blocked) in one list; callers
+   * split them by `type`. Sending too many friend requests quickly is
+   * explicitly flagged by that same doc as something Discord's abuse
+   * detection watches for — surfaced to the user in the Friends UI
+   * itself, matching how this app already handles the fresh-login
+   * caution (see BUILD_PROMPT.md's real account-lockout incident).
+   */
+  listRelationships(): Promise<RawRelationship[]> {
+    return this.request("GET", "/users/@me/relationships");
+  }
+
+  sendFriendRequest(username: string): Promise<void> {
+    return this.request("POST", "/users/@me/relationships", { username });
+  }
+
+  /** Accepts an incoming request, or completes a mutual add — PUT with no `type` defaults to "accept existing or create a new friend request" per docs.discord.food. */
+  acceptRelationship(userId: string): Promise<void> {
+    return this.request("PUT", `/users/@me/relationships/${userId}`, {});
+  }
+
+  blockUser(userId: string): Promise<void> {
+    return this.request("PUT", `/users/@me/relationships/${userId}`, { type: 2 });
+  }
+
+  /** Also used to decline an incoming request, cancel an outgoing one, or unblock — all the same "remove the relationship" call. */
+  removeRelationship(userId: string): Promise<void> {
+    return this.request("DELETE", `/users/@me/relationships/${userId}`);
+  }
+
+  /**
    * Per docs.discord.food/resources/message: `GET /guilds/{guild.id}/messages/search`
    * (guild-wide) and `GET /channels/{channel.id}/messages/search` (a single
    * private channel — used for DMs, which have no guild). Both share the
@@ -175,6 +208,18 @@ export interface RawSearchResponse {
   messages?: RawMessage[][];
   documents_indexed?: number;
   retry_after?: number;
+}
+
+export interface RawRelationship {
+  id: string;
+  /** 1 FRIEND, 2 BLOCKED, 3 INCOMING_REQUEST, 4 OUTGOING_REQUEST, 5 IMPLICIT — docs.discord.food/resources/relationships. */
+  type: number;
+  user: {
+    id: string;
+    username: string;
+    global_name?: string | null;
+    avatar?: string | null;
+  };
 }
 
 export interface RawGif {

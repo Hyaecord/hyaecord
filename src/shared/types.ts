@@ -144,6 +144,12 @@ export interface HyaecordBridge {
   searchMessages(query: string, guildId: string | null, channelId: string | null): Promise<MessageSearchResult>;
   /** `currentFlags` must be the message's full current flags bitfield, not just the SUPPRESS_EMBEDS bit. */
   toggleEmbedSuppression(channelId: string, messageId: string, currentFlags: number): Promise<boolean>;
+  listRelationships(): Promise<RelationshipSummary[]>;
+  sendFriendRequest(username: string): Promise<{ ok: boolean; error?: string }>;
+  acceptFriendRequest(userId: string): Promise<boolean>;
+  blockUser(userId: string): Promise<boolean>;
+  /** Also used to decline an incoming request, cancel an outgoing one, or unblock. */
+  removeRelationship(userId: string): Promise<boolean>;
 }
 
 export interface UserProfile {
@@ -161,6 +167,15 @@ export interface UserProfile {
   badges: Array<{ id: string; description: string; icon: string; link?: string }>;
   connectedAccounts: Array<{ type: string; name: string; verified: boolean }>;
   premiumType: number | null;
+}
+
+export interface RelationshipSummary {
+  id: string;
+  /** 1 FRIEND, 2 BLOCKED, 3 INCOMING_REQUEST, 4 OUTGOING_REQUEST, 5 IMPLICIT — docs.discord.food/resources/relationships. */
+  type: number;
+  username: string;
+  globalName: string | null;
+  avatar: string | null;
 }
 
 export interface MessageSearchResult {

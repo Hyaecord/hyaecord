@@ -8,6 +8,7 @@ import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubsc
 import { getPfpOverride } from "./avatar-overrides";
 import { openContextMenu, copyIdItem, mentionItem, userUrlItem, type ContextMenuItem } from "./context-menu";
 import { openMessageSearch } from "./message-search";
+import { openFriendsList } from "./friends";
 
 /**
  * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
@@ -711,7 +712,7 @@ function buildFolderElement(folder: ServerFolder): HTMLElement {
 
 export function renderRail(): void {
   const rail = document.getElementById("server-rail")!;
-  rail.querySelectorAll(".server-pill, .dm-pill, .server-folder").forEach(pill => pill.remove());
+  rail.querySelectorAll(".server-pill, .dm-pill, .friends-pill, .server-folder").forEach(pill => pill.remove());
   const settingsButton = rail.querySelector(".settings-button");
 
   const dmPill = el(
@@ -726,6 +727,19 @@ export function renderRail(): void {
     "💬"
   );
   rail.insertBefore(dmPill, settingsButton);
+
+  const friendsPill = el(
+    "button",
+    {
+      className: "server-pill friends-pill",
+      type: "button",
+      title: t("shell.friends"),
+      "aria-label": t("shell.friends"),
+      onClick: () => openFriendsList()
+    },
+    "👥"
+  );
+  rail.insertBefore(friendsPill, settingsButton);
 
   const renderedFolders = new Set<string>();
   for (const guild of guilds) {
