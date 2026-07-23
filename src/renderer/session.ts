@@ -6,20 +6,26 @@ import { openGifPicker } from "./gif-picker";
 import { openEmojiPicker } from "./emoji-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
-import { openContextMenu, copyIdItem } from "./context-menu";
+import { openContextMenu, copyIdItem, mentionItem, userUrlItem } from "./context-menu";
 import { openMessageSearch } from "./message-search";
 
 /**
- * Wires Developer Mode's "Copy ID" right-click menu onto one element — a
- * no-op (native browser context menu still shows) when the setting is
- * off. Pass one `{ id, label }` per copyable ID the target represents
- * (e.g. a message has both its own ID and its author's).
+ * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
+ * entries (one per `{ id, label }` the target represents — e.g. a message
+ * has both its own ID and its author's), plus, when `userId` is given,
+ * the always-available Copy Mention / Copy User URL entries (native
+ * reimplementations of Equicord's CopyUserMention/CopyUserURLs, see
+ * context-menu.ts). A no-op (native browser context menu still shows)
+ * only when Developer Mode is off *and* no `userId` was given.
  */
-function wireDevModeContextMenu(target: HTMLElement, entries: Array<{ id: string; label?: string }>): void {
+function wireDevModeContextMenu(target: HTMLElement, entries: Array<{ id: string; label?: string }>, userId?: string): void {
   target.addEventListener("contextmenu", ev => {
-    if (!state.settings.developerMode) return;
+    const items = [];
+    if (userId) items.push(mentionItem(userId), userUrlItem(userId));
+    if (state.settings.developerMode) items.push(...entries.map(e => copyIdItem(e.id, e.label)));
+    if (items.length === 0) return;
     ev.preventDefault();
-    openContextMenu(ev.clientX, ev.clientY, entries.map(e => copyIdItem(e.id, e.label)));
+    openContextMenu(ev.clientX, ev.clientY, items);
   });
 }
 
@@ -871,10 +877,14 @@ function messageRow(msg: MessageSummary): HTMLElement {
       el("p", { className: "msg-content" }, msg.content)
     )
   );
-  wireDevModeContextMenu(row, [
-    { id: msg.id, label: t("devMode.copyMessageId") },
-    { id: msg.authorId, label: t("devMode.copyAuthorId") }
-  ]);
+  wireDevModeContextMenu(
+    row,
+    [
+      { id: msg.id, label: t("devMode.copyMessageId") },
+      { id: msg.authorId, label: t("devMode.copyAuthorId") }
+    ],
+    msg.authorId
+  );
   return row;
 }
 

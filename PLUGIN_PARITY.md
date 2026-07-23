@@ -83,7 +83,8 @@ Same shape as the four already shipped: touches only outgoing message
 text via something equivalent to `onBeforeMessageSend`.
 - `googleThat` — hyperlinks a sent search-style message (needs to check exact mechanism)
 - `unsuppressEmbeds` — may be a REST call (unsuppress a message's embeds), not a content transform — needs a `rest.ts` addition (`PATCH` message flags) if pursued, not just the plugin hook surface
-- `copyEmojiMarkdown`, `copyUserMention`, `copyUserURLs`, `copyStickerLinks`, `copyProfileColors`, `copyUserURLs` — **not plugin candidates at all**: these are context-menu actions, better built as native features extending the context-menu system item 41 already built for Developer Mode's "Copy ID" (real precedent: same infra, same pattern), not as sandboxed plugins. Worth a future BUILD_PROMPT item on their own.
+- ~~`copyUserMention`, `copyUserURLs`~~ — ✅ built as native context-menu items (`mentionItem`/`userUrlItem`, `src/renderer/context-menu.ts`), reusing the same right-click infra Developer Mode's "Copy ID" already built, on message authors/member rows/profile popouts. Not gated behind Developer Mode (unlike Copy ID) since there's no real-Discord equivalent feature to match the "off by default" precedent against.
+- `copyEmojiMarkdown`, `copyStickerLinks`, `copyProfileColors` — same "native context-menu item, not a plugin" shape as above, just not built yet: `copyEmojiMarkdown` and `copyStickerLinks` need a right-click target on rendered emoji/stickers in message content (not built — messages render as plain text today, no per-token interactivity); `copyProfileColors` needs the profile popout to expose a copyable value for its accent colour.
 
 ### Category B — needs a plugin-API extension that doesn't exist yet, but is a reasonable one to add
 - `silentMessageToggle` — Discord's real "send silently" is a message `flags` bit at POST time, not a content string. `rest.ts`'s `createMessage()` only takes `content` today; would need a `flags` param threaded through `sendMessage()` and a way for a plugin to set it (a new `onMessageSend` return shape, or a second hook) — a real, scoped API addition, not a rebuild.
@@ -137,7 +138,7 @@ the moment they're actually built.
 
 ## Next candidates, roughly in order of value vs effort
 
-1. Native "Copy Mention" / "Copy User URL" context-menu items (Category A) — reuses item 41's existing context-menu infra almost exactly, no plugin-API changes needed.
+1. ~~Native "Copy Mention" / "Copy User URL" context-menu items~~ — ✅ done, see Category A above.
 2. `silentMessageToggle` (Category B) — small, well-scoped `rest.ts`/`sendMessage()` flags extension.
 3. Re-read `sendTimestamps` closely for a modal-free auto-replace path.
 4. A plugin key-value store API addition, unlocking the Category B "needs state across messages" group as a batch.

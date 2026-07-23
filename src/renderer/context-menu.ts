@@ -1,4 +1,4 @@
-import { el, showToast, t } from "./ui";
+import { el, showToast, state, t } from "./ui";
 
 /**
  * A minimal right-click context menu — currently only used for Developer
@@ -79,4 +79,51 @@ export function copyIdItem(id: string, label?: string): ContextMenuItem {
       showToast(t("devMode.copiedId"));
     }
   };
+}
+
+/**
+ * "Copy Mention" / "Copy User URL" — real, native reimplementations of
+ * Equicord's CopyUserMention/CopyUserURLs plugins (see PLUGIN_PARITY.md's
+ * Category A: better built as native context-menu items reusing this same
+ * infrastructure than as sandboxed plugins, since the plugin API has no
+ * context-menu hook at all). Unlike Copy ID, these aren't gated behind
+ * Developer Mode — Discord's own client doesn't have an equivalent
+ * built-in feature to match, so there's no "off by default, matches
+ * stock Discord" precedent to follow here; these are always available.
+ */
+export function mentionItem(userId: string): ContextMenuItem {
+  return {
+    label: t("devMode.copyMention"),
+    onClick: () => {
+      void navigator.clipboard.writeText(`<@${userId}>`);
+      showToast(t("devMode.copiedMention"));
+    }
+  };
+}
+
+export function userUrlItem(userId: string): ContextMenuItem {
+  return {
+    label: t("devMode.copyUserUrl"),
+    onClick: () => {
+      void navigator.clipboard.writeText(`<https://discord.com/users/${userId}>`);
+      showToast(t("devMode.copiedUserUrl"));
+    }
+  };
+}
+
+/**
+ * Wires a right-click menu for anything representing a single user: Copy
+ * Mention and Copy User URL are always present; Copy User ID is added on
+ * top only when Developer Mode is on, matching Copy ID's behaviour
+ * elsewhere. Use this for member rows, profile popouts, and anything else
+ * that's *only* a user (not a message, which also has its own ID — see
+ * session.ts's messageRow for that composed case).
+ */
+export function wireUserContextMenu(target: HTMLElement, userId: string): void {
+  target.addEventListener("contextmenu", ev => {
+    ev.preventDefault();
+    const items = [mentionItem(userId), userUrlItem(userId)];
+    if (state.settings.developerMode) items.push(copyIdItem(userId, t("devMode.copyUserId")));
+    openContextMenu(ev.clientX, ev.clientY, items);
+  });
 }
