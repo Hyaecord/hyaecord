@@ -48,11 +48,19 @@
 
 /* Semantic tokens per theme — all pairings contrast-verified in DESIGN.md §2.4 */
 [data-theme="dark"] {
-  --bg-deep: #16130e;
-  --bg-base: #1c1812;
-  --bg-raise: #241f16;
-  --bg-hover: #2d271c;
-  --border: #3a3325;
+  /* True neutral grey, not the brand brown — these five were missed when
+     item 33 de-branded the accent (see BUILD_PROMPT.md): the accent went
+     back to teal, but bg-deep/base/raise/hover/border were still the old
+     warm amber-tinted values (#16130e etc.) from before that pass, so the
+     whole background stayed visibly brown regardless of accent colour.
+     Never caught earlier because this session's sandbox couldn't reliably
+     render a screenshot for most of the work — first real visual check
+     (on the owner's actual screen) is what surfaced it. */
+  --bg-deep: #1e1f22;
+  --bg-base: #25262a;
+  --bg-raise: #2b2d31;
+  --bg-hover: #35373c;
+  --border: #3f4249;
   --text: #f2f3f5;
   --text-dim: #949ba4;
   --accent: var(--teal-400);

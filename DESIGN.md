@@ -49,11 +49,11 @@ Never reference ramp steps directly in component code — reference these:
 
 | Token | Dark (default) | Light | Role |
 |---|---|---|---|
-| `--bg-deep` | `#16130e` | `#e3e5e8` | window chrome, rails |
-| `--bg-base` | `#1c1812` | `#ffffff` | main content surface |
-| `--bg-raise` | `#241f16` | `#f2f3f5` | cards, inputs, popovers |
-| `--bg-hover` | `#2d271c` | `#e3e5e8` | hover/selected fills |
-| `--border` | `#3a3325` | `#d4d7dc` | hairlines, outlines |
+| `--bg-deep` | `#1e1f22` | `#e3e5e8` | window chrome, rails |
+| `--bg-base` | `#25262a` | `#ffffff` | main content surface |
+| `--bg-raise` | `#2b2d31` | `#f2f3f5` | cards, inputs, popovers |
+| `--bg-hover` | `#35373c` | `#e3e5e8` | hover/selected fills |
+| `--border` | `#3f4249` | `#d4d7dc` | hairlines, outlines |
 | `--text` | `#f2f3f5` | `#060607` | primary text |
 | `--text-dim` | `#949ba4` | `#5c5e66` | secondary text |
 | `--accent` | `#2dd4bf` | `#115e59` | default-theme accent, focus rings |

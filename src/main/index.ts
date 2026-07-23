@@ -85,7 +85,7 @@ function createWindow(): void {
     minWidth: 720,
     minHeight: 480,
     icon: join(app.getAppPath(), "assets", "icons", "hyaecord-256.png"),
-    backgroundColor: "#16130e",
+    backgroundColor: "#1e1f22",
     show: false,
     webPreferences: {
       preload: join(app.getAppPath(), "dist", "preload", "index.js"),

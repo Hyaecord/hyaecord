@@ -28,11 +28,11 @@ const PLACEHOLDER_CHANNELS = ["general", "screenshots"];
 
 const BASE_THEME_TOKENS: Record<"dark" | "light", CommunityThemeTokens> = {
   dark: {
-    bgDeep: "#16130e",
-    bgBase: "#1c1812",
-    bgRaise: "#241f16",
-    bgHover: "#2d271c",
-    border: "#3a3325",
+    bgDeep: "#1e1f22",
+    bgBase: "#25262a",
+    bgRaise: "#2b2d31",
+    bgHover: "#35373c",
+    border: "#3f4249",
     text: "#f2f3f5",
     textDim: "#949ba4",
     accent: "#2dd4bf",
