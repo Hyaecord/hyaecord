@@ -93,7 +93,7 @@ An honest status table, not an aspirational one — updated as features actually
 | Native system tray & notifications    |    Supported     | Mentions and DMs only, suppressed while the window is focused           |
 | Spellcheck & IME input                | Native (Chromium) | Free from Electron, not custom-built                                    |
 | Search & pinned messages              |   Not yet built   |                                                                           |
-| Self-pin auto-fade                    |   Not yet built   | Setting exists in Settings; no fade behaviour is wired up yet           |
+| Self-pin auto-fade                    |    Supported     | Other people's pin notices stay visible — no "hide others' pins" toggle exists yet |
 | Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
 | Emoji picker, sticker picker          |   Not yet built   | Typing/pasting emoji directly works (plain text input); no picker UI    |
