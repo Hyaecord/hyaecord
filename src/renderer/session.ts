@@ -5,7 +5,7 @@ import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
 import { openStickerPicker } from "./sticker-picker";
 import { openEmojiPicker } from "./emoji-picker";
-import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
+import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription, renderStoatMembers } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
 import { openContextMenu, copyIdItem, mentionItem, userUrlItem, type ContextMenuItem } from "./context-menu";
 import { openMessageSearch } from "./message-search";
@@ -25,7 +25,10 @@ import {
   stoatMessageRow,
   isStoatReady,
   onStoatStateChange,
-  loginStoat
+  loginStoat,
+  getStoatMembers,
+  fetchStoatDMs,
+  type StoatChannelSummary
 } from "./stoat-session";
 
 /**
@@ -142,6 +145,13 @@ interface DmSummary {
   name: string;
   type: number;
 }
+
+interface StoatDmSummary {
+  id: string;
+  name: string;
+}
+
+let stoatDms: StoatDmSummary[] = [];
 
 /** 0 = normal message; 6 = the automatic "X pinned a message" system notice. Full enum: docs.discord.com/developers/resources/message. */
 const MESSAGE_TYPE_PIN_NOTICE = 6;
@@ -864,9 +874,13 @@ function buildFolderElement(folder: ServerFolder): HTMLElement {
 }
 
 export function renderRail(): void {
-  const rail = document.getElementById("server-rail")!;
+  // Pills live in the scrollable #server-pills region, not #server-rail
+  // itself — the settings button is a fixed footer outside that scroll
+  // area (see styles.css) specifically so it can't get scrolled out of
+  // view once enough servers push the pill list past the window's
+  // height, which is what was happening before this split.
+  const rail = document.getElementById("server-pills")!;
   rail.querySelectorAll(".server-pill, .dm-pill, .friends-pill, .server-folder").forEach(pill => pill.remove());
-  const settingsButton = rail.querySelector(".settings-button");
 
   const dmPill = el(
     "button",
@@ -879,7 +893,7 @@ export function renderRail(): void {
     },
     icon("message-circle")
   );
-  rail.insertBefore(dmPill, settingsButton);
+  rail.append(dmPill);
 
   const friendsPill = el(
     "button",
@@ -892,7 +906,7 @@ export function renderRail(): void {
     },
     icon("users")
   );
-  rail.insertBefore(friendsPill, settingsButton);
+  rail.append(friendsPill);
 
   const showDiscord = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "discord";
   const showStoat = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "stoat";
@@ -905,16 +919,16 @@ export function renderRail(): void {
       if (folder) {
         if (renderedFolders.has(folder.id)) continue;
         renderedFolders.add(folder.id);
-        rail.insertBefore(buildFolderElement(folder), settingsButton);
+        rail.append(buildFolderElement(folder));
         continue;
       }
-      rail.insertBefore(buildGuildPill(guild, null), settingsButton);
+      rail.append(buildGuildPill(guild, null));
     }
   }
 
   if (showStoat) {
     for (const guild of getStoatGuilds()) {
-      rail.insertBefore(buildStoatGuildPill(guild), settingsButton);
+      rail.append(buildStoatGuildPill(guild));
     }
   }
 }
@@ -949,6 +963,20 @@ function markActivePill(guildId: string | null): void {
     const isDm = pill.classList.contains("dm-pill");
     pill.setAttribute("aria-current", isDm ? String(guildId === null) : String(pill.dataset.guild === guildId));
   });
+}
+
+function renderStoatDmRow(list: HTMLElement, dm: StoatDmSummary): void {
+  const li = el("li", { tabindex: "0", "data-channel": dm.id, className: "platform-row-stoat" }, dm.name);
+  const select = () => {
+    list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
+    li.setAttribute("aria-current", "true");
+    void loadStoatMessages(null, dm.id, dm.name);
+  };
+  li.addEventListener("click", select);
+  li.addEventListener("keydown", ev => {
+    if ((ev as KeyboardEvent).key === "Enter") select();
+  });
+  list.append(li);
 }
 
 function selectDms(): void {
@@ -986,6 +1014,20 @@ function selectDms(): void {
     wireChomperDrag(li, dm.id, "dm", dm.name);
     wireDevModeContextMenu(li, [{ id: dm.id, label: t("devMode.copyChannelId") }]);
     list.append(li);
+  }
+
+  // Stoat's DMs render in the same list, tagged with a platform-row class
+  // (small left accent bar via CSS) rather than a separate section — this
+  // list is already how the merged-sidebar rail treats mixed platforms.
+  for (const dm of stoatDms) renderStoatDmRow(list, dm);
+  if (isStoatReady()) {
+    void fetchStoatDMs().then(fetched => {
+      stoatDms = fetched;
+      if (activeGuildId === null) {
+        list.querySelectorAll("li.platform-row-stoat").forEach(row => row.remove());
+        for (const dm of stoatDms) renderStoatDmRow(list, dm);
+      }
+    });
   }
 }
 
@@ -1049,6 +1091,7 @@ function selectGuild(id: string): void {
   const voiceChannels = guild.channels.filter(ch => ch.type === VOICE_CHANNEL_TYPE).sort((a, b) => a.position - b.position);
   for (const channel of voiceChannels) {
     const li = el("li", { className: "voice-channel-item", tabindex: "0", "data-voice-channel": channel.id }, `🔊 ${channel.name}`);
+    applyTwemoji(li);
     li.addEventListener("click", () => window.hyaecord.joinVoiceChannel(id, channel.id));
     li.addEventListener("keydown", ev => {
       if ((ev as KeyboardEvent).key === "Enter") window.hyaecord.joinVoiceChannel(id, channel.id);
@@ -1194,8 +1237,8 @@ async function loadMessages(channelId: string): Promise<void> {
   container.scrollTop = container.scrollHeight;
 }
 
-/** Stoat's half of loadMessages() — deliberately separate rather than a shared generic function, since the two platforms' message shapes and rendering (stoatMessageRow vs messageRow) don't overlap. */
-async function loadStoatMessages(guildId: string, channelId: string, channelName: string): Promise<void> {
+/** Stoat's half of loadMessages() — deliberately separate rather than a shared generic function, since the two platforms' message shapes and rendering (stoatMessageRow vs messageRow) don't overlap. `guildId` is null for a Stoat DM (no server context). */
+async function loadStoatMessages(guildId: string | null, channelId: string, channelName: string): Promise<void> {
   activeGuildId = guildId;
   activeChannelId = channelId;
   activeChatPlatform = "stoat";
@@ -1210,18 +1253,33 @@ async function loadStoatMessages(guildId: string, channelId: string, channelName
   container.scrollTop = container.scrollHeight;
 }
 
+function stoatChannelLabel(channel: StoatChannelSummary): string {
+  return channel.hasVoice ? `🔊 ${channel.name}` : `# ${channel.name}`;
+}
+
 function selectStoatGuildUI(id: string): void {
   const guild = selectStoatGuild(id);
   if (!guild) return;
   markActivePill(null);
   document.querySelectorAll<HTMLElement>(`.server-pill[data-stoat-guild="${id}"]`).forEach(p => p.setAttribute("aria-current", "true"));
   applyServerHeaderBanner(null, guild.name, null);
-  clearMemberList();
+  renderStoatMembers(getStoatMembers(id));
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();
   for (const channel of guild.channels) {
-    const li = el("li", { tabindex: "0", "data-channel": channel.id }, `# ${channel.name}`);
+    // Stoat has no separate voice-channel type — voice capability is just
+    // a nullable field on an ordinary text channel (its `voice` property),
+    // so a voice-capable channel is still a real text channel to click
+    // into, just visually flagged (voice-channel-item, same class Discord's
+    // dedicated voice channels use) rather than routed to a join action
+    // Stoat's LiveKit voice isn't wired up for yet.
+    const li = el(
+      "li",
+      { tabindex: "0", "data-channel": channel.id, className: channel.hasVoice ? "voice-channel-item" : "" },
+      stoatChannelLabel(channel)
+    );
+    applyTwemoji(li);
     const select = () => {
       list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
       li.setAttribute("aria-current", "true");

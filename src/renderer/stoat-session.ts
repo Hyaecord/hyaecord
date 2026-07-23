@@ -20,6 +20,8 @@ import { applyTwemoji } from "./twemoji";
 export interface StoatChannelSummary {
   id: string;
   name: string;
+  /** True when the channel's `voice` field (Stoat's VoiceInformation) is set — Stoat has no separate voice-channel type, just this flag on an ordinary TextChannel, per its published OpenAPI schema. */
+  hasVoice: boolean;
 }
 
 export interface StoatGuildSummary {
@@ -38,6 +40,21 @@ export interface StoatMessageSummary {
   content: string;
 }
 
+export interface StoatFriendSummary {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatar: string | null;
+}
+
+export interface StoatMemberSummary {
+  userId: string;
+  nickname: string | null;
+  avatar: string | null;
+  username: string;
+  displayName: string | null;
+}
+
 let guilds: StoatGuildSummary[] = [];
 let activeGuildId: string | null = null;
 let activeChannelId: string | null = null;
@@ -45,6 +62,20 @@ let selfUserId: string | null = null;
 let stateChangeListeners = new Set<() => void>();
 let currentState: StoatSession["state"] = "logged-out";
 let sessionListeners = new Set<(state: StoatSession["state"]) => void>();
+/** CDN base for this session — discovered live from `GET /` on the main process side and forwarded on the Ready payload, see main/stoat/index.ts. Never guessed here. */
+let cdnBase = "https://cdn.stoatusercontent.com";
+
+interface CachedStoatUser {
+  id: string;
+  username: string;
+  displayName: string | null;
+  avatar: string | null;
+  relationship: string;
+}
+
+const userCache = new Map<string, CachedStoatUser>();
+/** Keyed by server id -> that server's members (from Ready's `members` array, whose composite `_id` is `{server, user}`). */
+const membersByServer = new Map<string, StoatMemberSummary[]>();
 
 export function onStoatGuildsChanged(cb: () => void): () => void {
   stateChangeListeners.add(cb);
@@ -81,22 +112,101 @@ interface RawStoatChannel {
   channel_type?: string;
   name?: string;
   server?: string;
+  /** VoiceInformation | null — presence (not shape) is all that matters here; see StoatChannelSummary.hasVoice. */
+  voice?: unknown | null;
+}
+
+interface RawStoatReadyUser {
+  _id: string;
+  username: string;
+  display_name?: string | null;
+  avatar?: { _id: string } | null;
+  /** RelationshipStatus: None | User | Friend | Outgoing | Incoming | Blocked | BlockedOther — per the OpenAPI User schema. */
+  relationship?: string;
+}
+
+interface RawStoatMember {
+  _id: { server: string; user: string };
+  nickname?: string | null;
+  avatar?: { _id: string } | null;
 }
 
 function onReady(data: unknown): void {
-  const payload = data as { user?: { _id?: string }; servers?: RawStoatServer[]; channels?: RawStoatChannel[] };
+  const payload = data as {
+    user?: { _id?: string };
+    servers?: RawStoatServer[];
+    channels?: RawStoatChannel[];
+    users?: RawStoatReadyUser[];
+    members?: RawStoatMember[];
+    cdnBase?: string;
+  };
   selfUserId = payload.user?._id ?? selfUserId;
+  if (payload.cdnBase) cdnBase = payload.cdnBase;
+
+  userCache.clear();
+  for (const u of payload.users ?? []) {
+    userCache.set(u._id, {
+      id: u._id,
+      username: u.username,
+      displayName: u.display_name ?? null,
+      avatar: u.avatar ? `${cdnBase}/avatars/${u.avatar._id}` : null,
+      relationship: u.relationship ?? "None"
+    });
+  }
+
+  membersByServer.clear();
+  for (const m of payload.members ?? []) {
+    const list = membersByServer.get(m._id.server) ?? [];
+    const cached = userCache.get(m._id.user);
+    list.push({
+      userId: m._id.user,
+      nickname: m.nickname ?? null,
+      avatar: m.avatar ? `${cdnBase}/avatars/${m.avatar._id}` : (cached?.avatar ?? null),
+      username: cached?.username ?? "?",
+      displayName: cached?.displayName ?? null
+    });
+    membersByServer.set(m._id.server, list);
+  }
+
   const channelsById = new Map((payload.channels ?? []).map(ch => [ch._id, ch]));
   guilds = (payload.servers ?? []).map(server => ({
     id: server._id,
     name: server.name ?? "?",
-    icon: server.icon ? `https://api.stoat.chat/icons/${server.icon._id}` : null,
+    icon: server.icon ? `${cdnBase}/icons/${server.icon._id}` : null,
     channels: server.channels
       .map(id => channelsById.get(id))
       .filter((ch): ch is RawStoatChannel => !!ch && ch.channel_type === "TextChannel")
-      .map(ch => ({ id: ch._id, name: ch.name ?? "?" }))
+      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null }))
   }));
   stateChangeListeners.forEach(cb => cb());
+}
+
+/** Friends aren't a separate endpoint on Stoat — each `User` embeds the current user's `relationship` with them directly (confirmed in the OpenAPI User schema), so this is just a filter over the Ready-populated user cache. */
+export function getStoatFriends(): StoatFriendSummary[] {
+  return [...userCache.values()]
+    .filter(u => u.relationship === "Friend")
+    .map(u => ({ id: u.id, username: u.username, displayName: u.displayName, avatar: u.avatar }));
+}
+
+export function getStoatMembers(serverId: string): StoatMemberSummary[] {
+  return membersByServer.get(serverId) ?? [];
+}
+
+let cachedDms: import("@shared/types").StoatDMSummary[] = [];
+
+/** Stoat's `GET /users/dms` results, resolved to display names via the user cache — recipients on a DM channel are just user IDs, not embedded user objects. */
+export async function fetchStoatDMs(): Promise<Array<{ id: string; name: string }>> {
+  cachedDms = await window.hyaecord.stoatGetDMs();
+  return cachedDms.map(dm => ({
+    id: dm.id,
+    name:
+      dm.name ??
+      (dm.recipientIds
+        .filter(id => id !== selfUserId)
+        .map(id => userCache.get(id)?.displayName || userCache.get(id)?.username || "?")
+        .join(", ") ||
+        "?")
+  }));
 }
 
 export function initStoatSession(): void {
@@ -107,6 +217,9 @@ export function initStoatSession(): void {
     currentState = session.state;
     if (session.state !== "ready") {
       guilds = [];
+      userCache.clear();
+      membersByServer.clear();
+      cachedDms = [];
       stateChangeListeners.forEach(cb => cb());
     }
     sessionListeners.forEach(cb => cb(session.state));

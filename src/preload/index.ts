@@ -24,6 +24,7 @@ const bridge: HyaecordBridge = {
   },
   stoatFetchMessages: channelId => ipcRenderer.invoke(IPC.stoatFetchMessages, channelId),
   stoatSendMessage: (channelId, content) => ipcRenderer.invoke(IPC.stoatSendMessage, channelId, content),
+  stoatGetDMs: () => ipcRenderer.invoke(IPC.stoatGetDMs),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

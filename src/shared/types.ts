@@ -188,6 +188,16 @@ export interface HyaecordBridge {
   onStoatEvent(cb: (event: string, data: unknown) => void): void;
   stoatFetchMessages(channelId: string): Promise<unknown[]>;
   stoatSendMessage(channelId: string, content: string): Promise<boolean>;
+  stoatGetDMs(): Promise<StoatDMSummary[]>;
+}
+
+export interface StoatDMSummary {
+  id: string;
+  /** "DirectMessage" | "Group" — Stoat's real channel_type values for DM-like channels. */
+  channelType: string;
+  name: string | null;
+  icon: string | null;
+  recipientIds: string[];
 }
 
 export interface UserProfile {
@@ -214,6 +224,8 @@ export interface RelationshipSummary {
   username: string;
   globalName: string | null;
   avatar: string | null;
+  /** Omitted (defaults to Discord) for real Discord relationships; "stoat" for entries merged in from Stoat's own Ready-embedded relationship field. */
+  platform?: "discord" | "stoat";
 }
 
 export interface ScreenShareSource {

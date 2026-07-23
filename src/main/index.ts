@@ -54,7 +54,8 @@ import {
   autoLogin as stoatAutoLogin,
   getSessionState as getStoatSessionState,
   fetchMessages as stoatFetchMessages,
-  sendMessage as stoatSendMessage
+  sendMessage as stoatSendMessage,
+  getDMs as stoatGetDMs
 } from "./stoat";
 
 let mainWindow: BrowserWindow | null = null;
@@ -95,7 +96,10 @@ function createWindow(): void {
     }
   });
 
-  mainWindow.once("ready-to-show", () => mainWindow?.show());
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.maximize();
+    mainWindow?.show();
+  });
   mainWindow.loadFile(join(app.getAppPath(), "dist", "renderer", "index.html"));
   mainWindow.on("closed", () => (mainWindow = null));
 }
@@ -144,6 +148,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatGetSession, () => getStoatSessionState());
   ipcMain.handle(IPC.stoatFetchMessages, (_e, channelId: string) => stoatFetchMessages(channelId));
   ipcMain.handle(IPC.stoatSendMessage, (_e, channelId: string, content: string) => stoatSendMessage(channelId, content));
+  ipcMain.handle(IPC.stoatGetDMs, () => stoatGetDMs());
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

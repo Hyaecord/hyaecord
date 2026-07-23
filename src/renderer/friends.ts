@@ -4,6 +4,7 @@ import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
 import { getPresenceStatus, onPresenceChange } from "./session";
 import { icon } from "./icons";
+import { getStoatFriends, isStoatReady } from "./stoat-session";
 
 /**
  * The Friends list — real friends/blocked-users API
@@ -34,8 +35,11 @@ let currentTab: Tab = "online";
 let relationships: RelationshipSummary[] = [];
 
 function avatarEl(rel: RelationshipSummary): HTMLElement {
-  const override = getPfpOverride(rel.id);
-  const src = override ?? (rel.avatar ? `https://cdn.discordapp.com/avatars/${rel.id}/${rel.avatar}.png?size=64` : null);
+  const override = rel.platform === "stoat" ? null : getPfpOverride(rel.id);
+  // Stoat's avatar is already a full resolved CDN URL (built server-side
+  // from the discovered Autumn base — see stoat-session.ts); only
+  // Discord's needs the hash-to-URL construction here.
+  const src = override ?? (rel.platform === "stoat" ? rel.avatar : rel.avatar ? `https://cdn.discordapp.com/avatars/${rel.id}/${rel.avatar}.png?size=64` : null);
   const name = rel.globalName ?? rel.username;
   return src
     ? el("img", { className: "friend-avatar", src, alt: "", loading: "lazy" })
@@ -53,8 +57,13 @@ function actionButton(label: string, onClick: () => void, danger = false): HTMLE
 function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   const name = rel.globalName ?? rel.username;
   const avatar = avatarEl(rel);
-  avatar.classList.add("clickable-profile");
-  avatar.addEventListener("click", () => openProfilePopout(rel.id, avatar));
+  // Profile popouts fetch via Discord's own REST API — there's no Stoat
+  // equivalent wired up yet, so a Stoat friend's avatar just isn't
+  // clickable rather than opening an empty/error popout.
+  if (rel.platform !== "stoat") {
+    avatar.classList.add("clickable-profile");
+    avatar.addEventListener("click", () => openProfilePopout(rel.id, avatar));
+  }
 
   const avatarWrap = el("span", { className: "friend-avatar-wrap" }, avatar);
   if (rel.type === RELATIONSHIP_FRIEND) {
@@ -64,6 +73,19 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   }
 
   const actions: HTMLElement[] = [];
+  // Stoat friend requests aren't wired up to any REST calls yet (this pass
+  // only surfaces the real, already-accepted friend list from Stoat's
+  // Ready payload) — no accept/remove actions for those rows rather than
+  // buttons that would silently no-op or hit the wrong platform's API.
+  if (rel.platform === "stoat") {
+    return el(
+      "div",
+      { className: "friend-row" },
+      avatarWrap,
+      el("span", { className: "friend-name" }, name),
+      el("span", { className: "friend-status" }, t("friends.type.friend"))
+    );
+  }
   if (rel.type === RELATIONSHIP_INCOMING) {
     actions.push(
       actionButton(t("friends.accept"), () => void respond(rel.id, "accept", list)),
@@ -195,7 +217,17 @@ export function openFriendsList(): void {
   (dialog.querySelector(".close") as HTMLButtonElement).focus();
 
   void window.hyaecord.listRelationships().then(rels => {
-    relationships = rels;
+    const stoatFriends: RelationshipSummary[] = isStoatReady()
+      ? getStoatFriends().map(f => ({
+          id: f.id,
+          type: RELATIONSHIP_FRIEND,
+          username: f.username,
+          globalName: f.displayName,
+          avatar: f.avatar,
+          platform: "stoat" as const
+        }))
+      : [];
+    relationships = [...rels, ...stoatFriends];
     renderList(list);
   });
 }

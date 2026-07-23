@@ -106,6 +106,42 @@ export function applyMemberListUpdate(data: unknown): void {
   render();
 }
 
+interface StoatMemberEntry {
+  userId: string;
+  nickname: string | null;
+  avatar: string | null;
+  username: string;
+  displayName: string | null;
+}
+
+/**
+ * Stoat's member list — deliberately flat (no online/offline/role
+ * grouping like Discord's lazy-guilds protocol above): Stoat's Ready
+ * payload gives a plain `members` array with no equivalent grouping
+ * metadata, so grouping here would mean inventing a scheme with nothing
+ * to verify it against.
+ */
+export function renderStoatMembers(members: StoatMemberEntry[]): void {
+  subscribedGuildId = null; // not a Discord subscription; keeps clearMemberList/beginSubscription from fighting this render
+  const list = document.getElementById("member-list")!;
+  list.replaceChildren();
+  if (members.length === 0) return;
+  list.append(el("h3", { className: "member-group-header" }, `${t("memberList.members")} — ${members.length}`));
+  for (const m of members) {
+    const name = m.nickname || m.displayName || m.username;
+    const avatar = m.avatar
+      ? el("img", { className: "member-avatar", src: m.avatar, alt: "", loading: "lazy" })
+      : el("span", { className: "member-avatar member-avatar-fallback", "aria-hidden": "true" }, name[0] ?? "?");
+    const row = el(
+      "button",
+      { type: "button", className: "member-row", title: name },
+      avatar,
+      el("span", { className: "member-name" }, name)
+    );
+    list.append(row);
+  }
+}
+
 function groupLabel(group: MemberGroup): string {
   if (group.id === "online") return t("memberList.online");
   if (group.id === "offline") return t("memberList.offline");

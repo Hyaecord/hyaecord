@@ -38,6 +38,17 @@ export function openBrowserLogin(): Promise<string | null> {
       loginSession.webRequest.onBeforeSendHeaders(null);
       resolve(token);
       if (!win.isDestroyed()) win.close();
+      // Closing this popup doesn't automatically bring the main window
+      // back to the front on Linux window managers — without this the
+      // owner had to click Hyaecord in the taskbar/panel manually every
+      // time after logging in (same fix as stoat/browser-login.ts).
+      for (const w of BrowserWindow.getAllWindows()) {
+        if (w !== win && !w.isDestroyed()) {
+          if (w.isMinimized()) w.restore();
+          w.show();
+          w.focus();
+        }
+      }
     };
 
     const win = new BrowserWindow({
