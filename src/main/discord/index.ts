@@ -268,6 +268,57 @@ export async function toggleEmbedSuppression(channelId: string, messageId: strin
   }
 }
 
+export interface PinSummary {
+  id: string;
+  channelId: string;
+  authorName: string;
+  authorId: string;
+  avatar: string | null;
+  content: string;
+  timestamp: string;
+  pinnedAt: string;
+}
+
+/** Powers the pinned-messages panel. */
+export async function listMessagePins(channelId: string): Promise<PinSummary[]> {
+  if (!rest) return [];
+  try {
+    const res = await rest.listMessagePins(channelId);
+    return res.items.map(item => ({
+      id: item.message.id,
+      channelId: item.message.channel_id,
+      authorName: item.message.author.global_name || item.message.author.username,
+      authorId: item.message.author.id,
+      avatar: item.message.author.avatar ?? null,
+      content: item.message.content,
+      timestamp: item.message.timestamp,
+      pinnedAt: item.pinned_at
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function pinMessage(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.pinMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function unpinMessage(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.unpinMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function toUserProfile(raw: RawUserProfile): UserProfile {
   return {
     id: raw.user.id,

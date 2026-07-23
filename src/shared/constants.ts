@@ -75,5 +75,8 @@ export const IPC = {
   discordBlockUser: "hyaecord:discord-block-user",
   discordRemoveRelationship: "hyaecord:discord-remove-relationship",
   getPluginCommands: "hyaecord:get-plugin-commands",
-  runPluginCommand: "hyaecord:run-plugin-command"
+  runPluginCommand: "hyaecord:run-plugin-command",
+  discordListMessagePins: "hyaecord:discord-list-message-pins",
+  discordPinMessage: "hyaecord:discord-pin-message",
+  discordUnpinMessage: "hyaecord:discord-unpin-message"
 } as const;

@@ -184,6 +184,26 @@ export class RestClient {
   }
 
   /**
+   * Real pinned-messages API — per docs.discord.food/resources/message:
+   * `GET /channels/{channel.id}/messages/pins` (the current, non-deprecated
+   * endpoint — the older `GET /channels/{channel.id}/pins` is explicitly
+   * marked deprecated there, so this uses the replacement, not the legacy
+   * one). Pin/unpin require MANAGE_MESSAGES in a guild channel, not in a DM
+   * (confirmed via the docs' own wording, not assumed).
+   */
+  listMessagePins(channelId: string): Promise<{ items: Array<{ pinned_at: string; message: RawMessage }>; has_more: boolean }> {
+    return this.request("GET", `/channels/${channelId}/messages/pins`);
+  }
+
+  pinMessage(channelId: string, messageId: string): Promise<void> {
+    return this.request("PUT", `/channels/${channelId}/messages/pins/${messageId}`);
+  }
+
+  unpinMessage(channelId: string, messageId: string): Promise<void> {
+    return this.request("DELETE", `/channels/${channelId}/messages/pins/${messageId}`);
+  }
+
+  /**
    * Per docs.discord.food/resources/message: `GET /guilds/{guild.id}/messages/search`
    * (guild-wide) and `GET /channels/{channel.id}/messages/search` (a single
    * private channel — used for DMs, which have no guild). Both share the

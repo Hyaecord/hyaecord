@@ -150,6 +150,9 @@ export interface HyaecordBridge {
   blockUser(userId: string): Promise<boolean>;
   /** Also used to decline an incoming request, cancel an outgoing one, or unblock. */
   removeRelationship(userId: string): Promise<boolean>;
+  listMessagePins(channelId: string): Promise<PinSummary[]>;
+  pinMessage(channelId: string, messageId: string): Promise<boolean>;
+  unpinMessage(channelId: string, messageId: string): Promise<boolean>;
   /** Name/description of every enabled plugin's registered slash commands — for the composer's autocomplete, merged with the built-in commands. */
   getPluginCommands(): Promise<Array<{ name: string; description: string }>>;
   /** Runs a plugin-registered command by name; returns the message content to send, or null if the command doesn't exist/declined to produce one. */
@@ -180,6 +183,17 @@ export interface RelationshipSummary {
   username: string;
   globalName: string | null;
   avatar: string | null;
+}
+
+export interface PinSummary {
+  id: string;
+  channelId: string;
+  authorName: string;
+  authorId: string;
+  avatar: string | null;
+  content: string;
+  timestamp: string;
+  pinnedAt: string;
 }
 
 export interface MessageSearchResult {

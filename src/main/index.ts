@@ -38,7 +38,10 @@ import {
   sendFriendRequest,
   acceptFriendRequest,
   blockUser,
-  removeRelationship
+  removeRelationship,
+  listMessagePins,
+  pinMessage,
+  unpinMessage
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -156,6 +159,9 @@ app.whenReady().then(() => {
   );
   ipcMain.handle(IPC.getPluginCommands, () => listPluginCommands());
   ipcMain.handle(IPC.runPluginCommand, (_e, name: string, args: string) => runPluginCommand(name, args));
+  ipcMain.handle(IPC.discordListMessagePins, (_e, channelId: string) => listMessagePins(channelId));
+  ipcMain.handle(IPC.discordPinMessage, (_e, channelId: string, messageId: string) => pinMessage(channelId, messageId));
+  ipcMain.handle(IPC.discordUnpinMessage, (_e, channelId: string, messageId: string) => unpinMessage(channelId, messageId));
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed

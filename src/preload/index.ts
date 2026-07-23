@@ -54,7 +54,10 @@ const bridge: HyaecordBridge = {
   blockUser: userId => ipcRenderer.invoke(IPC.discordBlockUser, userId),
   removeRelationship: userId => ipcRenderer.invoke(IPC.discordRemoveRelationship, userId),
   getPluginCommands: () => ipcRenderer.invoke(IPC.getPluginCommands),
-  runPluginCommand: (name, args) => ipcRenderer.invoke(IPC.runPluginCommand, name, args)
+  runPluginCommand: (name, args) => ipcRenderer.invoke(IPC.runPluginCommand, name, args),
+  listMessagePins: channelId => ipcRenderer.invoke(IPC.discordListMessagePins, channelId),
+  pinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordPinMessage, channelId, messageId),
+  unpinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordUnpinMessage, channelId, messageId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

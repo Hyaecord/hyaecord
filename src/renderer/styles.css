@@ -361,6 +361,72 @@ body {
   color: var(--text);
 }
 
+.pins-button {
+  position: absolute;
+  inset-inline-end: 2.85rem;
+  top: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.pins-button:hover,
+.pins-button:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.pins-panel {
+  position: fixed;
+  z-index: 60;
+  width: 360px;
+  max-height: 460px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.pins-panel-header {
+  padding: 0.7rem 0.9rem;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.pins-panel-list { overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.pins-panel-empty { color: var(--text-dim); padding: 1rem; margin: 0; text-align: center; }
+.pin-item {
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg-hover);
+}
+.pin-item-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+.pin-item-author { font-weight: 700; color: var(--text); }
+.pin-item-content {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  margin-bottom: 0.35rem;
+}
+.pin-item-unpin { font-size: 0.75rem; padding: 0.25rem 0.55rem; }
+
 .messages {
   flex: 1;
   overflow-y: auto;

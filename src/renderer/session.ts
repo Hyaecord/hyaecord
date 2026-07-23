@@ -10,6 +10,7 @@ import { openContextMenu, copyIdItem, mentionItem, userUrlItem, type ContextMenu
 import { openMessageSearch } from "./message-search";
 import { openFriendsList } from "./friends";
 import { tryExecuteSlashCommand, showSlashSuggestions, closeSlashSuggestions } from "./slash-commands";
+import { openPinsPanel } from "./pins";
 
 /**
  * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
@@ -46,6 +47,22 @@ function canToggleEmbeds(msg: MessageSummary): boolean {
   if (!activeGuildId) return false;
   const channel = guilds.find(g => g.id === activeGuildId)?.channels.find(ch => ch.id === msg.channelId);
   return channel ? hasPermission(channel.permissions, Permission.MANAGE_MESSAGES) : false;
+}
+
+/** Pin/unpin requires MANAGE_MESSAGES in a guild channel regardless of authorship — per docs.discord.food, unlike embed suppression this isn't author-exempt. DMs allow it unconditionally. */
+function pinItem(msg: MessageSummary): ContextMenuItem[] {
+  if (!canManageMessagesIn(msg.channelId)) return [];
+  return [
+    {
+      label: msg.pinned ? t("pins.unpin") : t("pins.pin"),
+      onClick: async () => {
+        const ok = msg.pinned
+          ? await window.hyaecord.unpinMessage(msg.channelId, msg.id)
+          : await window.hyaecord.pinMessage(msg.channelId, msg.id);
+        if (!ok) showToast(t("pins.actionFailed"));
+      }
+    }
+  ];
 }
 
 /**
@@ -124,6 +141,7 @@ interface MessageSummary {
   type: number;
   flags: number;
   hasEmbeds: boolean;
+  pinned: boolean;
 }
 
 let guilds: GuildSummary[] = [];
@@ -180,6 +198,19 @@ function wireMessageSearch(): void {
       jumpToChannel(activeGuildId, channelId)
     );
   });
+
+  const pinsButton = document.getElementById("pins-button") as HTMLButtonElement;
+  pinsButton.addEventListener("click", () => {
+    if (!activeChannelId) return;
+    openPinsPanel(pinsButton, activeChannelId, canManageMessagesIn(activeChannelId));
+  });
+}
+
+/** Own messages can always be pinned/unpinned in a DM; guild channels need MANAGE_MESSAGES regardless of authorship (matches docs.discord.food's real requirement — pin/unpin isn't author-exempt the way embed suppression is). */
+function canManageMessagesIn(channelId: string): boolean {
+  if (!activeGuildId) return true;
+  const channel = guilds.find(g => g.id === activeGuildId)?.channels.find(ch => ch.id === channelId);
+  return channel ? hasPermission(channel.permissions, Permission.MANAGE_MESSAGES) : false;
 }
 
 /**
@@ -934,6 +965,7 @@ function toSummary(raw: unknown): MessageSummary | null {
     type?: number;
     flags?: number;
     embeds?: unknown[];
+    pinned?: boolean;
     author?: { id?: string; username?: string; global_name?: string | null; avatar?: string | null };
   };
   if (!m?.id || !m.channel_id || !m.author?.id) return null;
@@ -947,7 +979,8 @@ function toSummary(raw: unknown): MessageSummary | null {
     timestamp: m.timestamp ?? "",
     type: m.type ?? 0,
     flags: m.flags ?? 0,
-    hasEmbeds: (m.embeds?.length ?? 0) > 0
+    hasEmbeds: (m.embeds?.length ?? 0) > 0,
+    pinned: m.pinned ?? false
   };
 }
 
@@ -1030,7 +1063,7 @@ function messageRow(msg: MessageSummary): HTMLElement {
       { id: msg.authorId, label: t("devMode.copyAuthorId") }
     ],
     msg.authorId,
-    () => suppressEmbedsItem(msg)
+    () => [...pinItem(msg), ...suppressEmbedsItem(msg)]
   );
   return row;
 }
