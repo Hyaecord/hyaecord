@@ -1,7 +1,7 @@
 import type { UserProfile } from "@shared/types";
 import { el, t } from "./ui";
 import { getPfpOverride, getBgOverride } from "./avatar-overrides";
-import { wireUserContextMenu } from "./context-menu";
+import { wireUserContextMenu, profileColorsItem } from "./context-menu";
 
 /**
  * The profile popout — click a username or avatar anywhere in the message
@@ -132,7 +132,7 @@ function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: str
     avatar,
     el("div", { className: "profile-identity" }, ...identityChildren)
   );
-  wireUserContextMenu(body, profile.id);
+  wireUserContextMenu(body, profile.id, () => (profile.themeColors ? [profileColorsItem(profile.themeColors)] : []));
   if (badges) body.append(badges);
   if (profile.bio) body.append(el("p", { className: "profile-bio" }, profile.bio));
   if (connections) body.append(connections);

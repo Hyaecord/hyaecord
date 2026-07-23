@@ -138,6 +138,8 @@
   "devMode.copiedMention": "Mention copied to clipboard.",
   "devMode.copyUserUrl": "Copy User URL",
   "devMode.copiedUserUrl": "User URL copied to clipboard.",
+  "devMode.copyProfileColors": "Copy Profile Colors",
+  "devMode.copiedProfileColors": "Profile colors copied to clipboard.",
   "feature.userPFP": "UserPFP",
   "feature.userPFP.description": "Show community profile pictures from the UserPFP database.",
   "feature.usrBG": "UsrBG",

@@ -152,6 +152,8 @@ export interface UserProfile {
   bot: boolean;
   bio: string | null;
   pronouns: string | null;
+  /** The profile's two real theme colours (Discord's premium-only gradient), as raw integers — null if unset. */
+  themeColors: [number, number] | null;
   banner: string | null;
   accentColor: number | null;
   badges: Array<{ id: string; description: string; icon: string; link?: string }>;

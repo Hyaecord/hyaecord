@@ -248,6 +248,7 @@ function toUserProfile(raw: RawUserProfile): UserProfile {
     bot: raw.user.bot ?? false,
     bio: raw.user_profile?.bio ?? null,
     pronouns: raw.user_profile?.pronouns ?? null,
+    themeColors: raw.user_profile?.theme_colors ?? null,
     banner: raw.banner ?? null,
     accentColor: raw.accent_color ?? null,
     badges: (raw.badges ?? []).map(b => ({ id: b.id, description: b.description, icon: b.icon, link: b.link })),

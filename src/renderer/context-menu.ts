@@ -112,18 +112,42 @@ export function userUrlItem(userId: string): ContextMenuItem {
 }
 
 /**
+ * Native reimplementation of Equicord's "CopyProfileColors" plugin (see
+ * PLUGIN_PARITY.md) — copies a profile's two real theme colours (Discord's
+ * actual `theme_colors` profile field, a premium-only gradient distinct
+ * from the older single `accent_color`; docs.discord.food/resources/user)
+ * as hex, in the original plugin's exact output format. Only offered when
+ * a profile actually has theme colours set — same "no dead UI" rule as
+ * everything else that's conditionally shown here.
+ */
+export function profileColorsItem(themeColors: [number, number]): ContextMenuItem {
+  const [primary, secondary] = themeColors.map(c => c.toString(16).padStart(6, "0"));
+  return {
+    label: t("devMode.copyProfileColors"),
+    onClick: () => {
+      void navigator.clipboard.writeText(`Primary-color #${primary}, Secondary-Color #${secondary}`);
+      showToast(t("devMode.copiedProfileColors"));
+    }
+  };
+}
+
+/**
  * Wires a right-click menu for anything representing a single user: Copy
  * Mention and Copy User URL are always present; Copy User ID is added on
  * top only when Developer Mode is on, matching Copy ID's behaviour
  * elsewhere. Use this for member rows, profile popouts, and anything else
  * that's *only* a user (not a message, which also has its own ID — see
- * session.ts's messageRow for that composed case).
+ * session.ts's messageRow for that composed case). `extra` appends more
+ * items when the caller has something specific to that target (e.g. the
+ * profile popout's Copy Profile Colors, only shown when a profile has
+ * theme colors set).
  */
-export function wireUserContextMenu(target: HTMLElement, userId: string): void {
+export function wireUserContextMenu(target: HTMLElement, userId: string, extra?: () => ContextMenuItem[]): void {
   target.addEventListener("contextmenu", ev => {
     ev.preventDefault();
     const items = [mentionItem(userId), userUrlItem(userId)];
     if (state.settings.developerMode) items.push(copyIdItem(userId, t("devMode.copyUserId")));
+    if (extra) items.push(...extra());
     openContextMenu(ev.clientX, ev.clientY, items);
   });
 }

@@ -185,6 +185,8 @@ export interface RawUserProfile {
   user_profile?: {
     bio?: string | null;
     pronouns?: string | null;
+    /** The user's two theme colours (premium-only gradient), per docs.discord.food/resources/user's Profile Metadata Object. */
+    theme_colors?: [number, number] | null;
   };
   badges?: Array<{ id: string; description: string; icon: string; link?: string }>;
   connected_accounts?: Array<{ type: string; id: string; name: string; verified: boolean }>;
