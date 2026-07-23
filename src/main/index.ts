@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import { join } from "node:path";
 import { IPC, PRODUCT_NAME } from "@shared/constants";
 import type { HyaecordSettings, MfaMethod } from "@shared/types";
@@ -48,6 +48,12 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 function createWindow(): void {
+  // No File/Edit/View/Window/Help bar — this is a Linux/Windows-only app (see
+  // BUILD_PROMPT.md platform targets) with its own in-app UI for everything
+  // that menu would offer, and the default Electron menu doesn't match any
+  // of Hyaecord's actual features.
+  Menu.setApplicationMenu(null);
+
   mainWindow = new BrowserWindow({
     title: PRODUCT_NAME,
     width: 1280,
