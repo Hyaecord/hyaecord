@@ -160,3 +160,16 @@ the moment they're actually built.
 6. ~~`unsuppressEmbeds`~~ — ✅ done, see Category A above.
 7. ~~Discord's own built-in text commands~~ — ✅ built: `/shrug`, `/tableflip`, `/unflip`, `/me` (`src/renderer/slash-commands.ts`), a small local composer autocomplete + transform system.
 8. ~~Plugin-facing slash-command registration~~ — ✅ built (`api.registerCommand`) directly following item 7, and used immediately by the `googleThat` port in Category A above rather than shipped speculatively.
+
+Every item that was here has shipped as of this pass. The next real
+frontier is **presence tracking outside an open guild's member list**
+(a global `PRESENCE_UPDATE` gateway listener, not just the
+per-subscription data `GUILD_MEMBER_LIST_UPDATE` already provides) —
+it's what's actually blocking `lastActive`/`pingNotifications` now
+(item 5 above), and it would also let the Friends list show real
+online status instead of no status at all. This is a standalone,
+non-trivial feature in its own right (global presence state, wired
+into both the Friends list and anywhere else a status dot could show),
+not a small hook — worth scoping deliberately before starting, same
+reasoning applied to every other "genuinely new feature area" in this
+document rather than backing into it via one more plugin.
