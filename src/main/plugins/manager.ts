@@ -23,6 +23,7 @@ export interface PluginInfo {
   error: string | null;
   settingsSchema: PluginDefinition["settings"];
   settingsValues: Record<string, boolean | number | string>;
+  portedFrom: PluginDefinition["portedFrom"] | null;
 }
 
 let plugins: LoadedPlugin[] = [];
@@ -126,7 +127,8 @@ export function listPlugins(): PluginInfo[] {
     enabled: p.enabled,
     error: p.error,
     settingsSchema: p.def.settings,
-    settingsValues: state[p.id]?.settings ?? {}
+    settingsValues: state[p.id]?.settings ?? {},
+    portedFrom: p.def.portedFrom ?? null
   }));
 }
 

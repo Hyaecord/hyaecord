@@ -201,6 +201,12 @@ export interface PluginInfo {
   error: string | null;
   settingsSchema?: Record<string, PluginSettingSchemaEntry>;
   settingsValues: Record<string, boolean | number | string>;
+  /** Set only for plugins that are a from-scratch reimplementation of an existing Equicord/Vencord plugin's behaviour — see PLUGIN_PARITY.md. Renders a dual-logo attribution badge. */
+  portedFrom: {
+    source: "equicord" | "vencord";
+    originalName: string;
+    url: string;
+  } | null;
 }
 
 export interface GamingModeState {

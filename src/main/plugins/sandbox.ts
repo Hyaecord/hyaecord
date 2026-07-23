@@ -45,11 +45,22 @@ export interface PluginRuntimeApi {
   onMessageCreate(fn: (message: unknown) => void): void;
 }
 
+export interface PortedFrom {
+  /** Which mod project the plugin's behaviour was ported/adapted from. */
+  source: "equicord" | "vencord";
+  /** The original plugin's name, if different from this port's `name`. */
+  originalName: string;
+  /** Link to the original plugin's source file, for attribution and to verify the port against. */
+  url: string;
+}
+
 export interface PluginDefinition {
   name: string;
   description: string;
   authors: string[];
   settings?: Record<string, SettingSchemaEntry>;
+  /** Set only when this plugin is a from-scratch reimplementation of an existing Equicord/Vencord plugin's behaviour against Hyaecord's own API — see PLUGIN_PARITY.md. Shows a dual-logo attribution badge in Settings. */
+  portedFrom?: PortedFrom;
   start?: (api: PluginRuntimeApi) => void;
   stop?: (api: PluginRuntimeApi) => void;
 }

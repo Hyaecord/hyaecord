@@ -52,6 +52,7 @@ commits, changes, chatting, or support.
 ### Ecosystem & Plugins
 
 - **A real plugin API**, sandboxed via Node `vm` with a restricted API surface — ergonomically modeled on Vencord's `definePlugin` shape so a simple message-hook plugin ports easily, but **not** a byte-compatible runner for existing Equicord/Vencord plugin files (those patch Discord's real webpack bundle, which this client's original GUI doesn't have). See [Plugin Guidelines](PLUGIN_GUIDELINES.md) and `src/main/plugins/` for exactly what's supported today.
+- **Bundled plugins ported from Equicord/Vencord**: TalkInReverse, WriteUpperCase, Signature, and PolishWording (partial) are real, from-scratch reimplementations of those plugins' behaviour, each shown in Settings with a dual-logo attribution badge linking back to the original. See [PLUGIN_PARITY.md](PLUGIN_PARITY.md) for a full audit of Equicord's entire 361-plugin catalogue — what's ported, what's plausible, and what's architecturally impossible and why.
 - **GlobalBadges, UserPFP, UsrBG, RPC Bridge**: all four are live, not just Settings toggles — real community-database avatar/banner overrides, and a real local Rich Presence socket for external apps. See the checklist below.
 - **Plugin policy:** Strict no-paywall rule with support for creator donation links. See [Plugin Guidelines](PLUGIN_GUIDELINES.md).
 
@@ -241,4 +242,5 @@ For rules regarding logos, branding, and third-party extensions, see:
 
 - [TRADEMARK.md](TRADEMARK.md) — Branding and trademark usage guidelines
 - [PLUGIN_GUIDELINES.md](PLUGIN_GUIDELINES.md) — Extension rules and monetization policy
+- [PLUGIN_PARITY.md](PLUGIN_PARITY.md) — Audit of Equicord/Vencord's plugin catalogue against what's feasible in Hyaecord's own plugin API
 - [assets/branding/LICENSE.md](assets/branding/LICENSE.md) — Brand assets are **not** covered by the source license; all rights reserved

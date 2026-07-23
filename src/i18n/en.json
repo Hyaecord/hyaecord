@@ -106,6 +106,8 @@
   "plugins.loading": "Loading plugins…",
   "plugins.empty": "No plugins found. Drop a .js file into your Hyaecord plugins folder to add one — see PLUGIN_GUIDELINES.md.",
   "plugins.by": "by {authors}",
+  "plugins.portedFrom": "Behaviour reimplemented from {source}'s \"{original}\" plugin against Hyaecord's own plugin API — not the original code, see PLUGIN_PARITY.md",
+  "plugins.portedFrom.short": "Ported from {source}",
   "settings.section.privacy": "Privacy",
   "settings.section.support": "Support the project",
   "settings.support": "Enjoying Hyaecord?",

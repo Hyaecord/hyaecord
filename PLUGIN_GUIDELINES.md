@@ -16,6 +16,12 @@ run here regardless of effort. See `src/main/plugins/sandbox.ts` for the
 exact API surface. To maintain a fair and safe ecosystem, all plugins
 submitted to or bundled with Hyaecord must adhere to these guidelines.
 
+See `PLUGIN_PARITY.md` for a real, plugin-by-plugin audit of Equicord's
+full catalogue (all 361 Vencord + Equicord-exclusive plugins) against
+what's actually feasible here — which ones have already been ported,
+which are plausible future ports, and which are architecturally
+impossible and why, rather than a guess or a blanket claim either way.
+
 ## 1. No Paywalls or Commercial Features
 
 * **100% free access:** Plugins must provide all functionality free of

@@ -181,6 +181,31 @@ function pluginSettingRow(pluginId: string, key: string, plugin: PluginInfo): HT
   );
 }
 
+/**
+ * A dual-logo badge for plugins that are a from-scratch reimplementation of
+ * an existing Equicord/Vencord plugin's behaviour (see PLUGIN_PARITY.md) —
+ * shows the source project's icon and Hyaecord's own icon side by side, so
+ * it's visually clear the code was adapted, not vendored unmodified.
+ */
+function portedFromBadge(portedFrom: PluginInfo["portedFrom"]): HTMLElement | string {
+  if (!portedFrom) return "";
+  const sourceLabel = portedFrom.source === "equicord" ? "Equicord" : "Vencord";
+  return el(
+    "a",
+    {
+      className: "plugin-attribution",
+      href: portedFrom.url,
+      target: "_blank",
+      rel: "noreferrer",
+      title: t("plugins.portedFrom", { source: sourceLabel, original: portedFrom.originalName })
+    },
+    el("span", { className: `plugin-attribution-logo plugin-attribution-logo-${portedFrom.source}`, "aria-hidden": "true" }),
+    el("span", { className: "plugin-attribution-plus", "aria-hidden": "true" }, "+"),
+    el("span", { className: "plugin-attribution-logo plugin-attribution-logo-hyaecord", "aria-hidden": "true" }),
+    el("span", { className: "plugin-attribution-label" }, t("plugins.portedFrom.short", { source: sourceLabel }))
+  );
+}
+
 function pluginRow(plugin: PluginInfo): HTMLElement {
   const toggle = el("input", { type: "checkbox", className: "switch-input" }) as HTMLInputElement;
   toggle.checked = plugin.enabled;
@@ -194,7 +219,8 @@ function pluginRow(plugin: PluginInfo): HTMLElement {
     el("span", { className: "row-text" },
       el("span", { className: "row-label" }, plugin.name),
       el("span", { className: "row-description" }, plugin.description || authors),
-      plugin.error ? el("span", { className: "row-description plugin-error" }, plugin.error) : ""
+      plugin.error ? el("span", { className: "row-description plugin-error" }, plugin.error) : "",
+      portedFromBadge(plugin.portedFrom)
     ),
     el("span", { className: "switch" }, toggle, el("span", { className: "switch-thumb", "aria-hidden": "true" }))
   );
