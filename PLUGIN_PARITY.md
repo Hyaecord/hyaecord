@@ -109,7 +109,7 @@ per plugin if ever revisited, not a blanket unlock.
 - `streaks` — calls a live third-party API (`streaks.equicord.org`) with its own OAuth flow, not local computation (see Category B note above — this was mis-triaged from its description alone originally, corrected after reading the actual source)
 - `animalese`, `keyboardSounds`, `moyai`, `soggy`, `partyMode`, `snowfall`, `cursorBuddy` — audio/visual effects (no audio API, no arbitrary DOM overlay API in the sandbox)
 - `autoZipper`, `downloadAllAttachments` — filesystem access
-- `lastActive`, `pingNotifications` — read Discord's internal webpack stores (`RelationshipStore`, `UserGuildSettingsStore`, `PresenceStore`) for data Hyaecord's gateway parsing doesn't expose as a concept yet (there's no "friends list" anywhere in this app) — blocked on a missing data model, not sandbox restrictions specifically, but grouped here since the fix is "build a whole feature," same weight as the others in this category
+- `lastActive`, `pingNotifications` — read Discord's internal webpack stores (`RelationshipStore`, `UserGuildSettingsStore`, `PresenceStore`) for data that's now *partially* available: a real friends list exists (`src/renderer/friends.ts`, see "Next candidates" below), but `UserGuildSettingsStore` (mute state) and `PresenceStore` (online status) still aren't. Still blocked, just on a smaller remaining gap than before.
 
 ### Category D — needs UI Hyaecord doesn't have a hook for (not "impossible," just not built)
 Modals, custom settings panes beyond boolean/number/string, chat-bar
@@ -157,6 +157,6 @@ the moment they're actually built.
 2. ~~`silentMessageToggle`~~ — ✅ done, see Category B above.
 3. ~~Re-read `sendTimestamps` closely for a modal-free auto-replace path~~ — ✅ done, see the ported-plugins table above.
 4. ~~A plugin key-value store API addition~~ — ✅ built (`api.getData`/`api.setData`); the four plugins that motivated it didn't pan out on closer inspection (see Category B), but the primitive is real and available now.
-5. A "friends list" data model (parse Discord's real relationships from the gateway/REST) would unblock `lastActive`/`pingNotifications` — a genuinely new feature area, not a small extension, so scope it deliberately before starting rather than backing into it via one plugin port.
+5. ~~A "friends list" data model~~ — ✅ built (`src/renderer/friends.ts`, real relationships API, not the READY payload) as a standalone Friends feature in its own right, not just plugin plumbing — see README's checklist. `lastActive`/`pingNotifications` are now only blocked on presence/mute-state data, not the friends concept itself; still not unblocked outright, since Chomper's mute tracking is Hyaecord's own local model (item 16/21) and doesn't read `UserGuildSettingsStore`'s mute state the way the original plugins expect, and there's still no presence tracking outside an open guild's member list.
 6. ~~`unsuppressEmbeds`~~ — ✅ done, see Category A above.
 7. Slash-command registration is now the single biggest lever left — it alone would unblock `googleThat` and several others across the full 361-plugin list that weren't itemized individually here, not just one plugin. Worth scoping as its own feature before picking off more one-plugin-at-a-time wins.
