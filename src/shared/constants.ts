@@ -1,4 +1,5 @@
-export const APP_ID = "org.hyaecord.Hyaecord";
+/** io.github.* namespace: no dedicated Hyaecord domain is owned yet, so this is the ID Flathub can verify against the GitHub org without separate domain-ownership proof. */
+export const APP_ID = "io.github.Hyaecord.Hyaecord";
 export const PRODUCT_NAME = "Hyaecord";
 
 export const DEFAULT_SETTINGS = {

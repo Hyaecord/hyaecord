@@ -56,8 +56,8 @@ Never reference ramp steps directly in component code — reference these:
 | `--border` | `#3a3325` | `#d4d7dc` | `#2a2416` | hairlines, outlines |
 | `--text` | `#f2f3f5` | `#060607` | `#f2f3f5` | primary text |
 | `--text-dim` | `#949ba4` | `#5c5e66` | `#949ba4` | secondary text |
-| `--accent` | `#e8a962` | `#653e05` | `#e8a962` | default-theme accent, focus rings |
-| `--accent-strong` | `#f5cc9f` | `#302110` | `#f5cc9f` | links, emphasized accent text |
+| `--accent` | `#e8a962` | `#835000` | `#e8a962` | default-theme accent, focus rings |
+| `--accent-strong` | `#f5cc9f` | `#653e05` | `#f5cc9f` | links, emphasized accent text |
 | `--danger` | `#fb5760` | `#a82231` | `#fb5760` | destructive, errors |
 | `--danger-text` | `#ff9593` | `#a82231` | `#ff9593` | error copy on base surfaces |
 
@@ -68,7 +68,7 @@ Never reference ramp steps directly in component code — reference these:
 Notes on why these work:
 
 - **Prefer near-black/near-white over pure black-on-white where the choice is ours** — 21:1 contrast causes halation for astigmatic readers (a large minority) — but the client's light theme deliberately breaks this rule to match Discord's own light theme exactly (`#060607` text on `#ffffff`, ~19:1), because "looks like Discord's light mode" was an explicit requirement and users already tolerate that choice in the app they're switching from.
-- **The accent shifts per theme, same as before, just with a different base hue.** Amber-300 (`#e8a962`) reads well on dark (8.6:1) but is too light for body-text size on white. Light mode substitutes amber-700 (`#653e05`, 9.4:1 on white). Same principle as the earlier teal remapping — this per-theme swap is the single most common thing naive theming gets wrong, brand hue or not.
+- **The accent shifts per theme, same as before, just with a different base hue.** Amber-300 (`#e8a962`) reads well on dark (8.6:1) but is too light for body-text size on white. Light mode substitutes amber-600 (`#835000`, 6.7:1 on white) — amber-700/900 were tried first and technically passed with more headroom, but read as flat brown rather than gold at that darkness; amber-600 is the lightest step that still clears 4.5:1 with real margin. Same principle as the earlier teal remapping — this per-theme swap is the single most common thing naive theming gets wrong, brand hue or not.
 - **AMOLED is not "dark but blacker".** True-black base for OLED power savings, but raised surfaces still step up in lightness, otherwise nothing has edges.
 
 ### 2.4 Verified contrast (computed, WCAG 2.x)
@@ -83,11 +83,11 @@ Notes on why these work:
 | white on red-600 button | 7.09 | AAA |
 | text on white (light) | 20.25 | AAA |
 | dim text on white (light) | 6.47 | AA |
-| accent amber-700 text on white (light) | 9.36 | AAA |
+| accent amber-600 text on white (light) | 6.75 | AA |
 | red-600 link on white (light) | 7.15 | AAA |
 | text on black (AMOLED) | 18.91 | AAA |
 | focus ring amber-300 on bg-deep (dark) | 9.07 | ≥3:1 non-text |
-| focus ring amber-700 on bg-deep (light) | 7.41 | ≥3:1 non-text |
+| focus ring amber-600 on bg-deep (light) | 5.35 | ≥3:1 non-text |
 
 **Rules derived from the numbers:**
 

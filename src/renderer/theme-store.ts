@@ -1,5 +1,6 @@
 import type { CommunityTheme } from "@shared/types";
 import { el, patchSettings, showToast, state, t, trapFocus } from "./ui";
+import { buildThemePreview, resolveBaseThemeTokens } from "./theme-preview";
 
 const ISSUE_TEMPLATE_URL =
   "https://github.com/Hyaecord/hyaecord/issues/new?template=theme_submission.yml";
@@ -74,13 +75,7 @@ function renderList(container: HTMLElement, themes: CommunityTheme[]): void {
 
 function themeCard(theme: CommunityTheme | null): HTMLElement {
   const isActive = theme ? state.settings.communityTheme?.id === theme.id : !state.settings.communityTheme;
-  const swatches = theme
-    ? el("div", { className: "theme-swatches" },
-        ...(["bgBase", "accent", "text", "danger"] as const).map(key =>
-          el("span", { className: "theme-swatch", style: `background:${theme.tokens[key]}` })
-        )
-      )
-    : el("div", { className: "theme-swatches theme-swatch-none" }, "—");
+  const preview = buildThemePreview(theme ? theme.tokens : resolveBaseThemeTokens());
 
   const button = el(
     "button",
@@ -89,7 +84,7 @@ function themeCard(theme: CommunityTheme | null): HTMLElement {
       className: isActive ? "theme-card is-active" : "theme-card",
       onClick: () => void applyTheme(theme)
     },
-    swatches,
+    preview,
     el("span", { className: "theme-card-name" }, theme ? theme.name : t("themeStore.none")),
     theme ? el("span", { className: "theme-card-author" }, t("themeStore.byAuthor", { author: theme.author })) : ""
   );

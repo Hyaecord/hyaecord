@@ -73,8 +73,8 @@
   --border: #d4d7dc;
   --text: #060607;
   --text-dim: #5c5e66;
-  --accent: var(--amber-700);
-  --accent-strong: var(--amber-900);
+  --accent: var(--amber-600);
+  --accent-strong: var(--amber-700);
   --danger: var(--red-600);
   --danger-text: var(--red-600);
   --danger-solid: var(--red-600);
@@ -917,12 +917,12 @@ body {
 .moderator-bar .count { flex: 1; color: var(--text-dim); font-size: 0.88rem; }
 
 /* ---------- Theme Store ---------- */
-.modal.theme-store { width: min(560px, calc(100vw - 2rem)); }
+.modal.theme-store { width: min(720px, calc(100vw - 2rem)); }
 .theme-store-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.7rem;
-  max-height: 18rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.8rem;
+  max-height: 24rem;
   overflow-y: auto;
   padding: 0.25rem 0.1rem;
 }
@@ -931,7 +931,7 @@ body {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.4rem;
-  padding: 0.7rem;
+  padding: 0.6rem;
   border: 2px solid var(--border);
   border-radius: var(--radius-m);
   background: var(--bg-raise);
@@ -944,16 +944,62 @@ body {
 .theme-card.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .theme-card-name { font-weight: 600; font-size: 0.88rem; }
 .theme-card-author { color: var(--text-dim); font-size: 0.78rem; }
-.theme-swatches { display: flex; gap: 0.2rem; }
-.theme-swatch { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(0, 0, 0, 0.15); }
-.theme-swatch-none {
-  color: var(--text-dim);
-  font-size: 0.78rem;
-  height: 16px;
-  display: flex;
-  align-items: center;
-}
 .theme-store-footer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* Live theme mockup — see theme-preview.ts. Its own tp-* custom properties
+   are scoped to this element so several previews with different themes can
+   render side by side without touching the page's real --accent etc. */
+.theme-preview {
+  width: 100%;
+  height: 110px;
+  display: flex;
+  border-radius: var(--radius-s);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--tp-bg-base);
+  font-size: 0.62rem;
+  pointer-events: none;
+}
+.tp-rail {
+  width: 22px;
+  flex-shrink: 0;
+  background: var(--tp-bg-deep);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 0;
+}
+.tp-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--tp-bg-raise); }
+.tp-dot-accent { background: var(--tp-accent); border-radius: 30%; }
+.tp-main { flex: 1; display: flex; min-width: 0; }
+.tp-channels {
+  width: 56px;
+  flex-shrink: 0;
+  background: var(--tp-bg-base);
+  border-right: 1px solid var(--tp-border);
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.tp-channel { color: var(--tp-text-dim); padding: 2px 3px; border-radius: 3px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tp-channel.is-active { background: var(--tp-bg-hover); color: var(--tp-text); }
+.tp-chat {
+  flex: 1;
+  background: var(--tp-bg-base);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tp-msg { display: flex; gap: 4px; align-items: flex-start; }
+.tp-avatar { width: 14px; height: 14px; border-radius: 50%; background: var(--tp-bg-raise); flex-shrink: 0; margin-top: 1px; }
+.tp-avatar-accent { background: var(--tp-accent); }
+.tp-msg > div { display: flex; flex-direction: column; min-width: 0; }
+.tp-author { color: var(--tp-text); font-weight: 600; }
+.tp-text { color: var(--tp-text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ---------- rotating status text ---------- */
 .rotating-text { transition: opacity 180ms var(--ease-standard); }

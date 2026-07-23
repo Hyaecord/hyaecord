@@ -254,6 +254,5 @@ Owner direction: stop deferring the blocked backlog items — build the prerequi
 - hCaptcha solving for login (item 18/23) — still shows a clear "not supported yet" error rather than failing silently.
 - Server folders (item 24) are local-only — they don't read or write Discord's real protobuf `guild_folders` settings, so they won't show up in the official client or sync across devices. Round-tripping that proto format is future work if it's ever worth the risk.
 - The Hyaecord Contributor badge (item 26's remaining gap) needs a GitHub-login → Discord-ID mapping that doesn't exist yet — a data-curation decision for the project owner. Contributor badge animations and the lanyard-style tilt effect both wait on that specific badge existing.
-- Member list — ✅ shipped (23 July 2026), see item 29 below. Only the first 100 entries per channel (no further paging), and correlates events to subscriptions by guild_id rather than a verified channel-level id — see the note in `member-list.ts` for why, and revisit if the app ever needs more than one concurrent subscription.
 - Plugin numeric sliders remain blocked on the plugin settings UI, which doesn't exist yet (no plugin loader is built).
 - Mascot/logo design work remains with the project owner (still [OPEN] above).
