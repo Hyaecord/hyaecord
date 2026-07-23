@@ -252,7 +252,6 @@ Owner direction: stop deferring the blocked backlog items — build the prerequi
 - hCaptcha solving for login (item 18/23) — still shows a clear "not supported yet" error rather than failing silently.
 - Server folders (item 24) are local-only — they don't read or write Discord's real protobuf `guild_folders` settings, so they won't show up in the official client or sync across devices. Round-tripping that proto format is future work if it's ever worth the risk.
 - The Hyaecord Contributor badge (item 26's remaining gap) needs a GitHub-login → Discord-ID mapping that doesn't exist yet — a data-curation decision for the project owner. Contributor badge animations and the lanyard-style tilt effect both wait on that specific badge existing.
-- Avatar picker — ✅ shipped (23 July 2026), see item 28 below. Masonry GIF picker ✅ shipped, see item 27 above.
 - A real member list (the fourth rail column, `#member-list` in `index.html`, currently unpopulated) is still open — Discord's actual member sidebar is powered by the gateway's lazy `GUILD_MEMBER_LIST_UPDATE` (OP 14) protocol, which is materially more complex/less documented than anything built so far. Worth scoping carefully before starting rather than guessing at the request shape.
 - Plugin numeric sliders remain blocked on the plugin settings UI, which doesn't exist yet (no plugin loader is built).
 - Mascot/logo design work remains with the project owner (still [OPEN] above).
