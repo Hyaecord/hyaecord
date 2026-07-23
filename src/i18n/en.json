@@ -97,6 +97,7 @@
   "login.title": "Connect to Discord",
   "login.welcomeBody": "This opens Discord's own real login page — never a form of ours asking for your password. It includes Discord's own QR-code scan option too, right there on the page.",
   "login.withBrowser": "Log in with Discord",
+  "login.withStoat": "Log in with Stoat.chat",
   "login.error.cancelled": "Login window closed before finishing.",
   "login.vpnNotice": "Looks like you might be using a VPN. Discord's login sometimes throws up extra verification for VPN connections — if login gets stuck, try disabling it and retrying.",
   "login.vpnNotice.dismiss": "Got it",

@@ -20,7 +20,10 @@ import {
   selectStoatGuild,
   selectStoatChannel,
   sendStoatMessage,
-  stoatMessageRow
+  stoatMessageRow,
+  isStoatReady,
+  onStoatStateChange,
+  loginStoat
 } from "./stoat-session";
 
 /**
@@ -191,6 +194,7 @@ export function initSession(): void {
   setVoiceChannelNameResolver(resolveChannelName);
   initStoatSession();
   onStoatGuildsChanged(renderRail);
+  onStoatStateChange(() => updateLoginGate());
 }
 
 function resolveChannelName(channelId: string): string {
@@ -376,14 +380,30 @@ function applySession(session: DiscordSession): void {
     header.textContent = t("shell.status.loggedOut");
   }
 
-  if (session.state === "logged-out") {
-    showLogin();
-  } else if (session.state === "ready") {
-    hideLogin();
+  discordReady = session.state === "ready";
+  updateLoginGate();
+  if (session.state === "ready") {
     if (session.freshLogin && !freshLoginNoticeShown) {
       freshLoginNoticeShown = true;
       showFreshLoginNotice();
     }
+  }
+}
+
+let discordReady = false;
+
+/**
+ * The login overlay blocks the whole UI, so it should only show when
+ * *neither* platform is connected — logging into Stoat alone (with
+ * Discord still logged out) is a real, complete state now, not "half
+ * logged in". Both Discord's applySession() and the Stoat state listener
+ * (see initSession()) call this on every change.
+ */
+function updateLoginGate(): void {
+  if (discordReady || isStoatReady()) {
+    hideLogin();
+  } else {
+    showLogin();
   }
 }
 
@@ -1227,34 +1247,59 @@ function onMessageCreate(data: unknown): void {
  * but demoted to secondary links rather than the default screen. */
 
 /**
- * Login is browser-only by design: it opens the real discord.com/login page
- * in an embedded window rather than any form of ours, so there's nothing
- * here that could be mistaken for a phishing-shaped credential prompt and
- * nothing asking a user to trust this app with a pasted token. See
- * browser-login.ts / loginWithBrowser() for the actual implementation.
+ * Login is browser-only by design for both platforms: each button opens
+ * that platform's own real login page in an embedded window rather than
+ * any form of ours, so there's nothing here that could be mistaken for a
+ * phishing-shaped credential prompt and nothing asking a user to trust
+ * this app with a pasted token. See browser-login.ts / loginWithBrowser()
+ * (Discord) and stoat-session.ts / loginStoat() (Stoat).
+ *
+ * Shown whenever *neither* platform is connected (see updateLoginGate())
+ * — a real platform choice, not a Discord screen with Stoat bolted on
+ * somewhere else. Logging into either one dismisses this; the other
+ * platform stays connectable later from Settings → Accounts.
  */
 function showLogin(): void {
   if (loginOverlay) return;
 
-  const browserError = el("p", { className: "login-error", role: "alert" });
-  const browserButton = el(
+  const discordError = el("p", { className: "login-error", role: "alert" });
+  const discordButton = el(
     "button",
     {
       className: "btn primary login-big-btn",
       type: "button",
       onClick: async () => {
-        browserError.textContent = "";
-        browserButton.setAttribute("disabled", "");
+        discordError.textContent = "";
+        discordButton.setAttribute("disabled", "");
         const result = await window.hyaecord.discordLoginBrowser();
-        browserButton.removeAttribute("disabled");
+        discordButton.removeAttribute("disabled");
         if (!result.ok && result.error !== "cancelled") {
-          browserError.textContent = t(`login.error.${result.error}`);
+          discordError.textContent = t(`login.error.${result.error}`);
         } else if (result.ok && result.persisted === false) {
           showToast(t("login.sessionOnly"));
         }
       }
     },
     t("login.withBrowser")
+  ) as HTMLButtonElement;
+
+  const stoatError = el("p", { className: "login-error", role: "alert" });
+  const stoatButton = el(
+    "button",
+    {
+      className: "btn login-big-btn",
+      type: "button",
+      onClick: async () => {
+        stoatError.textContent = "";
+        stoatButton.setAttribute("disabled", "");
+        const result = await loginStoat();
+        stoatButton.removeAttribute("disabled");
+        if (!result.ok && result.error !== "cancelled") {
+          stoatError.textContent = result.error ?? t("login.error.network");
+        }
+      }
+    },
+    t("login.withStoat")
   ) as HTMLButtonElement;
 
   const vpnNotice = el("div", { className: "login-vpn-notice", hidden: true });
@@ -1277,8 +1322,9 @@ function showLogin(): void {
     { className: "login-body" },
     el("p", { className: "modal-subtitle" }, t("login.welcomeBody")),
     vpnNotice,
-    browserButton,
-    browserError
+    el("div", { className: "login-platform-row" }, discordButton, stoatButton),
+    discordError,
+    stoatError
   );
   const dialog = el(
     "div",
@@ -1288,7 +1334,7 @@ function showLogin(): void {
   );
   loginOverlay = el("div", { className: "overlay" }, dialog);
   document.body.append(loginOverlay);
-  browserButton.focus();
+  discordButton.focus();
 }
 
 function hideLogin(): void {

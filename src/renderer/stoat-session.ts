@@ -42,6 +42,8 @@ let activeGuildId: string | null = null;
 let activeChannelId: string | null = null;
 let selfUserId: string | null = null;
 let stateChangeListeners = new Set<() => void>();
+let currentState: StoatSession["state"] = "logged-out";
+let sessionListeners = new Set<(state: StoatSession["state"]) => void>();
 
 export function onStoatGuildsChanged(cb: () => void): () => void {
   stateChangeListeners.add(cb);
@@ -50,6 +52,16 @@ export function onStoatGuildsChanged(cb: () => void): () => void {
 
 export function getStoatGuilds(): StoatGuildSummary[] {
   return guilds;
+}
+
+export function isStoatReady(): boolean {
+  return currentState === "ready";
+}
+
+/** Fires whenever the Stoat connection state changes (login gate logic in session.ts listens for this alongside Discord's own state). */
+export function onStoatStateChange(cb: (state: StoatSession["state"]) => void): () => void {
+  sessionListeners.add(cb);
+  return () => sessionListeners.delete(cb);
 }
 
 export function getActiveStoatChannel(): { guildId: string | null; channelId: string | null } {
@@ -89,6 +101,18 @@ function onReady(data: unknown): void {
 export function initStoatSession(): void {
   window.hyaecord.onStoatEvent((event, data) => {
     if (event === "READY") onReady(data);
+  });
+  window.hyaecord.onStoatState(session => {
+    currentState = session.state;
+    if (session.state !== "ready") {
+      guilds = [];
+      stateChangeListeners.forEach(cb => cb());
+    }
+    sessionListeners.forEach(cb => cb(session.state));
+  });
+  void getStoatSessionState().then(session => {
+    currentState = session.state;
+    sessionListeners.forEach(cb => cb(session.state));
   });
 }
 

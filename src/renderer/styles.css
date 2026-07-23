@@ -289,6 +289,11 @@ body {
   margin-bottom: 0.6rem;
   padding: 0.85rem;
 }
+.login-platform-row {
+  display: flex;
+  flex-direction: column;
+}
+.login-platform-row .login-big-btn { margin-bottom: 0.6rem; }
 .login-vpn-notice {
   background: var(--bg-hover);
   border: 1px solid var(--border);
