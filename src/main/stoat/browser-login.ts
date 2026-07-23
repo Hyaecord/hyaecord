@@ -9,6 +9,17 @@ import { BrowserWindow, session } from "electron";
  * Stoat's own published OpenAPI spec, stoat.chat/api/openapi.json — not
  * guessed), an observation made at the Electron layer, not by touching
  * the page's content.
+ *
+ * Watches `stoat.chat/*` broadly, not just `api.stoat.chat/*`: the
+ * OpenAPI spec itself is served from `stoat.chat/api/openapi.json`, a
+ * strong signal the production web client calls its API through a
+ * same-origin `/api/*` proxy path rather than the cross-origin
+ * `api.stoat.chat` host directly — matching only the latter meant the
+ * token-bearing request never matched the filter at all, so the window
+ * just sat there as an ordinary logged-in Stoat tab Hyaecord never
+ * noticed. The header-presence check (not the URL match) is still what
+ * actually triggers completion, so the broader filter doesn't change
+ * what counts as "logged in", only which requests get inspected.
  */
 export function openBrowserLogin(): Promise<string | null> {
   return new Promise(resolve => {
@@ -38,7 +49,7 @@ export function openBrowserLogin(): Promise<string | null> {
       }
     });
 
-    loginSession.webRequest.onBeforeSendHeaders({ urls: ["https://api.stoat.chat/*"] }, (details, callback) => {
+    loginSession.webRequest.onBeforeSendHeaders({ urls: ["https://api.stoat.chat/*", "https://stoat.chat/*"] }, (details, callback) => {
       const token = details.requestHeaders["x-session-token"] ?? details.requestHeaders["X-Session-Token"];
       if (token && token.length > 10) finish(token);
       callback({ requestHeaders: details.requestHeaders });
