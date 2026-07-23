@@ -1,6 +1,7 @@
 import type { ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
 import { renderRail } from "./session";
+import { openThemeStore } from "./theme-store";
 
 const REPO_URL = "https://github.com/Hyaecord/hyaecord";
 
@@ -113,7 +114,16 @@ export function openSettings(): void {
     ),
     el("div", { className: "settings-scroll" },
       section("settings.section.appearance",
-        selectRow("settings.theme", themeOptions, s.theme, value => void patchSettings({ theme: value as ThemeId }))
+        selectRow("settings.theme", themeOptions, s.theme, value => void patchSettings({ theme: value as ThemeId })),
+        el("div", { className: "setting-row" },
+          el("span", { className: "row-text" },
+            el("span", { className: "row-label" }, t("settings.communityTheme")),
+            el("span", { className: "row-description" },
+              s.communityTheme ? t("themeStore.applied", { name: s.communityTheme.name }) : t("settings.communityTheme.description")
+            )
+          ),
+          el("button", { className: "btn", type: "button", onClick: openThemeStore }, t("settings.communityTheme.browse"))
+        )
       ),
       section("settings.section.accessibility",
         selectRow("settings.reducedMotion", [

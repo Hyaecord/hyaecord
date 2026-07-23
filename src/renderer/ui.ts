@@ -38,6 +38,30 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+/** CSS custom property names a community theme is allowed to override — nothing else. */
+const COMMUNITY_TOKEN_PROPS: Record<string, string> = {
+  bgDeep: "--bg-deep",
+  bgBase: "--bg-base",
+  bgRaise: "--bg-raise",
+  bgHover: "--bg-hover",
+  border: "--border",
+  text: "--text",
+  textDim: "--text-dim",
+  accent: "--accent",
+  accentStrong: "--accent-strong",
+  danger: "--danger"
+};
+
+function applyCommunityTheme(): void {
+  const theme = state.settings.communityTheme;
+  const root = document.documentElement;
+  for (const [key, prop] of Object.entries(COMMUNITY_TOKEN_PROPS)) {
+    const value = theme?.tokens[key as keyof typeof theme.tokens];
+    if (value) root.style.setProperty(prop, value);
+    else root.style.removeProperty(prop);
+  }
+}
+
 export function applySettingsToDocument(): void {
   const { settings, prefersDark } = state;
   const resolved =
@@ -50,6 +74,7 @@ export function applySettingsToDocument(): void {
   } else {
     document.documentElement.dataset.reducedMotion = settings.reducedMotion;
   }
+  applyCommunityTheme();
 }
 
 export async function patchSettings(patch: Partial<HyaecordSettings>): Promise<void> {

@@ -1,0 +1,49 @@
+name: Community theme submission
+description: Submit a colour theme for the in-client Theme Store
+title: "[Theme] "
+labels: ["theme-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for making a Hyaecord theme! A maintainer reviews submissions for
+        readability (WCAG AA contrast — see [DESIGN.md](https://github.com/Hyaecord/hyaecord/blob/main/DESIGN.md))
+        and then adds it to `community-themes/registry.json` via a small PR.
+        You can also open that PR yourself if you're comfortable with GitHub —
+        see `community-themes/README.md` for the exact format.
+  - type: input
+    id: name
+    attributes:
+      label: Theme name
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Your name or handle (credited in the picker)
+    validations:
+      required: true
+  - type: textarea
+    id: tokens
+    attributes:
+      label: Colour tokens
+      description: |
+        Hex values for each token. All ten are required — the picker applies
+        them as a full set, not a partial override.
+      placeholder: |
+        bgDeep: #0a1929
+        bgBase: #0f2436
+        bgRaise: #15304a
+        bgHover: #1c3d5c
+        border: #254a6e
+        text: #e3f2fd
+        textDim: #90a4b8
+        accent: #4fc3f7
+        accentStrong: #81d4fa
+        danger: #ff6b6b
+    validations:
+      required: true
+  - type: input
+    id: preview
+    attributes:
+      label: Screenshot or preview link (optional but helps review go faster)

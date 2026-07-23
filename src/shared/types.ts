@@ -1,5 +1,25 @@
 export type ThemeId = "light" | "dark" | "amoled" | "system";
 
+export interface CommunityThemeTokens {
+  bgDeep: string;
+  bgBase: string;
+  bgRaise: string;
+  bgHover: string;
+  border: string;
+  text: string;
+  textDim: string;
+  accent: string;
+  accentStrong: string;
+  danger: string;
+}
+
+export interface CommunityTheme {
+  id: string;
+  name: string;
+  author: string;
+  tokens: CommunityThemeTokens;
+}
+
 export interface HyaecordSettings {
   theme: ThemeId;
   reducedMotion: "system" | "on" | "off";
@@ -29,6 +49,8 @@ export interface HyaecordSettings {
     /** When true, Chomper-hidden guilds are shown again and un-muted; toggling back off re-hides and re-mutes the same set. */
     showHidden: boolean;
   };
+  /** The applied community theme, cached in full so it still works offline; null = use the base theme (light/dark/amoled) untouched. */
+  communityTheme: CommunityTheme | null;
 }
 
 export interface DesktopEnvironmentInfo {
@@ -77,4 +99,5 @@ export interface HyaecordBridge {
   openExternal(url: string): Promise<void>;
   deleteChannel(channelId: string): Promise<boolean>;
   muteGuild(guildId: string, muted: boolean): Promise<boolean>;
+  getCommunityThemes(): Promise<CommunityTheme[]>;
 }

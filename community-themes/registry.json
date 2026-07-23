@@ -1,0 +1,36 @@
+[
+  {
+    "id": "midnight-ocean",
+    "name": "Midnight Ocean",
+    "author": "Hyaecord team",
+    "tokens": {
+      "bgDeep": "#0a1929",
+      "bgBase": "#0f2436",
+      "bgRaise": "#15304a",
+      "bgHover": "#1c3d5c",
+      "border": "#254a6e",
+      "text": "#e3f2fd",
+      "textDim": "#90a4b8",
+      "accent": "#4fc3f7",
+      "accentStrong": "#81d4fa",
+      "danger": "#ff6b6b"
+    }
+  },
+  {
+    "id": "evergreen",
+    "name": "Evergreen",
+    "author": "Hyaecord team",
+    "tokens": {
+      "bgDeep": "#122015",
+      "bgBase": "#182619",
+      "bgRaise": "#1f2f20",
+      "bgHover": "#283a29",
+      "border": "#37493a",
+      "text": "#eef3ea",
+      "textDim": "#a9b8a4",
+      "accent": "#7ed957",
+      "accentStrong": "#a3e883",
+      "danger": "#ff8080"
+    }
+  }
+]

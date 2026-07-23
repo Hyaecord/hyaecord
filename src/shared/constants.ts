@@ -25,7 +25,8 @@ export const DEFAULT_SETTINGS = {
   chomper: {
     hiddenGuildIds: [] as string[],
     showHidden: false
-  }
+  },
+  communityTheme: null
 } as const;
 
 export const TELEMETRY_ENDPOINT = "https://hyaecord.vercel.app/api/telemetry";
@@ -45,5 +46,6 @@ export const IPC = {
   discordSendMessage: "hyaecord:discord-send-message",
   discordDeleteChannel: "hyaecord:discord-delete-channel",
   discordMuteGuild: "hyaecord:discord-mute-guild",
-  openExternal: "hyaecord:open-external"
+  openExternal: "hyaecord:open-external",
+  getCommunityThemes: "hyaecord:get-community-themes"
 } as const;
