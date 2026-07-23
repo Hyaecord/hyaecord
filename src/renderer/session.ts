@@ -1,5 +1,6 @@
 import type { DiscordSession } from "@shared/types";
 import { el, mountRotatingText, t } from "./ui";
+import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -19,6 +20,8 @@ interface ChannelSummary {
   name: string;
   type: number;
   position: number;
+  /** Computed effective permissions for the logged-in user in this channel. */
+  permissions: bigint;
 }
 
 interface GuildSummary {
@@ -26,6 +29,15 @@ interface GuildSummary {
   name: string;
   icon: string | null;
   channels: ChannelSummary[];
+  /** True if the user can manage channels in *any* channel of this guild — gates Moderator View. */
+  canManageChannels: boolean;
+}
+
+interface DmSummary {
+  id: string;
+  /** Comma-joined recipient names; "?" for a DM with no recipients (shouldn't happen). */
+  name: string;
+  type: number;
 }
 
 interface MessageSummary {
@@ -39,10 +51,14 @@ interface MessageSummary {
 }
 
 let guilds: GuildSummary[] = [];
+let dms: DmSummary[] = [];
 let loginOverlay: HTMLElement | null = null;
 let activeChannelId: string | null = null;
+let activeGuildId: string | null = null;
+let selfUserId: string | null = null;
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
+const DM_TYPES = new Set([1, 3]);
 
 export function initSession(): void {
   window.hyaecord.onDiscordState(applySession);
@@ -121,27 +137,54 @@ function applySession(session: DiscordSession): void {
 /* ---------- READY → guild rail + channels ---------- */
 
 function onReady(data: unknown): void {
-  const raw = (data as { guilds?: unknown[] })?.guilds ?? [];
+  const payload = data as {
+    user?: { id?: string };
+    guilds?: unknown[];
+    private_channels?: unknown[];
+  };
+  selfUserId = payload.user?.id ?? selfUserId;
+
+  const raw = payload.guilds ?? [];
   guilds = raw.map(entry => {
     const g = entry as {
       id: string;
       name?: string;
       icon?: string | null;
       properties?: { name?: string; icon?: string | null };
-      channels?: Array<{ id: string; name?: string; type?: number; position?: number }>;
+      channels?: Array<{
+        id: string;
+        name?: string;
+        type?: number;
+        position?: number;
+        permission_overwrites?: Array<{ id?: string; type?: number; allow?: string; deny?: string }>;
+      }>;
     };
+    const channels: ChannelSummary[] = (g.channels ?? []).map(ch => ({
+      id: ch.id,
+      name: ch.name ?? "?",
+      type: ch.type ?? 0,
+      position: ch.position ?? 0,
+      permissions: selfUserId ? computeChannelPermissions(g, ch, selfUserId) : 0n
+    }));
     return {
       id: g.id,
       name: g.properties?.name ?? g.name ?? "?",
       icon: g.properties?.icon ?? g.icon ?? null,
-      channels: (g.channels ?? []).map(ch => ({
-        id: ch.id,
-        name: ch.name ?? "?",
-        type: ch.type ?? 0,
-        position: ch.position ?? 0
-      }))
+      channels,
+      canManageChannels: channels.some(ch => hasPermission(ch.permissions, Permission.MANAGE_CHANNELS))
     };
   });
+
+  dms = (payload.private_channels ?? []).map(entry => {
+    const d = entry as {
+      id: string;
+      type?: number;
+      recipients?: Array<{ global_name?: string | null; username?: string }>;
+    };
+    const names = (d.recipients ?? []).map(r => r.global_name ?? r.username ?? "?").join(", ");
+    return { id: d.id, type: d.type ?? 1, name: names || "?" };
+  });
+
   renderRail();
   const first = guilds[0];
   if (first) selectGuild(first.id);
@@ -149,8 +192,22 @@ function onReady(data: unknown): void {
 
 function renderRail(): void {
   const rail = document.getElementById("server-rail")!;
-  rail.querySelectorAll(".server-pill").forEach(pill => pill.remove());
+  rail.querySelectorAll(".server-pill, .dm-pill").forEach(pill => pill.remove());
   const settingsButton = rail.querySelector(".settings-button");
+
+  const dmPill = el(
+    "button",
+    {
+      className: "server-pill dm-pill",
+      type: "button",
+      title: t("shell.directMessages"),
+      "aria-label": t("shell.directMessages"),
+      onClick: selectDms
+    },
+    "💬"
+  );
+  rail.insertBefore(dmPill, settingsButton);
+
   for (const guild of guilds) {
     const pill = el("button", {
       className: "server-pill",
@@ -179,13 +236,45 @@ function renderRail(): void {
   }
 }
 
+function markActivePill(guildId: string | null): void {
+  document.querySelectorAll<HTMLElement>(".server-pill").forEach(pill => {
+    const isDm = pill.classList.contains("dm-pill");
+    pill.setAttribute("aria-current", isDm ? String(guildId === null) : String(pill.dataset.guild === guildId));
+  });
+}
+
+function selectDms(): void {
+  activeGuildId = null;
+  markActivePill(null);
+  document.getElementById("server-header")!.textContent = t("shell.directMessages");
+
+  const list = document.getElementById("channels")!;
+  list.replaceChildren();
+  for (const dm of dms) {
+    const li = el("li", { tabindex: "0", "data-channel": dm.id }, dm.name);
+    const select = () => {
+      list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
+      li.setAttribute("aria-current", "true");
+      document.getElementById("chat-header")!.textContent = dm.name;
+      const input = document.getElementById("composer-input") as HTMLInputElement;
+      input.placeholder = t("shell.chat.placeholder").replace("#general", dm.name);
+      activeChannelId = dm.id;
+      void loadMessages(dm.id);
+    };
+    li.addEventListener("click", select);
+    li.addEventListener("keydown", ev => {
+      if ((ev as KeyboardEvent).key === "Enter") select();
+    });
+    list.append(li);
+  }
+}
+
 function selectGuild(id: string): void {
   const guild = guilds.find(g => g.id === id);
   if (!guild) return;
 
-  document.querySelectorAll<HTMLElement>(".server-pill").forEach(pill => {
-    pill.setAttribute("aria-current", pill.dataset.guild === id ? "true" : "false");
-  });
+  activeGuildId = id;
+  markActivePill(id);
   document.getElementById("server-header")!.textContent = guild.name;
 
   const list = document.getElementById("channels")!;
@@ -210,6 +299,10 @@ function selectGuild(id: string): void {
     });
     list.append(li);
   }
+}
+
+export function getActiveGuild(): GuildSummary | null {
+  return guilds.find(g => g.id === activeGuildId) ?? null;
 }
 
 /* ---------- messages ---------- */

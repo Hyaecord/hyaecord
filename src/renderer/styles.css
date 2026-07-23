@@ -155,6 +155,7 @@ body {
   border-radius: inherit;
   object-fit: cover;
 }
+.server-rail .dm-pill { font-size: 1.2rem; margin-bottom: 0.4rem; }
 .server-rail .server-pill[aria-current="true"] {
   border-color: var(--accent);
   border-radius: var(--radius-m);

@@ -4,6 +4,7 @@
   "shell.channels": "Channels",
   "shell.members": "Members",
   "shell.chat.placeholder": "Message #general",
+  "shell.directMessages": "Direct Messages",
   "shell.status.connecting.0": "Connecting…",
   "shell.status.connecting.1": "Waking up the den…",
   "shell.status.connecting.2": "Talking to Discord…",
