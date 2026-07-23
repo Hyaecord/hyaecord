@@ -63,6 +63,10 @@ export class RestClient {
   deleteChannel(channelId: string): Promise<void> {
     return this.request("DELETE", `/channels/${channelId}`);
   }
+
+  setGuildMuted(guildId: string, muted: boolean): Promise<void> {
+    return this.request("PATCH", `/users/@me/guilds/${guildId}/settings`, { muted });
+  }
 }
 
 export interface RawMessage {

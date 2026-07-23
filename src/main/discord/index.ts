@@ -168,3 +168,14 @@ export async function deleteChannel(channelId: string): Promise<boolean> {
     return false;
   }
 }
+
+/** Used by Server Chomper. */
+export async function muteGuild(guildId: string, muted: boolean): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.setGuildMuted(guildId, muted);
+    return true;
+  } catch {
+    return false;
+  }
+}

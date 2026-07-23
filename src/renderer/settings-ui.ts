@@ -1,5 +1,6 @@
 import type { ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
+import { renderRail } from "./session";
 
 const REPO_URL = "https://github.com/Hyaecord/hyaecord";
 
@@ -140,6 +141,19 @@ export function openSettings(): void {
         toggleRow("settings.telemetry", "settings.telemetry.description", s.telemetry.enabled, next =>
           void patchSettings({ telemetry: { ...state.settings.telemetry, enabled: next } })
         )
+      ),
+      section("settings.section.chomper",
+        el("p", { className: "row-description" }, t("settings.chomper.count", { count: s.chomper.hiddenGuildIds.length })),
+        toggleRow("settings.chomper.showHidden", "settings.chomper.showHidden.description", s.chomper.showHidden, async next => {
+          await patchSettings({ chomper: { ...state.settings.chomper, showHidden: next } });
+          // Toggling the visibility override also flips the mute state of
+          // every guild Chomper is tracking — showing them again means
+          // un-muting, hiding them again re-mutes the same set.
+          for (const guildId of state.settings.chomper.hiddenGuildIds) {
+            void window.hyaecord.muteGuild(guildId, !next);
+          }
+          renderRail();
+        })
       ),
       section("settings.section.support", starRepoButton())
     )

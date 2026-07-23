@@ -23,6 +23,12 @@ export interface HyaecordSettings {
     /** Random UUID, no link to any Discord identity; regenerated if cleared */
     anonId: string | null;
   };
+  chomper: {
+    /** Guild IDs swiped away by Server Chomper — hidden client-side, muted server-side. */
+    hiddenGuildIds: string[];
+    /** When true, Chomper-hidden guilds are shown again and un-muted; toggling back off re-hides and re-mutes the same set. */
+    showHidden: boolean;
+  };
 }
 
 export interface DesktopEnvironmentInfo {
@@ -70,4 +76,5 @@ export interface HyaecordBridge {
   sendMessage(channelId: string, content: string): Promise<boolean>;
   openExternal(url: string): Promise<void>;
   deleteChannel(channelId: string): Promise<boolean>;
+  muteGuild(guildId: string, muted: boolean): Promise<boolean>;
 }

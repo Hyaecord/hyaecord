@@ -21,6 +21,10 @@ export const DEFAULT_SETTINGS = {
   telemetry: {
     enabled: true,
     anonId: null
+  },
+  chomper: {
+    hiddenGuildIds: [] as string[],
+    showHidden: false
   }
 } as const;
 
@@ -40,5 +44,6 @@ export const IPC = {
   discordFetchMessages: "hyaecord:discord-fetch-messages",
   discordSendMessage: "hyaecord:discord-send-message",
   discordDeleteChannel: "hyaecord:discord-delete-channel",
+  discordMuteGuild: "hyaecord:discord-mute-guild",
   openExternal: "hyaecord:open-external"
 } as const;

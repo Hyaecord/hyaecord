@@ -156,6 +156,8 @@ body {
   object-fit: cover;
 }
 .server-rail .dm-pill { font-size: 1.2rem; margin-bottom: 0.4rem; }
+.server-rail .server-pill { touch-action: pan-y; }
+.server-rail .server-pill.chomper-restored { border-style: dashed; opacity: 0.75; }
 .server-rail .server-pill[aria-current="true"] {
   border-color: var(--accent);
   border-radius: var(--radius-m);
