@@ -150,6 +150,10 @@ export interface HyaecordBridge {
   blockUser(userId: string): Promise<boolean>;
   /** Also used to decline an incoming request, cancel an outgoing one, or unblock. */
   removeRelationship(userId: string): Promise<boolean>;
+  /** Name/description of every enabled plugin's registered slash commands — for the composer's autocomplete, merged with the built-in commands. */
+  getPluginCommands(): Promise<Array<{ name: string; description: string }>>;
+  /** Runs a plugin-registered command by name; returns the message content to send, or null if the command doesn't exist/declined to produce one. */
+  runPluginCommand(name: string, args: string): Promise<string | null>;
 }
 
 export interface UserProfile {

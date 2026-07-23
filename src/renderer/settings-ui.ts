@@ -3,6 +3,7 @@ import { burstParticles, el, holdToggleRow, patchSettings, showToast, state, t, 
 import { refreshChomperViews, getCurrentUser } from "./session";
 import { openThemeStore } from "./theme-store";
 import { loadAvatarOverrides } from "./avatar-overrides";
+import { refreshPluginCommands } from "./slash-commands";
 
 const MAX_AVATAR_BYTES = 8 * 1024 * 1024;
 
@@ -210,7 +211,9 @@ function pluginRow(plugin: PluginInfo): HTMLElement {
   const toggle = el("input", { type: "checkbox", className: "switch-input" }) as HTMLInputElement;
   toggle.checked = plugin.enabled;
   toggle.disabled = !!plugin.error;
-  toggle.addEventListener("change", () => void window.hyaecord.setPluginEnabled(plugin.id, toggle.checked));
+  toggle.addEventListener("change", () =>
+    void window.hyaecord.setPluginEnabled(plugin.id, toggle.checked).then(() => refreshPluginCommands())
+  );
 
   const authors = plugin.authors.length ? t("plugins.by", { authors: plugin.authors.join(", ") }) : "";
   const header = el(

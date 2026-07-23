@@ -52,7 +52,9 @@ const bridge: HyaecordBridge = {
   sendFriendRequest: username => ipcRenderer.invoke(IPC.discordSendFriendRequest, username),
   acceptFriendRequest: userId => ipcRenderer.invoke(IPC.discordAcceptFriendRequest, userId),
   blockUser: userId => ipcRenderer.invoke(IPC.discordBlockUser, userId),
-  removeRelationship: userId => ipcRenderer.invoke(IPC.discordRemoveRelationship, userId)
+  removeRelationship: userId => ipcRenderer.invoke(IPC.discordRemoveRelationship, userId),
+  getPluginCommands: () => ipcRenderer.invoke(IPC.getPluginCommands),
+  runPluginCommand: (name, args) => ipcRenderer.invoke(IPC.runPluginCommand, name, args)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

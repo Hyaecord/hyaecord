@@ -73,5 +73,7 @@ export const IPC = {
   discordSendFriendRequest: "hyaecord:discord-send-friend-request",
   discordAcceptFriendRequest: "hyaecord:discord-accept-friend-request",
   discordBlockUser: "hyaecord:discord-block-user",
-  discordRemoveRelationship: "hyaecord:discord-remove-relationship"
+  discordRemoveRelationship: "hyaecord:discord-remove-relationship",
+  getPluginCommands: "hyaecord:get-plugin-commands",
+  runPluginCommand: "hyaecord:run-plugin-command"
 } as const;

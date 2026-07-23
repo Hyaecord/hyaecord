@@ -249,7 +249,12 @@ function wireComposer(): void {
     if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
     closeSlashSuggestions();
     const original = input.value;
-    const content = tryExecuteSlashCommand(original) ?? original;
+    const result = await tryExecuteSlashCommand(original);
+    if (result.handled && result.content === null) {
+      input.value = ""; // a plugin command declined to produce a message
+      return;
+    }
+    const content = result.handled ? (result.content as string) : original;
     const silent = silentModeEnabled;
     input.value = "";
     if (silent) {

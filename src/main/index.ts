@@ -14,7 +14,7 @@ import { fetchUserPfpMap } from "./userpfp";
 import { fetchUserBgMap } from "./usrbg";
 import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
-import { loadPlugins, listPlugins, setPluginEnabled, setPluginSetting } from "./plugins/manager";
+import { loadPlugins, listPlugins, setPluginEnabled, setPluginSetting, listPluginCommands, runPluginCommand } from "./plugins/manager";
 import { startRpcBridge, stopRpcBridge } from "./rpc-bridge";
 import {
   initDiscord,
@@ -154,6 +154,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.setPluginSetting, (_e, id: string, key: string, value: boolean | number | string) =>
     setPluginSetting(id, key, value)
   );
+  ipcMain.handle(IPC.getPluginCommands, () => listPluginCommands());
+  ipcMain.handle(IPC.runPluginCommand, (_e, name: string, args: string) => runPluginCommand(name, args));
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed

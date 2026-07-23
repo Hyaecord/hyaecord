@@ -51,19 +51,51 @@ export const BUILT_IN_COMMANDS: SlashCommand[] = [
   }
 ];
 
-/** If `content` starts with a known "/command" (own word, i.e. followed by a space or end-of-string), returns the transformed message; otherwise returns null (unchanged, not a recognised command). */
-export function tryExecuteSlashCommand(content: string): string | null {
-  const match = content.match(/^\/(\S+)(?:\s+([\s\S]*))?$/);
-  if (!match) return null;
-  const [, name = "", rest = ""] = match;
-  const cmd = BUILT_IN_COMMANDS.find(c => c.name === name.toLowerCase());
-  return cmd ? cmd.transform(rest.trim()) : null;
+/**
+ * Plugin-registered commands (via `api.registerCommand`, see
+ * PLUGIN_GUIDELINES.md/sandbox.ts) merge into the same autocomplete and
+ * "/name" syntax as the built-ins above — the composer doesn't care which
+ * kind it's running. Fetched once at startup and cached; a plugin toggled
+ * on/off mid-session won't be reflected until `refreshPluginCommands()`
+ * is called again (wired from settings-ui.ts's plugin enable/disable
+ * handler) — a deliberate, small staleness window rather than an IPC
+ * round trip on every keystroke.
+ */
+let pluginCommands: Array<{ name: string; description: string }> = [];
+
+export async function refreshPluginCommands(): Promise<void> {
+  pluginCommands = await window.hyaecord.getPluginCommands();
 }
 
-/** Commands whose name starts with `query` (the text typed after "/" so far). */
-export function matchCommands(query: string): SlashCommand[] {
+export type SlashCommandResult = { handled: false } | { handled: true; content: string | null };
+
+/**
+ * If `content` starts with a known "/command" (own word, i.e. followed by
+ * a space or end-of-string), runs it. `handled: false` means it wasn't a
+ * recognised command at all — send the original text as-is. `handled:
+ * true, content: null` means a plugin command matched but explicitly
+ * declined to produce a message (same convention as onMessageSend's
+ * cancel-by-null) — don't send anything. Built-ins resolve locally;
+ * plugin commands round-trip to the main process where the plugin's
+ * function actually lives.
+ */
+export async function tryExecuteSlashCommand(content: string): Promise<SlashCommandResult> {
+  const match = content.match(/^\/(\S+)(?:\s+([\s\S]*))?$/);
+  if (!match) return { handled: false };
+  const [, name = "", rest = ""] = match;
+  const lower = name.toLowerCase();
+  const builtIn = BUILT_IN_COMMANDS.find(c => c.name === lower);
+  if (builtIn) return { handled: true, content: builtIn.transform(rest.trim()) };
+  if (pluginCommands.some(c => c.name === lower)) {
+    return { handled: true, content: await window.hyaecord.runPluginCommand(lower, rest.trim()) };
+  }
+  return { handled: false };
+}
+
+/** Commands whose name starts with `query` (the text typed after "/" so far) — built-ins first, then plugin commands. */
+export function matchCommands(query: string): Array<{ name: string; description: string }> {
   const q = query.toLowerCase();
-  return BUILT_IN_COMMANDS.filter(c => c.name.startsWith(q));
+  return [...BUILT_IN_COMMANDS, ...pluginCommands].filter(c => c.name.startsWith(q));
 }
 
 let suggestionsEl: HTMLElement | null = null;

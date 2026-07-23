@@ -6,6 +6,7 @@ import { initSession } from "./session";
 import { initModeratorView } from "./moderator";
 import { loadAvatarOverrides } from "./avatar-overrides";
 import { applyDirection } from "./rtl";
+import { refreshPluginCommands } from "./slash-commands";
 
 declare global {
   interface Window {
@@ -44,6 +45,7 @@ async function init(): Promise<void> {
   api.onPluginToast(showToast);
 
   void loadAvatarOverrides();
+  void refreshPluginCommands();
 
   renderChrome();
   mountSettingsButton();

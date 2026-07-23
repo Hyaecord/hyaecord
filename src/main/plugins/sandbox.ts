@@ -53,6 +53,17 @@ export interface PluginRuntimeApi {
    */
   getData(key: string): unknown;
   setData(key: string, value: unknown): void;
+  /**
+   * Registers a `/name` command in the composer's slash-command
+   * autocomplete (alongside Hyaecord's own built-ins — see
+   * slash-commands.ts). `execute` receives everything typed after the
+   * command name and returns the message content to send, or `null` to
+   * not send anything. Unlike message hooks, running a plugin command
+   * requires a main-process round trip from the renderer (the function
+   * itself never leaves this sandbox) — see manager.ts's
+   * runPluginCommand.
+   */
+  registerCommand(name: string, description: string, execute: (args: string) => string | null | Promise<string | null>): void;
 }
 
 export interface PortedFrom {

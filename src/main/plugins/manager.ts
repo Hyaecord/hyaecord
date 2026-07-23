@@ -4,6 +4,12 @@ import { join } from "node:path";
 import { evaluatePluginSource, PluginLoadError, type PluginDefinition, type PluginRuntimeApi } from "./sandbox";
 import { loadPluginState, savePluginState } from "./store";
 
+export interface PluginCommand {
+  name: string;
+  description: string;
+  execute: (args: string) => string | null | Promise<string | null>;
+}
+
 export interface LoadedPlugin {
   id: string;
   def: PluginDefinition;
@@ -12,6 +18,7 @@ export interface LoadedPlugin {
   api: PluginRuntimeApi;
   sendHooks: Array<(content: string, channelId: string) => string | null | Promise<string | null>>;
   createHooks: Array<(message: unknown) => void>;
+  commands: PluginCommand[];
 }
 
 export interface PluginInfo {
@@ -52,7 +59,8 @@ function buildApi(id: string, schema: PluginDefinition["settings"], state: () =>
       const current = map[id] ?? { enabled: false, settings: {}, data: {} };
       map[id] = { ...current, data: { ...current.data, [key]: value } };
       savePluginState(map);
-    }
+    },
+    registerCommand: (name, description, execute) => plugin().commands.push({ name, description, execute })
   };
 }
 
@@ -94,6 +102,7 @@ export function loadPlugins(onToast: (message: string) => void): void {
         error,
         sendHooks: [],
         createHooks: [],
+        commands: [],
         api: null as unknown as PluginRuntimeApi
       };
       entry.api = buildApi(id, def.settings, () => loadPluginState()[id]?.settings ?? {});
@@ -122,6 +131,7 @@ function stopPlugin(plugin: LoadedPlugin): void {
   }
   plugin.sendHooks = [];
   plugin.createHooks = [];
+  plugin.commands = [];
 }
 
 export function listPlugins(): PluginInfo[] {
@@ -200,4 +210,29 @@ export function runMessageCreateHooks(message: unknown): void {
       }
     }
   }
+}
+
+/** Powers the composer's slash-command autocomplete alongside the built-in commands — name/description only, the actual function stays in this process. */
+export function listPluginCommands(): Array<{ name: string; description: string }> {
+  const out: Array<{ name: string; description: string }> = [];
+  for (const plugin of plugins) {
+    if (!plugin.enabled) continue;
+    for (const cmd of plugin.commands) out.push({ name: cmd.name, description: cmd.description });
+  }
+  return out;
+}
+
+/** Runs a plugin-registered command by name (first enabled plugin that has it wins on a name collision). Returns null if no such command exists or it throws. */
+export async function runPluginCommand(name: string, args: string): Promise<string | null> {
+  for (const plugin of plugins) {
+    if (!plugin.enabled) continue;
+    const cmd = plugin.commands.find(c => c.name === name);
+    if (!cmd) continue;
+    try {
+      return await cmd.execute(args);
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
