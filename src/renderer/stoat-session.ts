@@ -1,5 +1,6 @@
 import type { StoatSession } from "@shared/types";
 import { el, t } from "./ui";
+import { applyTwemoji } from "./twemoji";
 
 /**
  * Stoat (formerly Revolt) session — a real, separate integration talking
@@ -141,6 +142,8 @@ export function stoatMessageRow(msg: StoatMessageSummary): HTMLElement {
   const avatar = msg.avatar
     ? el("img", { className: "msg-avatar", src: msg.avatar, alt: "", loading: "lazy" })
     : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
+  const content = el("p", { className: "msg-content" }, msg.content);
+  applyTwemoji(content);
   return el(
     "article",
     { className: "msg", "data-message": msg.id },
@@ -149,7 +152,7 @@ export function stoatMessageRow(msg: StoatMessageSummary): HTMLElement {
       "div",
       { className: "msg-body" },
       el("header", { className: "msg-meta" }, el("span", { className: "msg-author" }, msg.authorName)),
-      el("p", { className: "msg-content" }, msg.content)
+      content
     )
   );
 }

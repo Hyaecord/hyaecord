@@ -1,4 +1,5 @@
 import { el, t, trapFocus } from "./ui";
+import { icon } from "./icons";
 
 /**
  * Real camera/microphone device picker — standard
@@ -57,7 +58,7 @@ export function openDevicePicker(kind: "audioinput" | "videoinput", onPick: (dev
     { className: "modal device-picker-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "device-picker-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "device-picker-title" }, kind === "videoinput" ? t("devicePicker.titleCamera") : t("devicePicker.titleMic")),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     list
   );

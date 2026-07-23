@@ -1581,8 +1581,8 @@ body {
   background: var(--danger-solid);
   color: #fefefe;
   cursor: pointer;
-  transform: rotate(135deg);
-  font-size: 0.9rem;
+  display: grid;
+  place-items: center;
 }
 .voice-bar-disconnect:hover { filter: brightness(1.1); }
 
@@ -1644,3 +1644,22 @@ body {
 
 .voice-video-tests { display: flex; flex-direction: column; gap: 0.6rem; }
 .voice-video-buttons { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ---------- SVG chrome icons (see icons.ts) — replaces emoji-as-icon throughout the UI ---------- */
+.icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex-shrink: 0;
+  vertical-align: -0.15em;
+}
+.icon-settings { width: 1.3rem; height: 1.3rem; }
+
+/* ---------- Twemoji (see twemoji.ts) — replaces OS-font emoji rendering in message content ---------- */
+img.emoji {
+  width: 1.375em;
+  height: 1.375em;
+  vertical-align: -0.3em;
+  margin: 0 0.05em;
+  display: inline-block;
+}
+.emoji-tile img.emoji { width: 100%; height: 100%; margin: 0; }

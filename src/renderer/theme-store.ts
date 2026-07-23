@@ -1,6 +1,7 @@
 import type { CommunityTheme } from "@shared/types";
 import { el, patchSettings, showToast, state, t, trapFocus } from "./ui";
 import { buildThemePreview, resolveBaseThemeTokens, resolveMode } from "./theme-preview";
+import { icon } from "./icons";
 
 const ISSUE_TEMPLATE_URL =
   "https://github.com/Hyaecord/hyaecord/issues/new?template=theme_submission.yml";
@@ -27,7 +28,7 @@ export function openThemeStore(): void {
     { className: "modal theme-store", role: "dialog", "aria-modal": "true", "aria-labelledby": "theme-store-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "theme-store-title" }, t("themeStore.title")),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("p", { className: "modal-subtitle" }, t("themeStore.subtitle")),
     list,

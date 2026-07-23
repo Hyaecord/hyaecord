@@ -1,5 +1,6 @@
 import type { MessageSearchResult } from "@shared/types";
 import { el, t } from "./ui";
+import { applyTwemoji } from "./twemoji";
 
 /**
  * Message search, closing the last real gap in the README's "Search &
@@ -59,6 +60,8 @@ function renderResults(
     return;
   }
   for (const msg of result.messages) {
+    const contentEl = el("div", { className: "message-search-result-content" }, msg.content || t("messageSearch.noContent"));
+    applyTwemoji(contentEl);
     const row = el(
       "button",
       {
@@ -75,7 +78,7 @@ function renderResults(
         el("span", { className: "message-search-result-author" }, msg.authorName),
         el("span", { className: "message-search-result-channel" }, resolveChannelName(msg.channelId))
       ),
-      el("div", { className: "message-search-result-content" }, msg.content || t("messageSearch.noContent"))
+      contentEl
     );
     list.append(row);
   }

@@ -1,5 +1,6 @@
 import type { PinSummary } from "@shared/types";
 import { el, showToast, t } from "./ui";
+import { applyTwemoji } from "./twemoji";
 
 /**
  * The pinned-messages panel — closes the last real gap in the README's
@@ -30,12 +31,14 @@ function onEscape(ev: KeyboardEvent): void {
 
 function pinRow(pin: PinSummary, list: HTMLElement, channelId: string, canUnpin: boolean): HTMLElement {
   const time = pin.timestamp ? new Date(pin.timestamp).toLocaleDateString() : "";
+  const contentEl = el("p", { className: "pin-item-content" }, pin.content || t("messageSearch.noContent"));
+  applyTwemoji(contentEl);
   const children: (Node | string)[] = [
     el("div", { className: "pin-item-meta" },
       el("span", { className: "pin-item-author" }, pin.authorName),
       el("span", {}, time)
     ),
-    el("p", { className: "pin-item-content" }, pin.content || t("messageSearch.noContent"))
+    contentEl
   ];
   if (canUnpin) {
     children.push(

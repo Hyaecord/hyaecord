@@ -3,6 +3,7 @@ import { el, showToast, t, trapFocus } from "./ui";
 import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
 import { getPresenceStatus, onPresenceChange } from "./session";
+import { icon } from "./icons";
 
 /**
  * The Friends list — real friends/blocked-users API
@@ -174,7 +175,7 @@ export function openFriendsList(): void {
     { className: "modal friends-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "friends-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "friends-title" }, t("friends.title")),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("div", { className: "friend-add-row" }, usernameInput, addButton),
     el("p", { className: "step-hint friend-add-caution" }, t("friends.addCaution")),

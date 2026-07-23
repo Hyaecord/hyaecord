@@ -1,5 +1,6 @@
 import type { ScreenShareSource } from "@shared/types";
 import { el, t, trapFocus } from "./ui";
+import { icon } from "./icons";
 
 /**
  * Real screen/window source picker for screen sharing — Electron's actual
@@ -59,7 +60,7 @@ export function openScreenSharePicker(onPick: (source: ScreenShareSource) => voi
     { className: "modal share-source-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "share-source-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "share-source-title" }, t("screenShare.title")),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     grid
   );

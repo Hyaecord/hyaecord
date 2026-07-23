@@ -1,5 +1,6 @@
 import emojiGroups from "unicode-emoji-json/data-by-group.json";
 import { el, t } from "./ui";
+import { applyTwemoji } from "./twemoji";
 
 /**
  * A unicode emoji picker: category tabs + search over the real Unicode
@@ -56,6 +57,7 @@ function renderGrid(grid: HTMLElement, entries: EmojiEntry[], onPick: (emoji: st
       { type: "button", className: "emoji-tile", title: entry.name, "aria-label": entry.name, onClick: () => onPick(entry.emoji) },
       entry.emoji
     );
+    applyTwemoji(tile);
     grid.append(tile);
   }
 }

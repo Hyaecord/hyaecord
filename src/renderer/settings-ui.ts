@@ -8,6 +8,7 @@ import { refreshPluginCommands } from "./slash-commands";
 import { openDevicePicker } from "./device-picker";
 import { openScreenSharePicker } from "./screen-share-picker";
 import { openMediaPreview, openMicPreview } from "./media-preview";
+import { icon } from "./icons";
 
 const MAX_AVATAR_BYTES = 8 * 1024 * 1024;
 
@@ -408,7 +409,7 @@ export function mountSettingsButton(): void {
   const button = el(
     "button",
     { className: "settings-button", type: "button", "aria-label": t("settings.open"), title: t("settings.title"), onClick: openSettings },
-    "⚙"
+    icon("settings")
   );
   rail.append(button);
 }
@@ -482,7 +483,7 @@ export function openSettings(): void {
     { className: "modal settings", role: "dialog", "aria-modal": "true", "aria-labelledby": "settings-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "settings-title" }, t("settings.title")),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("div", { className: "settings-scroll" },
       section("settings.section.accounts", accountsSection()),

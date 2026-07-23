@@ -13,6 +13,8 @@ import { openFriendsList } from "./friends";
 import { tryExecuteSlashCommand, showSlashSuggestions, closeSlashSuggestions } from "./slash-commands";
 import { openPinsPanel } from "./pins";
 import { initVoiceUI, setVoiceChannelNameResolver } from "./voice-ui";
+import { icon } from "./icons";
+import { applyTwemoji } from "./twemoji";
 import {
   getStoatGuilds,
   onStoatGuildsChanged,
@@ -875,7 +877,7 @@ export function renderRail(): void {
       "aria-label": t("shell.directMessages"),
       onClick: selectDms
     },
-    "💬"
+    icon("message-circle")
   );
   rail.insertBefore(dmPill, settingsButton);
 
@@ -888,7 +890,7 @@ export function renderRail(): void {
       "aria-label": t("shell.friends"),
       onClick: () => openFriendsList()
     },
-    "👥"
+    icon("users")
   );
   rail.insertBefore(friendsPill, settingsButton);
 
@@ -1149,6 +1151,11 @@ function messageRow(msg: MessageSummary): HTMLElement {
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
+  // textContent path only — message content must never become HTML.
+  // applyTwemoji() operates on the resulting text nodes, not the raw
+  // string, so it can't reintroduce that risk (see twemoji.ts).
+  const content = el("p", { className: "msg-content" }, msg.content);
+  applyTwemoji(content);
   const row = el(
     "article",
     { className: "msg", "data-message": msg.id },
@@ -1159,7 +1166,7 @@ function messageRow(msg: MessageSummary): HTMLElement {
         el("time", { className: "msg-time" }, time)
       ),
       // textContent path only — message content must never become HTML
-      el("p", { className: "msg-content" }, msg.content)
+      content
     )
   );
   wireDevModeContextMenu(

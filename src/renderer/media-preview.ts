@@ -1,4 +1,5 @@
 import { el, t, trapFocus } from "./ui";
+import { icon } from "./icons";
 
 /**
  * A live local preview modal for a `MediaStream` — used by the camera and
@@ -26,7 +27,7 @@ export function openMediaPreview(stream: MediaStream, title: string): void {
     { className: "modal media-preview-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "media-preview-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "media-preview-title" }, title),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("div", { className: "media-preview-frame" }, video),
     el("p", { className: "step-hint" }, t("mediaPreview.note"))
@@ -79,7 +80,7 @@ export function openMicPreview(stream: MediaStream, title: string): void {
     { className: "modal media-preview-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "mic-preview-title" },
     el("div", { className: "settings-header" },
       el("h1", { id: "mic-preview-title" }, title),
-      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
+      el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("div", { className: "mic-meter-track" }, meterFill),
     el("p", { className: "step-hint" }, t("mediaPreview.micNote"))

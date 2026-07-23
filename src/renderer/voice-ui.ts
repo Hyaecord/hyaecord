@@ -1,5 +1,6 @@
 import type { VoiceState } from "@shared/types";
 import { el, t } from "./ui";
+import { icon } from "./icons";
 
 /**
  * The voice status bar — shows join/leave, real connection state, and who
@@ -49,7 +50,7 @@ function renderVoiceBar(voiceState: VoiceState): void {
   const disconnectButton = el(
     "button",
     { type: "button", className: "voice-bar-disconnect", "aria-label": t("voice.disconnect"), onClick: () => window.hyaecord.leaveVoiceChannel() },
-    "📞"
+    icon("phone-off")
   );
 
   bar.append(

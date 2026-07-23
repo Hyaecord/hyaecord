@@ -25,9 +25,11 @@
     "electron": "^33.2.0",
     "electron-builder": "^25.1.8",
     "esbuild": "^0.24.0",
+    "lucide-static": "^1.25.0",
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "@twemoji/api": "^17.0.3",
     "unicode-emoji-json": "^0.9.0",
     "ws": "^8.21.1"
   }
