@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = {
     hidden: [] as Array<{ id: string; type: "guild" | "dm" }>,
     showHidden: false
   },
+  serverFolders: [] as Array<{ id: string; name: string; color: string | null; guildIds: string[]; collapsed: boolean }>,
   communityTheme: null
 } as const;
 

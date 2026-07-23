@@ -49,6 +49,21 @@ export interface HyaecordSettings {
     /** When true, Chomper-hidden items are shown again and un-muted; toggling back off re-hides and re-mutes the same set. */
     showHidden: boolean;
   };
+  /**
+   * Server folders, purely client-side (Hyaecord's own settings, not synced
+   * to Discord's real account settings): real Discord stores these in the
+   * "Preloaded User Settings" protobuf, and round-tripping that format
+   * wasn't worth the risk of a bad write touching the account's actual
+   * settings while it's still just documentation-verified, not live-tested.
+   * Grouping/ordering here is local to this client only.
+   */
+  serverFolders: Array<{
+    id: string;
+    name: string;
+    color: string | null;
+    guildIds: string[];
+    collapsed: boolean;
+  }>;
   /** The applied community theme, cached in full so it still works offline; null = use the base theme (light/dark/amoled) untouched. */
   communityTheme: CommunityTheme | null;
 }

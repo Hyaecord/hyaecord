@@ -295,9 +295,260 @@ export function refreshChomperViews(): void {
   if (activeGuildId === null) selectDms();
 }
 
+/* ---------- Server folders: drag one server pill onto another to group them ----------
+ * Local to this client only — see the note on HyaecordSettings.serverFolders for why
+ * this doesn't round-trip Discord's real protobuf folder settings. Drag is a vertical
+ * gesture on the pill (orthogonal to Chomper's horizontal swipe-to-hide, so the same
+ * pointer sequence can commit to either one based on which axis actually moves first);
+ * there's also an explicit "Remove from folder" button on each folder member for
+ * keyboard/touch users, since drag-to-group itself has no non-pointer equivalent yet
+ * (same as Discord's own client).
+ */
+
+type ServerFolder = { id: string; name: string; color: string | null; guildIds: string[]; collapsed: boolean };
+
+const FOLDER_COLORS = ["#5865f2", "#57f287", "#fee75c", "#eb459e", "#ed4245", "#eb8e34"];
+
+function folderOf(guildId: string): ServerFolder | null {
+  return state.settings.serverFolders.find(f => f.guildIds.includes(guildId)) ?? null;
+}
+
+async function saveFolders(folders: ServerFolder[]): Promise<void> {
+  await patchSettings({ serverFolders: folders.filter(f => f.guildIds.length > 0) });
+}
+
+/** Merges `draggedId` into `targetId`'s folder, or creates a new one containing both. */
+async function groupGuilds(draggedId: string, targetId: string): Promise<void> {
+  if (draggedId === targetId) return;
+  const folders = state.settings.serverFolders.map(f => ({ ...f, guildIds: f.guildIds.filter(id => id !== draggedId) }));
+  const targetFolder = folders.find(f => f.guildIds.includes(targetId));
+  if (targetFolder) {
+    targetFolder.guildIds.push(draggedId);
+  } else {
+    folders.push({
+      id: `folder-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: "",
+      color: FOLDER_COLORS[Math.floor(Math.random() * FOLDER_COLORS.length)] ?? null,
+      guildIds: [targetId, draggedId],
+      collapsed: false
+    });
+  }
+  await saveFolders(folders);
+  renderRail();
+}
+
+async function removeFromFolder(guildId: string): Promise<void> {
+  const folders = state.settings.serverFolders.map(f => ({ ...f, guildIds: f.guildIds.filter(id => id !== guildId) }));
+  await saveFolders(folders);
+  renderRail();
+}
+
+async function toggleFolderCollapsed(folderId: string): Promise<void> {
+  const folders = state.settings.serverFolders.map(f => (f.id === folderId ? { ...f, collapsed: !f.collapsed } : f));
+  await saveFolders(folders);
+  renderRail();
+}
+
+async function renameFolder(folderId: string, name: string): Promise<void> {
+  const folders = state.settings.serverFolders.map(f => (f.id === folderId ? { ...f, name } : f));
+  await saveFolders(folders);
+}
+
+const FOLDER_DRAG_ACTIVATE_PX = 10;
+
+/** Wires a server pill for both Chomper's horizontal swipe-to-hide and vertical drag-to-group into a folder. */
+function wireRailPointer(target: HTMLElement, guild: GuildSummary): void {
+  let startX = 0;
+  let startY = 0;
+  let mode: "none" | "hide" | "group" = "none";
+  let dx = 0;
+  let hoverTarget: HTMLElement | null = null;
+
+  const clearHover = () => {
+    hoverTarget?.classList.remove("folder-drop-target");
+    hoverTarget = null;
+  };
+
+  target.addEventListener("pointerdown", ev => {
+    startX = ev.clientX;
+    startY = ev.clientY;
+    mode = "none";
+    dx = 0;
+    target.setPointerCapture(ev.pointerId);
+  });
+
+  target.addEventListener("pointermove", ev => {
+    const moveX = ev.clientX - startX;
+    const moveY = ev.clientY - startY;
+    if (mode === "none") {
+      if (Math.abs(moveX) < FOLDER_DRAG_ACTIVATE_PX && Math.abs(moveY) < FOLDER_DRAG_ACTIVATE_PX) return;
+      mode = Math.abs(moveX) > Math.abs(moveY) ? "hide" : "group";
+    }
+    if (mode === "hide") {
+      dx = moveX;
+      target.style.transform = `translateX(${dx}px)`;
+      target.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 140));
+    } else {
+      target.releasePointerCapture(ev.pointerId);
+      clearHover();
+      const under = document
+        .elementFromPoint(ev.clientX, ev.clientY)
+        ?.closest<HTMLElement>(".server-pill[data-guild], .server-folder-head");
+      if (under && under !== target) {
+        under.classList.add("folder-drop-target");
+        hoverTarget = under;
+      }
+    }
+  });
+
+  const end = () => {
+    if (mode === "hide") {
+      target.style.transform = "";
+      target.style.opacity = "";
+      if (Math.abs(dx) > CHOMPER_SWIPE_THRESHOLD) {
+        target.dataset.suppressClick = "true";
+        void chomperHide(guild.id, "guild", guild.name);
+      }
+    } else if (mode === "group" && hoverTarget) {
+      target.dataset.suppressClick = "true";
+      const targetGuildId = hoverTarget.dataset.guild;
+      const targetFolderId = hoverTarget.dataset.folder;
+      if (targetGuildId) void groupGuilds(guild.id, targetGuildId);
+      else if (targetFolderId) {
+        const folders = state.settings.serverFolders.map(f =>
+          f.id === targetFolderId ? { ...f, guildIds: [...f.guildIds.filter(id => id !== guild.id), guild.id] } : f
+        );
+        void saveFolders(folders).then(renderRail);
+      }
+    }
+    clearHover();
+    mode = "none";
+    dx = 0;
+  };
+  target.addEventListener("pointerup", end);
+  target.addEventListener("pointercancel", () => {
+    if (mode === "hide") {
+      target.style.transform = "";
+      target.style.opacity = "";
+    }
+    clearHover();
+    mode = "none";
+  });
+}
+
+function buildGuildPill(guild: GuildSummary, inFolder: ServerFolder | null): HTMLElement {
+  const pill = el("button", {
+    className: isChomperTracked(guild.id) ? "server-pill chomper-restored" : "server-pill",
+    type: "button",
+    title: guild.name,
+    "aria-label": guild.name,
+    "data-guild": guild.id,
+    onClick: () => {
+      if (pill.dataset.suppressClick) {
+        delete pill.dataset.suppressClick;
+        return;
+      }
+      selectGuild(guild.id);
+    }
+  });
+  wireRailPointer(pill, guild);
+  if (guild.icon) {
+    pill.append(
+      el("img", {
+        src: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=96`,
+        alt: "",
+        loading: "lazy"
+      })
+    );
+  } else {
+    pill.textContent = guild.name
+      .split(/\s+/)
+      .map(w => w[0] ?? "")
+      .join("")
+      .slice(0, 3);
+  }
+  if (inFolder) {
+    const removeBtn = el(
+      "button",
+      {
+        type: "button",
+        className: "folder-remove-btn",
+        title: t("serverFolders.remove", { name: guild.name }),
+        "aria-label": t("serverFolders.remove", { name: guild.name }),
+        onClick: (ev: Event) => {
+          ev.stopPropagation();
+          void removeFromFolder(guild.id);
+        }
+      },
+      "×"
+    );
+    return el("div", { className: "folder-member" }, pill, removeBtn);
+  }
+  return pill;
+}
+
+function buildFolderElement(folder: ServerFolder): HTMLElement {
+  const members = folder.guildIds.map(id => guilds.find(g => g.id === id)).filter((g): g is GuildSummary => !!g && !isChomperHidden(g.id));
+  if (members.length === 0) return el("div", {});
+
+  const head = el("button", {
+    type: "button",
+    className: "server-pill server-folder-head",
+    "data-folder": folder.id,
+    style: folder.color ? `border-color: ${folder.color};` : "",
+    title: folder.name || t("serverFolders.untitled"),
+    "aria-label": folder.name || t("serverFolders.untitled"),
+    "aria-expanded": String(!folder.collapsed),
+    onClick: () => void toggleFolderCollapsed(folder.id)
+  });
+  if (folder.collapsed) {
+    head.className += " is-collapsed";
+    head.append(
+      el(
+        "div",
+        { className: "folder-mini-grid" },
+        ...members.slice(0, 4).map(g =>
+          g.icon
+            ? el("img", { src: `https://cdn.discordapp.com/icons/${g.id}/${g.icon}.png?size=32`, alt: "", loading: "lazy" })
+            : el("span", { className: "folder-mini-initial" }, g.name[0] ?? "?")
+        )
+      )
+    );
+  } else {
+    head.textContent = "▾";
+  }
+
+  if (folder.collapsed) return head;
+
+  const nameLabel = el("span", { className: "folder-name", tabindex: "0", role: "button" }, folder.name || t("serverFolders.untitled"));
+  nameLabel.addEventListener("dblclick", () => {
+    const input = el("input", { className: "folder-name-input", value: folder.name }) as HTMLInputElement;
+    nameLabel.replaceWith(input);
+    input.focus();
+    input.select();
+    const commit = () => {
+      void renameFolder(folder.id, input.value.trim());
+      input.replaceWith(nameLabel);
+      nameLabel.textContent = input.value.trim() || t("serverFolders.untitled");
+    };
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", ev => {
+      if (ev.key === "Enter") input.blur();
+    });
+  });
+
+  return el(
+    "div",
+    { className: "server-folder is-expanded" },
+    head,
+    nameLabel,
+    ...members.map(g => buildGuildPill(g, folder))
+  );
+}
+
 export function renderRail(): void {
   const rail = document.getElementById("server-rail")!;
-  rail.querySelectorAll(".server-pill, .dm-pill").forEach(pill => pill.remove());
+  rail.querySelectorAll(".server-pill, .dm-pill, .server-folder").forEach(pill => pill.remove());
   const settingsButton = rail.querySelector(".settings-button");
 
   const dmPill = el(
@@ -313,39 +564,17 @@ export function renderRail(): void {
   );
   rail.insertBefore(dmPill, settingsButton);
 
+  const renderedFolders = new Set<string>();
   for (const guild of guilds) {
     if (isChomperHidden(guild.id)) continue;
-    const pill = el("button", {
-      className: isChomperTracked(guild.id) ? "server-pill chomper-restored" : "server-pill",
-      type: "button",
-      title: guild.name,
-      "aria-label": guild.name,
-      "data-guild": guild.id,
-      onClick: () => {
-        if (pill.dataset.suppressClick) {
-          delete pill.dataset.suppressClick;
-          return;
-        }
-        selectGuild(guild.id);
-      }
-    });
-    wireChomperDrag(pill, guild.id, "guild", guild.name);
-    if (guild.icon) {
-      pill.append(
-        el("img", {
-          src: `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.png?size=96`,
-          alt: "",
-          loading: "lazy"
-        })
-      );
-    } else {
-      pill.textContent = guild.name
-        .split(/\s+/)
-        .map(w => w[0] ?? "")
-        .join("")
-        .slice(0, 3);
+    const folder = folderOf(guild.id);
+    if (folder) {
+      if (renderedFolders.has(folder.id)) continue;
+      renderedFolders.add(folder.id);
+      rail.insertBefore(buildFolderElement(folder), settingsButton);
+      continue;
     }
-    rail.insertBefore(pill, settingsButton);
+    rail.insertBefore(buildGuildPill(guild, null), settingsButton);
   }
 }
 
