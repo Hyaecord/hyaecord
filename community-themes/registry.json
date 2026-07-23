@@ -143,5 +143,34 @@
       "accentStrong": "#0a5c4e",
       "danger": "#a82231"
     }
+  },
+  {
+    "id": "ermine",
+    "name": "Ermine",
+    "author": "Hyaecord team",
+    "dark": {
+      "bgDeep": "#171a21",
+      "bgBase": "#1e1f22",
+      "bgRaise": "#2b2d31",
+      "bgHover": "#35373c",
+      "border": "#3f4249",
+      "text": "#f2f3f5",
+      "textDim": "#b5bac1",
+      "accent": "#8ab4f8",
+      "accentStrong": "#4799f0",
+      "danger": "#f84848"
+    },
+    "light": {
+      "bgDeep": "#eef3fb",
+      "bgBase": "#f7f9fc",
+      "bgRaise": "#ffffff",
+      "bgHover": "#e6ecf5",
+      "border": "#d7e0ee",
+      "text": "#171a21",
+      "textDim": "#5b6472",
+      "accent": "#2b6fc7",
+      "accentStrong": "#1d55a3",
+      "danger": "#d03030"
+    }
   }
 ]
