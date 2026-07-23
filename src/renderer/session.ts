@@ -165,13 +165,40 @@ function wireChannelProximity(): void {
   });
 }
 
+/**
+ * Native reimplementation of Equicord's "SilentMessageToggle" — see
+ * PLUGIN_PARITY.md. The original prepends `"@silent "` to the message
+ * content, which only works because Discord's *own* official composer
+ * parses and strips that prefix client-side before building the request;
+ * a client that talks to the REST API directly (like this one) has to set
+ * the real thing instead — the SUPPRESS_NOTIFICATIONS message flag (see
+ * rest.ts's createMessage). Auto-disables after one send, matching the
+ * original's default `autoDisable: true` (no persistence option ported —
+ * this app has no per-channel/per-restart state store for it yet).
+ */
+let silentModeEnabled = false;
+
 function wireComposer(): void {
   const input = document.getElementById("composer-input") as HTMLInputElement;
+  const silentButton = document.getElementById("silent-toggle-button") as HTMLButtonElement;
+  silentButton.addEventListener("click", () => {
+    silentModeEnabled = !silentModeEnabled;
+    silentButton.classList.toggle("is-active", silentModeEnabled);
+    silentButton.setAttribute("aria-pressed", String(silentModeEnabled));
+    silentButton.title = silentModeEnabled ? t("composer.silentOn") : t("composer.silentOff");
+  });
+
   input.addEventListener("keydown", async ev => {
     if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
     const content = input.value;
+    const silent = silentModeEnabled;
     input.value = "";
-    const ok = await window.hyaecord.sendMessage(activeChannelId, content);
+    if (silent) {
+      silentModeEnabled = false;
+      silentButton.classList.remove("is-active");
+      silentButton.setAttribute("aria-pressed", "false");
+    }
+    const ok = await window.hyaecord.sendMessage(activeChannelId, content, silent);
     if (!ok) {
       input.value = content; // don't lose what they typed
     }

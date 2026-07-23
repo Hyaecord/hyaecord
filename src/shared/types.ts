@@ -117,7 +117,8 @@ export interface HyaecordBridge {
   onDiscordState(cb: (session: DiscordSession) => void): void;
   onDiscordEvent(cb: (event: string, data: unknown) => void): void;
   fetchMessages(channelId: string): Promise<unknown[]>;
-  sendMessage(channelId: string, content: string): Promise<boolean>;
+  /** `silent` sets Discord's real SUPPRESS_NOTIFICATIONS message flag — the recipient's client won't push/desktop-notify for this one message. */
+  sendMessage(channelId: string, content: string, silent?: boolean): Promise<boolean>;
   openExternal(url: string): Promise<void>;
   deleteChannel(channelId: string): Promise<boolean>;
   muteGuild(guildId: string, muted: boolean): Promise<boolean>;

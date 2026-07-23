@@ -87,7 +87,7 @@ text via something equivalent to `onBeforeMessageSend`.
 - `copyEmojiMarkdown`, `copyStickerLinks`, `copyProfileColors` — same "native context-menu item, not a plugin" shape as above, just not built yet: `copyEmojiMarkdown` and `copyStickerLinks` need a right-click target on rendered emoji/stickers in message content (not built — messages render as plain text today, no per-token interactivity); `copyProfileColors` needs the profile popout to expose a copyable value for its accent colour.
 
 ### Category B — needs a plugin-API extension that doesn't exist yet, but is a reasonable one to add
-- `silentMessageToggle` — Discord's real "send silently" is a message `flags` bit at POST time, not a content string. `rest.ts`'s `createMessage()` only takes `content` today; would need a `flags` param threaded through `sendMessage()` and a way for a plugin to set it (a new `onMessageSend` return shape, or a second hook) — a real, scoped API addition, not a rebuild.
+- ~~`silentMessageToggle`~~ — ✅ built, but as a **native composer feature**, not a plugin: the plugin API's `onMessageSend` can only transform the content *string*, and this needed to set the real `flags` field on the REST request (`SUPPRESS_NOTIFICATIONS`, `1 << 12`) — confirmed via docs.discord.food that this is genuine request-body surface, not the `"@silent "` content-prefix trick the original plugin uses (that trick only works because Discord's *own* official composer parses and strips it client-side before building the request; a client hitting the REST API directly, like this one, has to set the real flag). A 🔕 toggle button next to the composer sets it for the next message only, auto-disabling after send (matches the original's default `autoDisable: true`; its optional cross-channel/cross-restart persistence wasn't ported — no state store for it).
 - `sendTimestamps` — the useful core (typing `[3:00pm]` and having it become a real Discord `<t:...:t>` timestamp) is a content transform; the original's date-picker *modal* isn't portable (no modal API), but the auto-replace-on-send half might be, pending a closer read of the original's actual listener wiring (its `PickerModal` UI dominates the file; unclear yet whether there's also a plain regex auto-replace path independent of the modal).
 - `messageBurst`, `streaks`, `lastActive`, `pingNotifications` — need per-user/per-channel state persisted across messages (e.g. "have I DMed this person today"). `onMessageCreate` gives the raw events; the plugin API has no persistent structured storage beyond flat settings values today. Feasible with a small "plugin key-value store" API addition, not built yet.
 
@@ -139,6 +139,6 @@ the moment they're actually built.
 ## Next candidates, roughly in order of value vs effort
 
 1. ~~Native "Copy Mention" / "Copy User URL" context-menu items~~ — ✅ done, see Category A above.
-2. `silentMessageToggle` (Category B) — small, well-scoped `rest.ts`/`sendMessage()` flags extension.
+2. ~~`silentMessageToggle`~~ — ✅ done, see Category B above.
 3. Re-read `sendTimestamps` closely for a modal-free auto-replace path.
 4. A plugin key-value store API addition, unlocking the Category B "needs state across messages" group as a batch.

@@ -22,7 +22,7 @@ const bridge: HyaecordBridge = {
     ipcRenderer.on(IPC.discordEvent, (_e, event: string, data: unknown) => cb(event, data));
   },
   fetchMessages: channelId => ipcRenderer.invoke(IPC.discordFetchMessages, channelId),
-  sendMessage: (channelId, content) => ipcRenderer.invoke(IPC.discordSendMessage, channelId, content),
+  sendMessage: (channelId, content, silent) => ipcRenderer.invoke(IPC.discordSendMessage, channelId, content, silent),
   openExternal: url => ipcRenderer.invoke(IPC.openExternal, url),
   deleteChannel: channelId => ipcRenderer.invoke(IPC.discordDeleteChannel, channelId),
   muteGuild: (guildId, muted) => ipcRenderer.invoke(IPC.discordMuteGuild, guildId, muted),

@@ -191,13 +191,15 @@ export async function fetchMessages(channelId: string): Promise<RawMessage[]> {
   }
 }
 
-export async function sendMessage(channelId: string, content: string): Promise<boolean> {
+const SUPPRESS_NOTIFICATIONS_FLAG = 1 << 12;
+
+export async function sendMessage(channelId: string, content: string, silent = false): Promise<boolean> {
   if (!rest || !content.trim()) return false;
   const transformed = await runMessageSendHooks(content, channelId);
   if (transformed === null) return false; // a plugin cancelled the send
   if (!transformed.trim()) return false;
   try {
-    await rest.createMessage(channelId, transformed);
+    await rest.createMessage(channelId, transformed, silent ? SUPPRESS_NOTIFICATIONS_FLAG : undefined);
     return true;
   } catch {
     return false;

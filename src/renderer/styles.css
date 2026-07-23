@@ -671,6 +671,24 @@ body {
 }
 .emoji-picker-button:hover { border-color: var(--accent); }
 
+.silent-toggle-button {
+  flex-shrink: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  background: var(--bg-raise);
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.silent-toggle-button:hover { border-color: var(--accent); }
+.silent-toggle-button.is-active {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
 .emoji-picker {
   position: fixed;
   z-index: 60;

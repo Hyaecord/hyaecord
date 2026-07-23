@@ -56,8 +56,18 @@ export class RestClient {
     return this.request("GET", `/channels/${channelId}/messages?limit=${limit}`);
   }
 
-  createMessage(channelId: string, content: string): Promise<RawMessage> {
-    return this.request("POST", `/channels/${channelId}/messages`, { content });
+  /**
+   * `flags` is real Discord API surface — per docs.discord.food/resources/message,
+   * the message-create body accepts `flags`, and only SUPPRESS_EMBEDS,
+   * SUPPRESS_NOTIFICATIONS (1 << 12 = 4096, "send silently"), and
+   * VOICE_MESSAGE may be set this way. This is the actual REST-level
+   * mechanism — not the "@silent " content prefix some client mods use,
+   * which only works because it's parsed and stripped by Discord's own
+   * official composer before the request is built; a client that talks to
+   * the REST API directly (like this one) has to set the real flag.
+   */
+  createMessage(channelId: string, content: string, flags?: number): Promise<RawMessage> {
+    return this.request("POST", `/channels/${channelId}/messages`, flags ? { content, flags } : { content });
   }
 
   deleteChannel(channelId: string): Promise<void> {

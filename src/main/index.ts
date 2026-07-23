@@ -114,8 +114,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());
   ipcMain.handle(IPC.discordFetchMessages, (_e, channelId: string) => fetchMessages(channelId));
-  ipcMain.handle(IPC.discordSendMessage, (_e, channelId: string, content: string) =>
-    sendMessage(channelId, content)
+  ipcMain.handle(IPC.discordSendMessage, (_e, channelId: string, content: string, silent?: boolean) =>
+    sendMessage(channelId, content, silent)
   );
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
