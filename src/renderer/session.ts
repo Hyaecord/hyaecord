@@ -5,6 +5,21 @@ import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
+import { openContextMenu, copyIdItem } from "./context-menu";
+
+/**
+ * Wires Developer Mode's "Copy ID" right-click menu onto one element — a
+ * no-op (native browser context menu still shows) when the setting is
+ * off. Pass one `{ id, label }` per copyable ID the target represents
+ * (e.g. a message has both its own ID and its author's).
+ */
+function wireDevModeContextMenu(target: HTMLElement, entries: Array<{ id: string; label?: string }>): void {
+  target.addEventListener("contextmenu", ev => {
+    if (!state.settings.developerMode) return;
+    ev.preventDefault();
+    openContextMenu(ev.clientX, ev.clientY, entries.map(e => copyIdItem(e.id, e.label)));
+  });
+}
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -481,6 +496,7 @@ function buildGuildPill(guild: GuildSummary, inFolder: ServerFolder | null): HTM
     }
   });
   wireRailPointer(pill, guild);
+  wireDevModeContextMenu(pill, [{ id: guild.id, label: t("devMode.copyServerId") }]);
   if (guild.icon) {
     pill.append(
       el("img", {
@@ -647,6 +663,7 @@ function selectDms(): void {
       if ((ev as KeyboardEvent).key === "Enter") select();
     });
     wireChomperDrag(li, dm.id, "dm", dm.name);
+    wireDevModeContextMenu(li, [{ id: dm.id, label: t("devMode.copyChannelId") }]);
     list.append(li);
   }
 }
@@ -704,6 +721,7 @@ function selectGuild(id: string): void {
     li.addEventListener("keydown", ev => {
       if ((ev as KeyboardEvent).key === "Enter") select();
     });
+    wireDevModeContextMenu(li, [{ id: channel.id, label: t("devMode.copyChannelId") }]);
     list.append(li);
   }
 }
@@ -758,7 +776,7 @@ function messageRow(msg: MessageSummary): HTMLElement {
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
-  return el(
+  const row = el(
     "article",
     { className: "msg", "data-message": msg.id },
     avatar,
@@ -771,6 +789,11 @@ function messageRow(msg: MessageSummary): HTMLElement {
       el("p", { className: "msg-content" }, msg.content)
     )
   );
+  wireDevModeContextMenu(row, [
+    { id: msg.id, label: t("devMode.copyMessageId") },
+    { id: msg.authorId, label: t("devMode.copyAuthorId") }
+  ]);
+  return row;
 }
 
 async function loadMessages(channelId: string): Promise<void> {

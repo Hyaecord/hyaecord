@@ -8,6 +8,7 @@ const bridge: HyaecordBridge = {
     ipcRenderer.invoke(IPC.setSettings, patch),
   getDesktopEnvironment: () => ipcRenderer.invoke(IPC.getDesktopEnvironment),
   getLocaleStrings: () => ipcRenderer.invoke(IPC.getLocaleStrings),
+  getLocale: () => ipcRenderer.invoke(IPC.getLocale),
   onThemeChanged: cb => {
     ipcRenderer.on(IPC.themeChanged, (_e, prefersDark: boolean) => cb(prefersDark));
   },

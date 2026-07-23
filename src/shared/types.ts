@@ -29,6 +29,8 @@ export interface HyaecordSettings {
   uiScale: number;
   gamingMode: boolean;
   firstRunCompleted: boolean;
+  /** Discord's own real Developer Mode setting — adds "Copy ID" to right-click menus on servers/channels/messages/profiles. */
+  developerMode: boolean;
   integrations: {
     userPFP: boolean;
     usrBG: boolean;
@@ -107,6 +109,7 @@ export interface HyaecordBridge {
   setSettings(patch: Partial<HyaecordSettings>): Promise<HyaecordSettings>;
   getDesktopEnvironment(): Promise<DesktopEnvironmentInfo>;
   getLocaleStrings(): Promise<Record<string, string>>;
+  getLocale(): Promise<string>;
   onThemeChanged(cb: (prefersDark: boolean) => void): void;
   discordLoginBrowser(): Promise<LoginResult>;
   discordLogout(): Promise<void>;

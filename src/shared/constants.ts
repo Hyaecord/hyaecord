@@ -9,6 +9,8 @@ export const DEFAULT_SETTINGS = {
   uiScale: 1,
   gamingMode: false,
   firstRunCompleted: false,
+  /** Discord's own real Developer Mode setting — adds "Copy ID" to right-click menus on servers/channels/messages/profiles. Off by default, same as stock Discord. */
+  developerMode: false,
   integrations: {
     userPFP: true,
     usrBG: true,
@@ -38,6 +40,7 @@ export const IPC = {
   setSettings: "hyaecord:set-settings",
   getDesktopEnvironment: "hyaecord:get-de",
   getLocaleStrings: "hyaecord:get-locale",
+  getLocale: "hyaecord:get-locale-code",
   themeChanged: "hyaecord:theme-changed",
   discordLoginBrowser: "hyaecord:discord-login-browser",
   discordLogout: "hyaecord:discord-logout",

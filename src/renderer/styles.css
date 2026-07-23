@@ -98,6 +98,20 @@ body {
 }
 [data-reduced-motion="on"] { --dur-fast: 0ms; --dur-base: 0ms; --dur-slow: 0ms; }
 
+/* ---------- RTL ----------
+   Most of the layout is written with logical properties (border-inline-*,
+   text-align: start) so it mirrors automatically under [dir="rtl"] — see
+   rtl.ts, which sets that attribute from the resolved locale. The one
+   thing logical properties can't cover is a `transform: translateX()`
+   toggle-thumb slide, which needs an explicit flip: "on" still means
+   "slid toward the end", which is the opposite physical direction in
+   RTL. No RTL locale ships yet (only en.json exists), so this is
+   unverified against a real translation — verify visually against a
+   real RTL locale before assuming it's pixel-perfect, not just
+   direction-correct. */
+[dir="rtl"] .switch-btn.is-on .switch-thumb { transform: translateX(-18px); }
+[dir="rtl"] .switch-input:checked + .switch-thumb::after { transform: translateX(-18px); }
+
 .shell {
   display: grid;
   grid-template-columns: 72px 240px 1fr 240px;
@@ -207,7 +221,7 @@ body {
 .folder-remove-btn {
   position: absolute;
   top: -4px;
-  right: -4px;
+  inset-inline-end: -4px;
   width: 16px;
   height: 16px;
   border-radius: 50%;
@@ -252,7 +266,7 @@ body {
 .login-vpn-notice {
   background: var(--bg-hover);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
+  border-inline-start: 3px solid var(--accent);
   border-radius: var(--radius-s);
   padding: 0.6rem 0.8rem;
   font-size: 0.85rem;
@@ -264,7 +278,7 @@ body {
 .fresh-login-notice {
   background: var(--bg-hover);
   border-bottom: 1px solid var(--border);
-  border-left: 3px solid var(--danger);
+  border-inline-start: 3px solid var(--danger);
   padding: 0.6rem 1rem;
   font-size: 0.85rem;
   color: var(--text-dim);
@@ -273,7 +287,7 @@ body {
 
 .channel-list {
   background: var(--bg-base);
-  border-right: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -379,6 +393,34 @@ body {
   border-radius: var(--radius-l);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
   overflow: hidden;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 80;
+  min-width: 160px;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  padding: 0.3rem;
+  display: flex;
+  flex-direction: column;
+}
+.context-menu button {
+  background: none;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--radius-s);
+  cursor: pointer;
+}
+.context-menu button:hover,
+.context-menu button:focus-visible {
+  background: var(--bg-hover);
+  outline: none;
 }
 .profile-loading { padding: 1rem; color: var(--text-dim); margin: 0; }
 .profile-popout-body { display: flex; flex-direction: column; }
@@ -526,7 +568,7 @@ body {
 
 .member-list {
   background: var(--bg-base);
-  border-left: 1px solid var(--border);
+  border-inline-start: 1px solid var(--border);
   padding: 0.75rem;
   overflow-y: auto;
   color: var(--text-dim);
@@ -551,7 +593,7 @@ body {
   background: none;
   color: var(--text);
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
 .member-row:hover { background: var(--bg-hover); }
@@ -690,7 +732,7 @@ body {
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
-.settings-scroll { overflow-y: auto; padding-right: 0.25rem; }
+.settings-scroll { overflow-y: auto; padding-inline-end: 0.25rem; }
 .plugin-list { display: flex; flex-direction: column; }
 .plugin-card { border-bottom: 1px solid var(--border); padding-bottom: 0.4rem; }
 .plugin-card .setting-row { border-bottom: none; }
@@ -779,7 +821,7 @@ body {
 .switch-btn .switch-thumb {
   position: absolute;
   top: 1px;
-  left: 1px;
+  inset-inline-start: 1px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -823,7 +865,7 @@ body {
   content: "";
   position: absolute;
   top: 2px;
-  left: 2px;
+  inset-inline-start: 2px;
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -936,7 +978,7 @@ body {
   cursor: pointer;
   font: inherit;
   color: var(--text);
-  text-align: left;
+  text-align: start;
 }
 .theme-card:hover { border-color: var(--accent); }
 .theme-card.is-active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -975,7 +1017,7 @@ body {
   width: 56px;
   flex-shrink: 0;
   background: var(--tp-bg-base);
-  border-right: 1px solid var(--tp-border);
+  border-inline-end: 1px solid var(--tp-border);
   padding: 6px 4px;
   display: flex;
   flex-direction: column;

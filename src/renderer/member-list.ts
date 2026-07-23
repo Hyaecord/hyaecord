@@ -1,6 +1,7 @@
-import { el, t } from "./ui";
+import { el, state, t } from "./ui";
 import { openProfilePopout } from "./profile-popout";
 import { getPfpOverride } from "./avatar-overrides";
+import { openContextMenu, copyIdItem } from "./context-menu";
 
 /**
  * The member-list sidebar, driven by Discord's gateway "lazy guild loading"
@@ -135,6 +136,11 @@ function render(): void {
       el("span", { className: "member-name" }, item.name)
     );
     row.addEventListener("click", () => openProfilePopout(item.id, row));
+    row.addEventListener("contextmenu", ev => {
+      if (!state.settings.developerMode) return;
+      ev.preventDefault();
+      openContextMenu(ev.clientX, ev.clientY, [copyIdItem(item.id, t("devMode.copyUserId"))]);
+    });
     list.append(row);
   }
 }

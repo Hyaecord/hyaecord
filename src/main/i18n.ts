@@ -24,3 +24,8 @@ export function getLocaleStrings(): Record<string, string> {
   if (locale === FALLBACK_LOCALE) return fallback;
   return { ...fallback, ...(readLocale(locale) ?? {}) };
 }
+
+/** The resolved two-letter locale code (e.g. "en", "ar") — separate from the strings themselves, so the renderer can make layout decisions (RTL) off it even before a real non-English translation exists. */
+export function getResolvedLocale(): string {
+  return app.getLocale().split("-")[0] || FALLBACK_LOCALE;
+}

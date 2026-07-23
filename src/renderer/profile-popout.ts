@@ -1,6 +1,7 @@
 import type { UserProfile } from "@shared/types";
-import { el, t } from "./ui";
+import { el, state, t } from "./ui";
 import { getPfpOverride, getBgOverride } from "./avatar-overrides";
+import { openContextMenu, copyIdItem } from "./context-menu";
 
 /**
  * The profile popout — click a username or avatar anywhere in the message
@@ -131,6 +132,11 @@ function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: str
     avatar,
     el("div", { className: "profile-identity" }, ...identityChildren)
   );
+  body.addEventListener("contextmenu", ev => {
+    if (!state.settings.developerMode) return;
+    ev.preventDefault();
+    openContextMenu(ev.clientX, ev.clientY, [copyIdItem(profile.id, t("devMode.copyUserId"))]);
+  });
   if (badges) body.append(badges);
   if (profile.bio) body.append(el("p", { className: "profile-bio" }, profile.bio));
   if (connections) body.append(connections);

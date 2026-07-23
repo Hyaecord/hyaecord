@@ -341,6 +341,9 @@ export function openSettings(): void {
         el("p", { className: "row-description" }, gamingModeStatusText()),
         toggleRow("settings.selfPinFade", "settings.selfPinFade.description", s.selfPinFade.enabled, next =>
           void patchSettings({ selfPinFade: { ...state.settings.selfPinFade, enabled: next } })
+        ),
+        toggleRow("settings.developerMode", "settings.developerMode.description", s.developerMode, next =>
+          void patchSettings({ developerMode: next })
         )
       ),
       section("settings.section.integrations",

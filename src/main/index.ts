@@ -4,7 +4,7 @@ import { IPC, PRODUCT_NAME } from "@shared/constants";
 import type { HyaecordSettings } from "@shared/types";
 import { loadSettings, saveSettings } from "./settings";
 import { detectDesktopEnvironment, onSystemThemeChange } from "./theme";
-import { getLocaleStrings } from "./i18n";
+import { getLocaleStrings, getResolvedLocale } from "./i18n";
 import { createTray } from "./tray";
 import { startTelemetry } from "./telemetry";
 import { notifyMessage } from "./notifications";
@@ -108,6 +108,7 @@ app.whenReady().then(() => {
   });
   ipcMain.handle(IPC.getDesktopEnvironment, () => detectDesktopEnvironment());
   ipcMain.handle(IPC.getLocaleStrings, () => getLocaleStrings());
+  ipcMain.handle(IPC.getLocale, () => getResolvedLocale());
   ipcMain.handle(IPC.discordLoginBrowser, () => loginWithBrowser());
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());
