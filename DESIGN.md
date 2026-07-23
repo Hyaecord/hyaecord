@@ -56,19 +56,19 @@ Never reference ramp steps directly in component code — reference these:
 | `--border` | `#3a3325` | `#d4d7dc` | `#2a2416` | hairlines, outlines |
 | `--text` | `#f2f3f5` | `#060607` | `#f2f3f5` | primary text |
 | `--text-dim` | `#949ba4` | `#5c5e66` | `#949ba4` | secondary text |
-| `--accent` | `#e8a962` | `#835000` | `#e8a962` | default-theme accent, focus rings |
-| `--accent-strong` | `#f5cc9f` | `#653e05` | `#f5cc9f` | links, emphasized accent text |
+| `--accent` | `#2dd4bf` | `#115e59` | `#2dd4bf` | default-theme accent, focus rings |
+| `--accent-strong` | `#5eead4` | `#0d4f4a` | `#5eead4` | links, emphasized accent text |
 | `--danger` | `#fb5760` | `#a82231` | `#fb5760` | destructive, errors |
 | `--danger-text` | `#ff9593` | `#a82231` | `#ff9593` | error copy on base surfaces |
 
 > **Light surfaces are true neutral grey, never the brand cream.** Cream (`#f1e9d5`) is reserved for the website's chrome accents — as a *client* background it read dated and heavy, and the owner asked it be dropped from the app entirely (23 July 2026). The client's light theme now uses the same neutral scale as the website's Discord-modeled light theme, so the two surfaces agree on what "light mode" looks like even though their component systems are separate.
 
-> **The default-theme accent is the brand amber, not a neutral teal (23 July 2026, superseding the note below).** An earlier pass deliberately de-branded the default accent to a neutral teal, reasoning that branding the app itself would read as gaudy. The owner revisited that call and asked for a straight choice between copying Discord's own blurple or leaning into Hyaecord's own logo colour — copying Discord's accent was ruled out (same trademark-adjacent reasoning that kept the logo off Discord's colours originally), so `--accent`/`--accent-strong` now point at the existing `--amber-*` ramp instead of `--teal-*`. Contrast was recomputed for every pairing below rather than assumed to carry over from the teal values. The teal ramp (`--teal-300/400/800/900`) is left defined but unused — cheap to keep, no reason to delete, and available again if a future theme wants it.
+> **The default-theme accent is back to the neutral teal (23 July 2026, second reversal — read this whole note before changing it again).** The sequence: teal → brand amber (owner asked for logo colour over Discord's blurple) → amber lightened a step (owner: the dark shade "read as flat brown, not gold") → **back to teal** (owner: still "the brown accent colour", i.e. the amber direction itself was the problem, not the specific shade). The underlying issue is contrast math, not a shade pick: amber only clears 4.5:1 on a white background once it's dark enough that it stops reading as "gold" and starts reading as "brown" — that's not a tuning mistake, it's what a low-lightness orange-family hue *is*. The brand's other colours don't help either: shadow red (`#e44550`) and tongue pink (`#d4495f`) both fail 4.5:1 on white at their raw values, and darkening either one enough to pass lands within a few degrees of hue of `--danger`'s red (`#a82231`) — computed at ~350° for both, functionally the same colour for UI purposes, which would blur the one signal (danger/destructive) this system deliberately keeps rare and specific (§2.5). Teal has none of these problems: it's nowhere near brown at any lightness, nowhere near the danger red's hue, and nowhere near Discord's blurple either. Brand amber/cream/red/pink stay exactly where they belong — the logo and website — and are still available as CSS custom properties (`--amber-*`, `--brand-*`) for an optional future branded client theme, just not the *default* accent. Don't re-attempt an amber or red/pink default accent without solving the hue-collision-with-danger problem first, not just picking a different lightness.
 
 Notes on why these work:
 
 - **Prefer near-black/near-white over pure black-on-white where the choice is ours** — 21:1 contrast causes halation for astigmatic readers (a large minority) — but the client's light theme deliberately breaks this rule to match Discord's own light theme exactly (`#060607` text on `#ffffff`, ~19:1), because "looks like Discord's light mode" was an explicit requirement and users already tolerate that choice in the app they're switching from.
-- **The accent shifts per theme, same as before, just with a different base hue.** Amber-300 (`#e8a962`) reads well on dark (8.6:1) but is too light for body-text size on white. Light mode substitutes amber-600 (`#835000`, 6.7:1 on white) — amber-700/900 were tried first and technically passed with more headroom, but read as flat brown rather than gold at that darkness; amber-600 is the lightest step that still clears 4.5:1 with real margin. Same principle as the earlier teal remapping — this per-theme swap is the single most common thing naive theming gets wrong, brand hue or not.
+- **The accent shifts per theme.** Teal-400 (`#2dd4bf`) reads beautifully on dark (9.5:1+) but is too light for body-text size on white; light mode substitutes teal-800 (`#115e59`, 7.6:1 on white). This per-theme swap is the single most common thing naive theming gets wrong.
 - **AMOLED is not "dark but blacker".** True-black base for OLED power savings, but raised surfaces still step up in lightness, otherwise nothing has edges.
 
 ### 2.4 Verified contrast (computed, WCAG 2.x)
@@ -77,17 +77,17 @@ Notes on why these work:
 |---|---|---|
 | text on base (dark) | 15.91 | AAA |
 | dim text on base (dark) | 6.30 | AA |
-| accent amber-300 on base (dark) | 8.65 | AAA |
+| accent teal-400 on base (dark) | 9.49 | AAA |
 | danger text red-300 on base (dark) | 8.39 | AAA |
-| button label (bg-deep) on amber-300 fill | 9.07 | AAA |
+| button label (bg-deep) on teal-400 fill | 9.95 | AAA |
 | white on red-600 button | 7.09 | AAA |
 | text on white (light) | 20.25 | AAA |
 | dim text on white (light) | 6.47 | AA |
-| accent amber-600 text on white (light) | 6.75 | AA |
+| accent teal-800 text on white (light) | 7.58 | AAA |
 | red-600 link on white (light) | 7.15 | AAA |
 | text on black (AMOLED) | 18.91 | AAA |
-| focus ring amber-300 on bg-deep (dark) | 9.07 | ≥3:1 non-text |
-| focus ring amber-600 on bg-deep (light) | 5.35 | ≥3:1 non-text |
+| focus ring teal-400 on bg-deep (dark) | 9.95 | ≥3:1 non-text |
+| focus ring teal-800 on bg-deep (light) | 4.34 | ≥3:1 non-text |
 
 **Rules derived from the numbers:**
 
@@ -167,7 +167,7 @@ Every interactive element has all five states, always:
 
 **Website:** dark-first with `prefers-color-scheme` light support; hero uses brand anchors at full saturation (large text passes at 3:1); marketing may be more generous with colour-coded accents (the card top-border cycling amber/red/pink) because scan-reading, not hours-long use, is the job. Static HTML, no framework, no external fonts/scripts — speed *is* a design feature, and the accessibility bar is identical to the client's.
 
-**Client:** people live in it for hours, so it sits closer to the quiet end — neutrals everywhere, the accent colour only on the active/selected/primary, red for danger. Long-session comfort beats first-glance wow: when in doubt, remove colour from the chrome and let message content be the most colourful thing on screen. Default themes use the brand amber accent (§2.3) — theme accents may remap `--accent` to the user's GNOME/KDE accent colour, or to any other palette, via the community theme system (see BUILD_PROMPT.md) — the semantic-token layer exists precisely so that's a small, contained change per theme.
+**Client:** people live in it for hours, so it sits closer to the quiet end — neutrals everywhere, the accent colour only on the active/selected/primary, red for danger. Long-session comfort beats first-glance wow: when in doubt, remove colour from the chrome and let message content be the most colourful thing on screen. Default themes use a neutral teal accent, not brand colours (§2.3) — theme accents may remap `--accent` to the user's GNOME/KDE accent colour, or to a branded palette, via the community theme system (see BUILD_PROMPT.md) — the semantic-token layer exists precisely so that's a small, contained change per theme.
 
 ## 10. Review checklist
 
