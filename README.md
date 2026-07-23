@@ -52,8 +52,7 @@ commits, changes, chatting, or support.
 ### Ecosystem & Plugins
 
 - **A real plugin API**, sandboxed via Node `vm` with a restricted API surface — ergonomically modeled on Vencord's `definePlugin` shape so a simple message-hook plugin ports easily, but **not** a byte-compatible runner for existing Equicord/Vencord plugin files (those patch Discord's real webpack bundle, which this client's original GUI doesn't have). See [Plugin Guidelines](PLUGIN_GUIDELINES.md) and `src/main/plugins/` for exactly what's supported today.
-- **GlobalBadges**, live: fetches the real `badges.vencord.dev` feed and renders it on profiles.
-- **UserPFP, UsrBG, RPC Bridge**: present as Settings toggles, not yet functionally wired up — see the checklist below.
+- **GlobalBadges, UserPFP, UsrBG, RPC Bridge**: all four are live, not just Settings toggles — real community-database avatar/banner overrides, and a real local Rich Presence socket for external apps. See the checklist below.
 - **Plugin policy:** Strict no-paywall rule with support for creator donation links. See [Plugin Guidelines](PLUGIN_GUIDELINES.md).
 
 ### Desktop Integration & Visuals
@@ -101,7 +100,8 @@ An honest status table, not an aspirational one — updated as features actually
 | Multi-account switching               |   Not yet built   |                                                                           |
 | Auto-updater                          |   Not yet built   |                                                                           |
 | Session import (Discord/Vesktop/Equibop) | Declined for now | Requires decrypting another app's local session storage — see `BUILD_PROMPT.md` for why this is a deliberate hold, not an oversight |
-| UserPFP, UsrBG, RPC Bridge            | Toggle only, not wired up | Present in Settings; no functional backend yet                  |
+| UserPFP, UsrBG                        |    Supported     | Real community avatar/banner databases, applied wherever an avatar or the profile banner renders |
+| RPC Bridge                            |    Supported     | Real local Discord-RPC-compatible socket server; verified against a live handshake + SET_ACTIVITY exchange |
 | Equicord Cloud Saves                  |   Not yet built   |                                                                           |
 
 ---
