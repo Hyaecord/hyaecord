@@ -137,6 +137,7 @@ export interface HyaecordBridge {
   isUsingVpn(): Promise<boolean>;
   onGamingModeState(cb: (state: GamingModeState) => void): void;
   getUserProfile(userId: string): Promise<UserProfile | null>;
+  getGlobalBadges(userId: string): Promise<Array<{ icon: string; tooltip: string }>>;
 }
 
 export interface UserProfile {

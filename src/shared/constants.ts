@@ -56,5 +56,6 @@ export const IPC = {
   getCommunityThemes: "hyaecord:get-community-themes",
   isUsingVpn: "hyaecord:is-using-vpn",
   discordGetUserProfile: "hyaecord:discord-get-user-profile",
+  getGlobalBadges: "hyaecord:get-global-badges",
   gamingModeState: "hyaecord:gaming-mode-state"
 } as const;

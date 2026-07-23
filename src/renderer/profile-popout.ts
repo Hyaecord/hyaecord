@@ -58,7 +58,7 @@ function connectionIcon(type: string): string {
   return known[type] ?? "🔗";
 }
 
-function renderProfileBody(profile: UserProfile): HTMLElement {
+function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: string; tooltip: string }>): HTMLElement {
   const avatarUrl = profile.avatar
     ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
     : null;
@@ -68,22 +68,22 @@ function renderProfileBody(profile: UserProfile): HTMLElement {
       ? `background-color: #${profile.accentColor.toString(16).padStart(6, "0")};`
       : "";
 
-  const badges =
-    profile.badges.length > 0
-      ? el(
-          "div",
-          { className: "profile-badges" },
-          ...profile.badges.map(b =>
-            el("img", {
-              className: "profile-badge",
-              src: `https://cdn.discordapp.com/badge-icons/${b.icon}.png`,
-              alt: b.description,
-              title: b.description,
-              loading: "lazy"
-            })
-          )
-        )
-      : null;
+  const discordBadgeIcons = profile.badges.map(b =>
+    el("img", {
+      className: "profile-badge",
+      src: `https://cdn.discordapp.com/badge-icons/${b.icon}.png`,
+      alt: b.description,
+      title: b.description,
+      loading: "lazy"
+    })
+  );
+  // GlobalBadges entries already carry full image URLs, unlike Discord's own
+  // badges which are just an icon hash resolved through the CDN above.
+  const globalBadgeIcons = globalBadges.map(b =>
+    el("img", { className: "profile-badge", src: b.icon, alt: b.tooltip, title: b.tooltip, loading: "lazy" })
+  );
+  const allBadgeIcons = [...discordBadgeIcons, ...globalBadgeIcons];
+  const badges = allBadgeIcons.length > 0 ? el("div", { className: "profile-badges" }, ...allBadgeIcons) : null;
 
   const connections =
     profile.connectedAccounts.length > 0
@@ -139,14 +139,16 @@ export function openProfilePopout(userId: string, anchor: HTMLElement): void {
   document.addEventListener("pointerdown", onOutsideClick, true);
   document.addEventListener("keydown", onEscape, true);
 
-  void window.hyaecord.getUserProfile(userId).then(profile => {
-    if (openPopout !== popout) return; // closed or replaced while the request was in flight
-    popout.replaceChildren();
-    if (!profile) {
-      popout.append(el("p", { className: "profile-loading" }, t("profile.error")));
-      return;
+  void Promise.all([window.hyaecord.getUserProfile(userId), window.hyaecord.getGlobalBadges(userId)]).then(
+    ([profile, globalBadges]) => {
+      if (openPopout !== popout) return; // closed or replaced while the request was in flight
+      popout.replaceChildren();
+      if (!profile) {
+        popout.append(el("p", { className: "profile-loading" }, t("profile.error")));
+        return;
+      }
+      popout.append(renderProfileBody(profile, globalBadges));
+      positionNear(popout, anchor);
     }
-    popout.append(renderProfileBody(profile));
-    positionNear(popout, anchor);
-  });
+  );
 }

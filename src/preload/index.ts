@@ -36,7 +36,8 @@ const bridge: HyaecordBridge = {
   onGamingModeState: cb => {
     ipcRenderer.on(IPC.gamingModeState, (_e, state) => cb(state));
   },
-  getUserProfile: userId => ipcRenderer.invoke(IPC.discordGetUserProfile, userId)
+  getUserProfile: userId => ipcRenderer.invoke(IPC.discordGetUserProfile, userId),
+  getGlobalBadges: userId => ipcRenderer.invoke(IPC.getGlobalBadges, userId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

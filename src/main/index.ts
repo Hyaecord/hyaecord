@@ -9,6 +9,7 @@ import { createTray } from "./tray";
 import { startTelemetry } from "./telemetry";
 import { notifyMessage } from "./notifications";
 import { fetchCommunityThemes } from "./community-themes";
+import { fetchGlobalBadges } from "./global-badges";
 import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
 import {
@@ -110,6 +111,9 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));
   ipcMain.handle(IPC.discordGetUserProfile, (_e, userId: string) => fetchUserProfile(userId));
+  ipcMain.handle(IPC.getGlobalBadges, (_e, userId: string) =>
+    loadSettings().integrations.globalBadges ? fetchGlobalBadges(userId) : []
+  );
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
