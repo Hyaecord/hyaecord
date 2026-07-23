@@ -10,6 +10,7 @@ import { startTelemetry } from "./telemetry";
 import { notifyMessage } from "./notifications";
 import { fetchCommunityThemes } from "./community-themes";
 import { isLikelyUsingVpn } from "./vpn-detect";
+import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
 import {
   initDiscord,
   login,
@@ -63,11 +64,29 @@ function createWindow(): void {
   mainWindow.on("closed", () => (mainWindow = null));
 }
 
+function applyGamingModeSetting(enabled: boolean): void {
+  stopGamingModeDetection();
+  if (!enabled) {
+    mainWindow?.webContents.send(IPC.gamingModeState, { active: false, available: null });
+    return;
+  }
+  startGamingModeDetection({
+    onAvailability: available => {
+      mainWindow?.webContents.send(IPC.gamingModeState, { active: false, available });
+    },
+    onChange: active => {
+      mainWindow?.webContents.send(IPC.gamingModeState, { active, available: true });
+    }
+  });
+}
+
 app.whenReady().then(() => {
   ipcMain.handle(IPC.getSettings, () => loadSettings());
-  ipcMain.handle(IPC.setSettings, (_e, patch: Partial<HyaecordSettings>) =>
-    saveSettings(patch)
-  );
+  ipcMain.handle(IPC.setSettings, (_e, patch: Partial<HyaecordSettings>) => {
+    const next = saveSettings(patch);
+    if ("gamingMode" in patch) applyGamingModeSetting(next.gamingMode);
+    return next;
+  });
   ipcMain.handle(IPC.getDesktopEnvironment, () => detectDesktopEnvironment());
   ipcMain.handle(IPC.getLocaleStrings, () => getLocaleStrings());
   ipcMain.handle(IPC.discordLogin, (_e, token: string) => login(token));
@@ -112,6 +131,7 @@ app.whenReady().then(() => {
   createWindow();
   if (mainWindow) createTray(mainWindow);
   startTelemetry();
+  if (loadSettings().gamingMode) applyGamingModeSetting(true);
 
   onSystemThemeChange(prefersDark => {
     mainWindow?.webContents.send(IPC.themeChanged, prefersDark);
@@ -124,4 +144,8 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   // Keep running in the tray on Linux/Windows; quitting is explicit via tray menu.
+});
+
+app.on("before-quit", () => {
+  stopGamingModeDetection();
 });

@@ -117,4 +117,11 @@ export interface HyaecordBridge {
   muteDm(channelId: string, muted: boolean): Promise<boolean>;
   getCommunityThemes(): Promise<CommunityTheme[]>;
   isUsingVpn(): Promise<boolean>;
+  onGamingModeState(cb: (state: GamingModeState) => void): void;
+}
+
+export interface GamingModeState {
+  active: boolean;
+  /** null = not yet known; false = xprop/X11 unreachable (e.g. native Wayland, or xprop not installed); true = detection is running. */
+  available: boolean | null;
 }

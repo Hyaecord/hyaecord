@@ -52,5 +52,6 @@ export const IPC = {
   discordMuteDm: "hyaecord:discord-mute-dm",
   openExternal: "hyaecord:open-external",
   getCommunityThemes: "hyaecord:get-community-themes",
-  isUsingVpn: "hyaecord:is-using-vpn"
+  isUsingVpn: "hyaecord:is-using-vpn",
+  gamingModeState: "hyaecord:gaming-mode-state"
 } as const;

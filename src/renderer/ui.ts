@@ -1,10 +1,11 @@
-import type { HyaecordSettings } from "@shared/types";
+import type { GamingModeState, HyaecordSettings } from "@shared/types";
 
 /** Shared renderer state, populated once by app.ts before anything renders. */
 export const state = {
   settings: null as unknown as HyaecordSettings,
   prefersDark: true,
-  strings: {} as Record<string, string>
+  strings: {} as Record<string, string>,
+  gamingModeState: { active: false, available: null } as GamingModeState
 };
 
 export function t(key: string, vars?: Record<string, string | number>): string {

@@ -31,7 +31,10 @@ const bridge: HyaecordBridge = {
   muteGuild: (guildId, muted) => ipcRenderer.invoke(IPC.discordMuteGuild, guildId, muted),
   muteDm: (channelId, muted) => ipcRenderer.invoke(IPC.discordMuteDm, channelId, muted),
   getCommunityThemes: () => ipcRenderer.invoke(IPC.getCommunityThemes),
-  isUsingVpn: () => ipcRenderer.invoke(IPC.isUsingVpn)
+  isUsingVpn: () => ipcRenderer.invoke(IPC.isUsingVpn),
+  onGamingModeState: cb => {
+    ipcRenderer.on(IPC.gamingModeState, (_e, state) => cb(state));
+  }
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

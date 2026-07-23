@@ -34,6 +34,9 @@ async function init(): Promise<void> {
     state.prefersDark = prefersDark;
     applySettingsToDocument();
   });
+  api.onGamingModeState(s => {
+    state.gamingModeState = s;
+  });
 
   renderChrome();
   mountSettingsButton();

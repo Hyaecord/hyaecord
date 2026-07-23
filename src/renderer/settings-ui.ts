@@ -48,6 +48,14 @@ export function mountSettingsButton(): void {
   rail.append(button);
 }
 
+function gamingModeStatusText(): string {
+  if (!state.settings.gamingMode) return t("settings.gamingMode.off");
+  const { available, active } = state.gamingModeState;
+  if (available === null) return t("settings.gamingMode.starting");
+  if (!available) return t("settings.gamingMode.unavailable");
+  return active ? t("settings.gamingMode.active") : t("settings.gamingMode.watching");
+}
+
 function selectRow(
   labelKey: string,
   options: Array<{ value: string; labelKey: string }>,
@@ -136,6 +144,7 @@ export function openSettings(): void {
       ),
       section("settings.section.behaviour",
         toggleRow("settings.gamingMode", null, s.gamingMode, next => void patchSettings({ gamingMode: next })),
+        el("p", { className: "row-description" }, gamingModeStatusText()),
         toggleRow("settings.selfPinFade", "settings.selfPinFade.description", s.selfPinFade.enabled, next =>
           void patchSettings({ selfPinFade: { ...state.settings.selfPinFade, enabled: next } })
         )
