@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, shell, desktopCapturer } from "electron";
 import { join } from "node:path";
 import { IPC, PRODUCT_NAME } from "@shared/constants";
 import type { HyaecordSettings } from "@shared/types";
@@ -43,7 +43,9 @@ import {
   pinMessage,
   unpinMessage,
   listStickerPacks,
-  sendSticker
+  sendSticker,
+  joinVoiceChannel,
+  leaveVoiceChannel
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -166,6 +168,26 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordUnpinMessage, (_e, channelId: string, messageId: string) => unpinMessage(channelId, messageId));
   ipcMain.handle(IPC.getStickerPacks, () => listStickerPacks());
   ipcMain.handle(IPC.discordSendSticker, (_e, channelId: string, stickerId: string) => sendSticker(channelId, stickerId));
+  ipcMain.on(IPC.discordJoinVoice, (_e, guildId: string | null, channelId: string) => joinVoiceChannel(guildId, channelId));
+  ipcMain.on(IPC.discordLeaveVoice, () => leaveVoiceChannel());
+  ipcMain.handle(IPC.getScreenShareSources, async () => {
+    // desktopCapturer is main-process-only — this is the real, documented way
+    // to enumerate actual screens/windows for screen sharing in Electron,
+    // not a guess. Thumbnails are already-composited PNG previews Electron
+    // itself renders, safe to hand across the sandboxed contextBridge as
+    // plain data URLs (no live capture handle crosses into the renderer).
+    const sources = await desktopCapturer.getSources({
+      types: ["screen", "window"],
+      thumbnailSize: { width: 300, height: 200 },
+      fetchWindowIcons: true
+    });
+    return sources.map(s => ({
+      id: s.id,
+      name: s.name,
+      thumbnailDataUrl: s.thumbnail.toDataURL(),
+      appIconDataUrl: s.appIcon && !s.appIcon.isEmpty() ? s.appIcon.toDataURL() : null
+    }));
+  });
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed
@@ -176,7 +198,7 @@ app.whenReady().then(() => {
 
   initDiscord(
     (channel, ...args) => {
-      const ipcChannel = channel === "state" ? IPC.discordState : IPC.discordEvent;
+      const ipcChannel = channel === "state" ? IPC.discordState : channel === "voice" ? IPC.discordVoiceState : IPC.discordEvent;
       mainWindow?.webContents.send(ipcChannel, ...args);
     },
     (title, body) => {

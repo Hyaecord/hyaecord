@@ -96,7 +96,9 @@ An honest status table, not an aspirational one — updated as features actually
 | Message search                        |    Supported     | Finds a message and switches to its channel; doesn't jump to the exact message within that channel's history yet |
 | Browsing a channel's pinned messages  |    Supported     | 📌 button by the chat header; real pins API, pin/unpin from the panel or a message's own context menu |
 | Self-pin auto-fade                    |    Supported     | Other people's pin notices stay visible — no "hide others' pins" toggle exists yet |
-| Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
+| Joining a voice channel               |    Supported     | Real voice gateway handshake (join/leave, who's connected, live speaking indicators) — see the note below |
+| Voice/video audio-video transport, screen share to a call, Go Live | Not yet built | Actually sending/receiving audio or video needs Discord's real media transport (UDP or WebRTC-to-SFU with exact SDP/codec handling plus end-to-end encryption) — a project of its own, not started. See `BUILD_PROMPT.md` |
+| Camera / microphone / screen-source tests | Supported | Settings → Voice & Video — real device pickers with a genuine local preview (not connected to a call yet) |
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
 | Emoji picker                          |    Supported     | Search-and-browse picker backed by real Unicode emoji data              |
 | Sticker picker                        |    Supported     | Real standard sticker packs; Lottie (vector-animated) stickers send correctly but preview as a name-only tile, no animation |

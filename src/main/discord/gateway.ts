@@ -13,6 +13,7 @@ const enum Op {
   Heartbeat = 1,
   Identify = 2,
   PresenceUpdate = 3,
+  VoiceStateUpdate = 4,
   Resume = 6,
   Reconnect = 7,
   InvalidSession = 9,
@@ -108,6 +109,22 @@ export class GatewayClient {
     this.send({
       op: Op.PresenceUpdate,
       d: { since: null, activities, status: "online", afk: false }
+    });
+  }
+
+  /**
+   * Real Discord voice join/move/leave — per docs.discord.food's gateway
+   * events reference, Opcode 4. `channelId: null` disconnects. Response
+   * arrives as two separate dispatch events (VOICE_STATE_UPDATE with a
+   * session_id, and VOICE_SERVER_UPDATE with a token+endpoint) — both are
+   * already forwarded to the renderer raw like every other dispatch, and
+   * discord/index.ts's voice orchestration waits for both before opening
+   * the actual voice WebSocket.
+   */
+  updateVoiceState(guildId: string | null, channelId: string | null, selfMute: boolean, selfDeaf: boolean): void {
+    this.send({
+      op: Op.VoiceStateUpdate,
+      d: { guild_id: guildId, channel_id: channelId, self_mute: selfMute, self_deaf: selfDeaf }
     });
   }
 

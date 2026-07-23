@@ -4,6 +4,9 @@ import { refreshChomperViews, getCurrentUser } from "./session";
 import { openThemeStore } from "./theme-store";
 import { loadAvatarOverrides } from "./avatar-overrides";
 import { refreshPluginCommands } from "./slash-commands";
+import { openDevicePicker } from "./device-picker";
+import { openScreenSharePicker } from "./screen-share-picker";
+import { openMediaPreview, openMicPreview } from "./media-preview";
 
 const MAX_AVATAR_BYTES = 8 * 1024 * 1024;
 
@@ -14,6 +17,69 @@ function readFileAsDataUri(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error);
     reader.readAsDataURL(file);
   });
+}
+
+/**
+ * Voice & Video device tests — real camera/mic/screen-source pickers with
+ * a genuine live local preview, same idea as Discord's own Voice & Video
+ * Settings page. Deliberately scoped as tests/previews, not a call:
+ * actual voice/video transport to a channel isn't built (see
+ * voice-gateway.ts's own scope note) — these buttons don't send anything
+ * anywhere, they just prove your hardware/source selection actually
+ * works, which is real and complete on its own.
+ */
+function voiceVideoSection(): HTMLElement {
+  const cameraButton = el(
+    "button",
+    {
+      className: "btn",
+      type: "button",
+      onClick: () =>
+        openDevicePicker("videoinput", async deviceId => {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: { deviceId: { exact: deviceId } } });
+          openMediaPreview(stream, t("settings.voice.testCamera"));
+        })
+    },
+    t("settings.voice.testCamera")
+  );
+
+  const micButton = el(
+    "button",
+    {
+      className: "btn",
+      type: "button",
+      onClick: () =>
+        openDevicePicker("audioinput", async deviceId => {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } });
+          openMicPreview(stream, t("settings.voice.testMic"));
+        })
+    },
+    t("settings.voice.testMic")
+  );
+
+  const screenButton = el(
+    "button",
+    {
+      className: "btn",
+      type: "button",
+      onClick: () =>
+        openScreenSharePicker(async source => {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: false,
+            video: { mandatory: { chromeMediaSourceId: source.id } }
+          } as MediaStreamConstraints);
+          openMediaPreview(stream, source.name);
+        })
+    },
+    t("settings.voice.testScreenShare")
+  );
+
+  return el(
+    "div",
+    { className: "voice-video-tests" },
+    el("p", { className: "step-hint" }, t("settings.voice.description")),
+    el("div", { className: "voice-video-buttons" }, cameraButton, micButton, screenButton)
+  );
 }
 
 function avatarSection(): HTMLElement {
@@ -387,6 +453,7 @@ export function openSettings(): void {
           })
         )
       ),
+      section("settings.section.voice", voiceVideoSection()),
       section("settings.section.plugins", pluginsList()),
       section("settings.section.privacy",
         toggleRow("settings.telemetry", "settings.telemetry.description", s.telemetry.enabled, next =>

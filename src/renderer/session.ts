@@ -12,6 +12,7 @@ import { openMessageSearch } from "./message-search";
 import { openFriendsList } from "./friends";
 import { tryExecuteSlashCommand, showSlashSuggestions, closeSlashSuggestions } from "./slash-commands";
 import { openPinsPanel } from "./pins";
+import { initVoiceUI, setVoiceChannelNameResolver } from "./voice-ui";
 
 /**
  * Wires a right-click menu onto one element: Developer Mode's "Copy ID"
@@ -159,6 +160,8 @@ export function getCurrentUser(): DiscordSession["user"] {
 }
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
+/** GUILD_VOICE only (2) — stage channels (13) work differently enough (speaker/audience roles) that they're deliberately not included here yet. */
+const VOICE_CHANNEL_TYPE = 2;
 const DM_TYPES = new Set([1, 3]);
 
 export function initSession(): void {
@@ -173,6 +176,8 @@ export function initSession(): void {
   wireComposer();
   wireChannelProximity();
   wireMessageSearch();
+  initVoiceUI();
+  setVoiceChannelNameResolver(resolveChannelName);
 }
 
 function resolveChannelName(channelId: string): string {
@@ -953,6 +958,17 @@ function selectGuild(id: string): void {
     li.addEventListener("click", select);
     li.addEventListener("keydown", ev => {
       if ((ev as KeyboardEvent).key === "Enter") select();
+    });
+    wireDevModeContextMenu(li, [{ id: channel.id, label: t("devMode.copyChannelId") }]);
+    list.append(li);
+  }
+
+  const voiceChannels = guild.channels.filter(ch => ch.type === VOICE_CHANNEL_TYPE).sort((a, b) => a.position - b.position);
+  for (const channel of voiceChannels) {
+    const li = el("li", { className: "voice-channel-item", tabindex: "0", "data-voice-channel": channel.id }, `🔊 ${channel.name}`);
+    li.addEventListener("click", () => window.hyaecord.joinVoiceChannel(id, channel.id));
+    li.addEventListener("keydown", ev => {
+      if ((ev as KeyboardEvent).key === "Enter") window.hyaecord.joinVoiceChannel(id, channel.id);
     });
     wireDevModeContextMenu(li, [{ id: channel.id, label: t("devMode.copyChannelId") }]);
     list.append(li);

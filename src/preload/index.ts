@@ -59,7 +59,13 @@ const bridge: HyaecordBridge = {
   pinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordPinMessage, channelId, messageId),
   unpinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordUnpinMessage, channelId, messageId),
   listStickerPacks: () => ipcRenderer.invoke(IPC.getStickerPacks),
-  sendSticker: (channelId, stickerId) => ipcRenderer.invoke(IPC.discordSendSticker, channelId, stickerId)
+  sendSticker: (channelId, stickerId) => ipcRenderer.invoke(IPC.discordSendSticker, channelId, stickerId),
+  joinVoiceChannel: (guildId, channelId) => ipcRenderer.send(IPC.discordJoinVoice, guildId, channelId),
+  leaveVoiceChannel: () => ipcRenderer.send(IPC.discordLeaveVoice),
+  onVoiceState: cb => {
+    ipcRenderer.on(IPC.discordVoiceState, (_e, state) => cb(state));
+  },
+  getScreenShareSources: () => ipcRenderer.invoke(IPC.getScreenShareSources)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

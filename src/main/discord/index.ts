@@ -1,4 +1,5 @@
 import { GatewayClient, type GatewayState } from "./gateway";
+import { VoiceGatewayClient } from "../voice/voice-gateway";
 import {
   RestClient,
   DiscordRestError,
@@ -27,7 +28,7 @@ import type {
  * renderer through the callbacks given to init().
  */
 
-type Sender = (channel: "state" | "event", ...args: unknown[]) => void;
+type Sender = (channel: "state" | "event" | "voice", ...args: unknown[]) => void;
 export type NotifyFn = (title: string, body: string) => void;
 
 let send: Sender = () => {};
@@ -47,6 +48,104 @@ let user: DiscordUserSummary | null = null;
 let freshLogin = false;
 
 const DEFAULT_GATEWAY = "wss://gateway.discord.gg/";
+
+/**
+ * Voice join/leave state machine. Joining sends Op 4 Voice State Update
+ * over the *main* gateway, then waits for both VOICE_STATE_UPDATE (gives
+ * a session_id) and VOICE_SERVER_UPDATE (gives a token + endpoint) —
+ * Discord sends these as two separate dispatch events per
+ * docs.discord.food, and both are required before the voice WebSocket
+ * handshake can start. `pendingVoiceJoin` tracks a join that's still
+ * waiting on one or both.
+ */
+let voiceGateway: VoiceGatewayClient | null = null;
+let pendingVoiceJoin: { guildId: string | null; channelId: string; sessionId?: string; token?: string; endpoint?: string } | null = null;
+let voiceMembers = new Set<string>();
+let voiceSpeaking = new Set<string>();
+
+export interface VoiceState {
+  status: "idle" | "connecting" | "connected";
+  guildId: string | null;
+  channelId: string | null;
+  members: string[];
+  speaking: string[];
+}
+
+function sendVoiceState(status: VoiceState["status"]): void {
+  send("voice", {
+    status,
+    guildId: pendingVoiceJoin?.guildId ?? null,
+    channelId: pendingVoiceJoin?.channelId ?? null,
+    members: [...voiceMembers],
+    speaking: [...voiceSpeaking]
+  } satisfies VoiceState);
+}
+
+function maybeStartVoiceGateway(): void {
+  const p = pendingVoiceJoin;
+  if (!p?.sessionId || !p.token || !p.endpoint || !user) return;
+  voiceGateway?.destroy();
+  voiceMembers = new Set();
+  voiceSpeaking = new Set();
+  voiceGateway = new VoiceGatewayClient(p.endpoint, p.guildId ?? p.channelId, p.channelId, user.id, p.sessionId, p.token, {
+    onReady: () => sendVoiceState("connected"),
+    onClientsConnect: userIds => {
+      for (const id of userIds) voiceMembers.add(id);
+      sendVoiceState("connected");
+    },
+    onClientDisconnect: userId => {
+      voiceMembers.delete(userId);
+      voiceSpeaking.delete(userId);
+      sendVoiceState("connected");
+    },
+    onSpeaking: (userId, speaking) => {
+      if (speaking) voiceSpeaking.add(userId);
+      else voiceSpeaking.delete(userId);
+      sendVoiceState("connected");
+    },
+    onClose: () => {
+      voiceGateway = null;
+    }
+  });
+  voiceGateway.connect();
+}
+
+function handleVoiceDispatch(event: string, data: unknown): void {
+  if (!pendingVoiceJoin) return;
+  if (event === "VOICE_STATE_UPDATE") {
+    const d = data as { user_id?: string; session_id?: string; channel_id?: string | null };
+    if (d.user_id !== user?.id || !d.session_id) return;
+    if (d.channel_id !== pendingVoiceJoin.channelId) return;
+    pendingVoiceJoin.sessionId = d.session_id;
+    maybeStartVoiceGateway();
+  } else if (event === "VOICE_SERVER_UPDATE") {
+    const d = data as { token?: string; endpoint?: string | null; guild_id?: string | null };
+    if (!d.token || !d.endpoint) return;
+    pendingVoiceJoin.token = d.token;
+    pendingVoiceJoin.endpoint = d.endpoint;
+    maybeStartVoiceGateway();
+  }
+}
+
+/** Joins/moves to a voice channel. `guildId` is null for a DM/group-DM call. Real Op 4 Voice State Update — see gateway.ts. */
+export function joinVoiceChannel(guildId: string | null, channelId: string): void {
+  if (!gateway) return;
+  pendingVoiceJoin = { guildId, channelId };
+  sendVoiceState("connecting");
+  gateway.updateVoiceState(guildId, channelId, false, false);
+}
+
+export function leaveVoiceChannel(): void {
+  if (!gateway) return;
+  const guildId = pendingVoiceJoin?.guildId ?? null;
+  voiceGateway?.destroy();
+  voiceGateway = null;
+  pendingVoiceJoin = null;
+  voiceMembers = new Set();
+  voiceSpeaking = new Set();
+  gateway.updateVoiceState(guildId, null, false, false);
+  sendVoiceState("idle");
+}
 
 function setState(next: DiscordSessionState): void {
   state = next;
@@ -132,6 +231,7 @@ async function startGateway(token: string): Promise<void> {
       send("event", event, data);
       maybeNotify(event, data);
       if (event === "MESSAGE_CREATE") runMessageCreateHooks(data);
+      handleVoiceDispatch(event, data);
     },
     onStateChange: gs => setState(mapGatewayState(gs))
   });
@@ -183,6 +283,9 @@ export async function autoLogin(): Promise<void> {
 export function logout(): void {
   gateway?.destroy();
   gateway = null;
+  voiceGateway?.destroy();
+  voiceGateway = null;
+  pendingVoiceJoin = null;
   rest = null;
   user = null;
   freshLogin = false;

@@ -155,6 +155,11 @@ export interface HyaecordBridge {
   unpinMessage(channelId: string, messageId: string): Promise<boolean>;
   listStickerPacks(): Promise<StickerPackSummary[]>;
   sendSticker(channelId: string, stickerId: string): Promise<boolean>;
+  /** `guildId` is null for a DM/group-DM call. */
+  joinVoiceChannel(guildId: string | null, channelId: string): void;
+  leaveVoiceChannel(): void;
+  onVoiceState(cb: (state: VoiceState) => void): void;
+  getScreenShareSources(): Promise<ScreenShareSource[]>;
   /** Name/description of every enabled plugin's registered slash commands — for the composer's autocomplete, merged with the built-in commands. */
   getPluginCommands(): Promise<Array<{ name: string; description: string }>>;
   /** Runs a plugin-registered command by name; returns the message content to send, or null if the command doesn't exist/declined to produce one. */
@@ -185,6 +190,21 @@ export interface RelationshipSummary {
   username: string;
   globalName: string | null;
   avatar: string | null;
+}
+
+export interface ScreenShareSource {
+  id: string;
+  name: string;
+  thumbnailDataUrl: string;
+  appIconDataUrl: string | null;
+}
+
+export interface VoiceState {
+  status: "idle" | "connecting" | "connected";
+  guildId: string | null;
+  channelId: string | null;
+  members: string[];
+  speaking: string[];
 }
 
 export interface StickerSummary {

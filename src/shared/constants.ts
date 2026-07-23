@@ -80,5 +80,9 @@ export const IPC = {
   discordPinMessage: "hyaecord:discord-pin-message",
   discordUnpinMessage: "hyaecord:discord-unpin-message",
   getStickerPacks: "hyaecord:get-sticker-packs",
-  discordSendSticker: "hyaecord:discord-send-sticker"
+  discordSendSticker: "hyaecord:discord-send-sticker",
+  discordJoinVoice: "hyaecord:discord-join-voice",
+  discordLeaveVoice: "hyaecord:discord-leave-voice",
+  discordVoiceState: "hyaecord:discord-voice-state",
+  getScreenShareSources: "hyaecord:get-screen-share-sources"
 } as const;
