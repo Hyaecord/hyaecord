@@ -6,30 +6,38 @@ const REQUIRED_TOKEN_KEYS = [
   "text", "textDim", "accent", "accentStrong", "danger"
 ] as const;
 
+type TokenSet = Record<(typeof REQUIRED_TOKEN_KEYS)[number], string>;
+
 export interface CommunityTheme {
   id: string;
   name: string;
   author: string;
-  tokens: Record<(typeof REQUIRED_TOKEN_KEYS)[number], string>;
+  light: TokenSet;
+  dark: TokenSet;
 }
 
 const HEX_RE = /^#[0-9a-fA-F]{3,8}$/;
+
+function isValidTokenSet(tokens: unknown): tokens is TokenSet {
+  if (!tokens || typeof tokens !== "object") return false;
+  const t = tokens as Record<string, unknown>;
+  return REQUIRED_TOKEN_KEYS.every(key => typeof t[key] === "string" && HEX_RE.test(t[key] as string));
+}
 
 function isValidTheme(entry: unknown): entry is CommunityTheme {
   if (!entry || typeof entry !== "object") return false;
   const e = entry as Record<string, unknown>;
   if (typeof e.id !== "string" || typeof e.name !== "string" || typeof e.author !== "string") return false;
-  if (!e.tokens || typeof e.tokens !== "object") return false;
-  const tokens = e.tokens as Record<string, unknown>;
-  return REQUIRED_TOKEN_KEYS.every(key => typeof tokens[key] === "string" && HEX_RE.test(tokens[key] as string));
+  return isValidTokenSet(e.light) && isValidTokenSet(e.dark);
 }
 
 /**
  * Fetches the community theme registry — a static JSON file on GitHub's raw
  * content CDN (community-themes/registry.json in the main repo). No custom
  * backend, no hosting cost. Every entry is validated defensively: a theme is
- * only ever ten hex colour values, never CSS or code, so the worst a bad
- * registry entry can do is look ugly, not do anything unsafe.
+ * only ever twenty hex colour values (a light set and a dark set — every
+ * theme ships both, there's no separate AMOLED mode), never CSS or code, so
+ * the worst a bad registry entry can do is look ugly, not do anything unsafe.
  */
 export async function fetchCommunityThemes(): Promise<CommunityTheme[]> {
   try {

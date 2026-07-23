@@ -80,21 +80,6 @@
   --danger-solid: var(--red-600);
 }
 
-[data-theme="amoled"] {
-  --bg-deep: #000000;
-  --bg-base: #000000;
-  --bg-raise: #0d0b07;
-  --bg-hover: #1a160e;
-  --border: #2a2416;
-  --text: #f2f3f5;
-  --text-dim: #949ba4;
-  --accent: var(--teal-400);
-  --accent-strong: var(--teal-300);
-  --danger: var(--red-400);
-  --danger-text: var(--red-300);
-  --danger-solid: var(--red-600);
-}
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html, body { height: 100%; }

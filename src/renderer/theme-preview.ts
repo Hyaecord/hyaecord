@@ -11,12 +11,12 @@ import { el, state } from "./ui";
  * would risk showing a real server's/DM's content). All names/messages
  * below are placeholder text, never live data.
  *
- * Deliberately self-contained (inline styles + a handful of `tp-*` classes,
- * no dependency on the rest of the app's DOM) so this same function's
- * output — or the equivalent markup/CSS — can be reused on the marketing
- * website for "what Hyaecord looks like" previews filled with their own
- * placeholder content. That's a website-repo task, not something this
- * repo's build can do directly.
+ * Deliberately self-contained (a handful of `tp-*` classes, no dependency
+ * on the rest of the app's DOM) — the same approach (different class names,
+ * `ap-*`) is now live on the marketing website's homepage as a "See it
+ * before you install it" section, built independently since the website is
+ * a static HTML/CSS site with no JS component system to share this file
+ * with directly.
  */
 
 const PLACEHOLDER_MESSAGES = [
@@ -26,7 +26,7 @@ const PLACEHOLDER_MESSAGES = [
 
 const PLACEHOLDER_CHANNELS = ["general", "screenshots"];
 
-const BASE_THEME_TOKENS: Record<"dark" | "light" | "amoled", CommunityThemeTokens> = {
+const BASE_THEME_TOKENS: Record<"dark" | "light", CommunityThemeTokens> = {
   dark: {
     bgDeep: "#16130e",
     bgBase: "#1c1812",
@@ -35,8 +35,8 @@ const BASE_THEME_TOKENS: Record<"dark" | "light" | "amoled", CommunityThemeToken
     border: "#3a3325",
     text: "#f2f3f5",
     textDim: "#949ba4",
-    accent: "#e8a962",
-    accentStrong: "#f5cc9f",
+    accent: "#2dd4bf",
+    accentStrong: "#5eead4",
     danger: "#fb5760"
   },
   light: {
@@ -47,28 +47,20 @@ const BASE_THEME_TOKENS: Record<"dark" | "light" | "amoled", CommunityThemeToken
     border: "#d4d7dc",
     text: "#060607",
     textDim: "#5c5e66",
-    accent: "#835000",
-    accentStrong: "#653e05",
+    accent: "#115e59",
+    accentStrong: "#0d4f4a",
     danger: "#a82231"
-  },
-  amoled: {
-    bgDeep: "#000000",
-    bgBase: "#000000",
-    bgRaise: "#0d0b07",
-    bgHover: "#1a160e",
-    border: "#2a2416",
-    text: "#f2f3f5",
-    textDim: "#949ba4",
-    accent: "#e8a962",
-    accentStrong: "#f5cc9f",
-    danger: "#fb5760"
   }
 };
 
-/** The built-in Light/Dark/AMOLED tokens for whichever base theme is currently resolved — used for the "no override" preview card. */
+/** "system" resolved against the OS preference — the same light/dark split every theme (built-in or community) is shown through. */
+export function resolveMode(): "light" | "dark" {
+  return state.settings.theme === "system" ? (state.prefersDark ? "dark" : "light") : state.settings.theme;
+}
+
+/** The built-in Light/Dark tokens for whichever mode is currently resolved — used for the "Default" preview card. */
 export function resolveBaseThemeTokens(): CommunityThemeTokens {
-  const resolved = state.settings.theme === "system" ? (state.prefersDark ? "dark" : "light") : state.settings.theme;
-  return BASE_THEME_TOKENS[resolved as "dark" | "light" | "amoled"] ?? BASE_THEME_TOKENS.dark;
+  return BASE_THEME_TOKENS[resolveMode()];
 }
 
 const TOKEN_CSS_VARS: Record<keyof CommunityThemeTokens, string> = {

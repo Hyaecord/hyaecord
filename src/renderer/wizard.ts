@@ -49,7 +49,7 @@ export function maybeShowWizard(de: DesktopEnvironmentInfo): void {
         : de.family === "kde"
           ? "wizard.theme.detected.kde"
           : "wizard.theme.detected.other";
-    const options: ThemeId[] = ["system", "light", "dark", "amoled"];
+    const options: ThemeId[] = ["system", "light", "dark"];
     const group = el("div", { className: "theme-options", role: "radiogroup", "aria-label": t("wizard.theme.title") });
     for (const theme of options) {
       const input = el("input", { type: "radio", name: "wizard-theme", value: theme }) as HTMLInputElement;

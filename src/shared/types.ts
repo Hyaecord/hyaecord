@@ -1,4 +1,4 @@
-export type ThemeId = "light" | "dark" | "amoled" | "system";
+export type ThemeId = "light" | "dark" | "system";
 
 export interface CommunityThemeTokens {
   bgDeep: string;
@@ -17,7 +17,9 @@ export interface CommunityTheme {
   id: string;
   name: string;
   author: string;
-  tokens: CommunityThemeTokens;
+  /** Every theme ships both variants — there's no separate AMOLED mode; the light/dark setting picks which one applies. */
+  light: CommunityThemeTokens;
+  dark: CommunityThemeTokens;
 }
 
 export interface HyaecordSettings {
@@ -64,7 +66,7 @@ export interface HyaecordSettings {
     guildIds: string[];
     collapsed: boolean;
   }>;
-  /** The applied community theme, cached in full so it still works offline; null = use the base theme (light/dark/amoled) untouched. */
+  /** The applied theme (built-in "Default" or a community theme), cached in full so it still works offline; null = the built-in default theme, untouched. */
   communityTheme: CommunityTheme | null;
 }
 

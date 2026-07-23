@@ -53,11 +53,12 @@ const COMMUNITY_TOKEN_PROPS: Record<string, string> = {
   danger: "--danger"
 };
 
-function applyCommunityTheme(): void {
+function applyCommunityTheme(resolved: "light" | "dark"): void {
   const theme = state.settings.communityTheme;
+  const tokens = theme?.[resolved];
   const root = document.documentElement;
   for (const [key, prop] of Object.entries(COMMUNITY_TOKEN_PROPS)) {
-    const value = theme?.tokens[key as keyof typeof theme.tokens];
+    const value = tokens?.[key as keyof typeof tokens];
     if (value) root.style.setProperty(prop, value);
     else root.style.removeProperty(prop);
   }
@@ -65,7 +66,7 @@ function applyCommunityTheme(): void {
 
 export function applySettingsToDocument(): void {
   const { settings, prefersDark } = state;
-  const resolved =
+  const resolved: "light" | "dark" =
     settings.theme === "system" ? (prefersDark ? "dark" : "light") : settings.theme;
   document.body.dataset.theme = resolved;
   document.documentElement.style.setProperty("--text-scale", String(settings.textScale));
@@ -75,7 +76,7 @@ export function applySettingsToDocument(): void {
   } else {
     document.documentElement.dataset.reducedMotion = settings.reducedMotion;
   }
-  applyCommunityTheme();
+  applyCommunityTheme(resolved);
 }
 
 export async function patchSettings(patch: Partial<HyaecordSettings>): Promise<void> {

@@ -1,6 +1,6 @@
 import type { CommunityTheme } from "@shared/types";
 import { el, patchSettings, showToast, state, t, trapFocus } from "./ui";
-import { buildThemePreview, resolveBaseThemeTokens } from "./theme-preview";
+import { buildThemePreview, resolveBaseThemeTokens, resolveMode } from "./theme-preview";
 
 const ISSUE_TEMPLATE_URL =
   "https://github.com/Hyaecord/hyaecord/issues/new?template=theme_submission.yml";
@@ -9,8 +9,10 @@ const DISCORD_URL = "https://hyaecord.vercel.app/discord";
 /**
  * The Theme Store: fetches community-themes/registry.json (via the main
  * process, so no CSP headaches) and lets the user apply one. A theme is
- * only ever ten colour values — see COMMUNITY_TOKEN_PROPS in ui.ts — so
- * there's no code-execution surface here, just a palette swap.
+ * only ever two sets of ten colour values (light + dark — see
+ * COMMUNITY_TOKEN_PROPS in ui.ts), so there's no code-execution surface
+ * here, just a palette swap. The existing light/dark/system setting picks
+ * which of the two sets actually applies; there's no separate AMOLED mode.
  */
 export function openThemeStore(): void {
   const close = () => {
@@ -75,7 +77,7 @@ function renderList(container: HTMLElement, themes: CommunityTheme[]): void {
 
 function themeCard(theme: CommunityTheme | null): HTMLElement {
   const isActive = theme ? state.settings.communityTheme?.id === theme.id : !state.settings.communityTheme;
-  const preview = buildThemePreview(theme ? theme.tokens : resolveBaseThemeTokens());
+  const preview = buildThemePreview(theme ? theme[resolveMode()] : resolveBaseThemeTokens());
 
   const button = el(
     "button",

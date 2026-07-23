@@ -300,8 +300,7 @@ export function openSettings(): void {
   const themeOptions: Array<{ value: ThemeId; labelKey: string }> = [
     { value: "system", labelKey: "settings.theme.system" },
     { value: "light", labelKey: "settings.theme.light" },
-    { value: "dark", labelKey: "settings.theme.dark" },
-    { value: "amoled", labelKey: "settings.theme.amoled" }
+    { value: "dark", labelKey: "settings.theme.dark" }
   ];
 
   const s = state.settings;

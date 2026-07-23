@@ -54,7 +54,7 @@ commits, changes, chatting, or support.
 
 - **Native OS look and feel:** Interfaces designed around GTK4/Libadwaita and KDE Plasma visual standards rather than generic web containers.
 - **Automatic DE theme matching:** Auto-detects GNOME and KDE theme settings on launch, with support for manual overrides.
-- **Stock accessible themes:** Bundles WCAG AA-compliant Light, Dark, and AMOLED themes.
+- **Stock accessible themes:** Bundles WCAG AA-compliant Light and Dark themes, plus a growing set of community themes (each shipping both a light and dark version) via the in-app Theme Store.
 - **Expanded media rendering:** Server banners and icons render at full source resolution without stock crop masks.
 - **Platform icon integration:** Multi-resolution `.ico`, `.png`, and `.svg` branding assets for system tray and taskbar rendering.
 

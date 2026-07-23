@@ -3,7 +3,7 @@
     "id": "midnight-ocean",
     "name": "Midnight Ocean",
     "author": "Hyaecord team",
-    "tokens": {
+    "dark": {
       "bgDeep": "#0a1929",
       "bgBase": "#0f2436",
       "bgRaise": "#15304a",
@@ -14,13 +14,25 @@
       "accent": "#4fc3f7",
       "accentStrong": "#81d4fa",
       "danger": "#ff6b6b"
+    },
+    "light": {
+      "bgDeep": "#d7e9f2",
+      "bgBase": "#ffffff",
+      "bgRaise": "#eaf4fa",
+      "bgHover": "#d7e9f2",
+      "border": "#bcdaea",
+      "text": "#072436",
+      "textDim": "#4d7387",
+      "accent": "#0277a8",
+      "accentStrong": "#015d85",
+      "danger": "#c62828"
     }
   },
   {
     "id": "evergreen",
     "name": "Evergreen",
     "author": "Hyaecord team",
-    "tokens": {
+    "dark": {
       "bgDeep": "#122015",
       "bgBase": "#182619",
       "bgRaise": "#1f2f20",
@@ -31,6 +43,105 @@
       "accent": "#7ed957",
       "accentStrong": "#a3e883",
       "danger": "#ff8080"
+    },
+    "light": {
+      "bgDeep": "#e1ecdd",
+      "bgBase": "#ffffff",
+      "bgRaise": "#eef5ea",
+      "bgHover": "#e1ecdd",
+      "border": "#c7ddc0",
+      "text": "#142b16",
+      "textDim": "#55705a",
+      "accent": "#2f8f3f",
+      "accentStrong": "#256e32",
+      "danger": "#b3261e"
+    }
+  },
+  {
+    "id": "hyena",
+    "name": "Hyena",
+    "author": "Hyaecord team",
+    "dark": {
+      "bgDeep": "#1a120a",
+      "bgBase": "#201610",
+      "bgRaise": "#2b1e14",
+      "bgHover": "#37281c",
+      "border": "#4a3626",
+      "text": "#f5eee2",
+      "textDim": "#b9a892",
+      "accent": "#e8a962",
+      "accentStrong": "#f5cc9f",
+      "danger": "#fb5760"
+    },
+    "light": {
+      "bgDeep": "#ece1cd",
+      "bgBase": "#fbf6ec",
+      "bgRaise": "#f3ebd9",
+      "bgHover": "#ece1cd",
+      "border": "#ddccaf",
+      "text": "#2e1d11",
+      "textDim": "#6b5645",
+      "accent": "#835000",
+      "accentStrong": "#653e05",
+      "danger": "#a82231"
+    }
+  },
+  {
+    "id": "discord-vanilla",
+    "name": "Discord Vanilla",
+    "author": "Hyaecord team",
+    "dark": {
+      "bgDeep": "#1e1f22",
+      "bgBase": "#313338",
+      "bgRaise": "#2b2d31",
+      "bgHover": "#3f4147",
+      "border": "#26282c",
+      "text": "#f2f3f5",
+      "textDim": "#949ba4",
+      "accent": "#8a93f5",
+      "accentStrong": "#9aa1f6",
+      "danger": "#e15f63"
+    },
+    "light": {
+      "bgDeep": "#e3e5e8",
+      "bgBase": "#ffffff",
+      "bgRaise": "#f2f3f5",
+      "bgHover": "#e3e5e8",
+      "border": "#d4d7dc",
+      "text": "#060607",
+      "textDim": "#5c5e66",
+      "accent": "#5865f2",
+      "accentStrong": "#3c45a5",
+      "danger": "#da373c"
+    }
+  },
+  {
+    "id": "tubular",
+    "name": "Tubular",
+    "author": "Hyaecord team",
+    "dark": {
+      "bgDeep": "#0a0f0e",
+      "bgBase": "#0f1614",
+      "bgRaise": "#16211d",
+      "bgHover": "#1d2b26",
+      "border": "#274038",
+      "text": "#eef9f6",
+      "textDim": "#93b3aa",
+      "accent": "#22e6c8",
+      "accentStrong": "#7ff5e0",
+      "danger": "#fb5760"
+    },
+    "light": {
+      "bgDeep": "#e2f2ee",
+      "bgBase": "#ffffff",
+      "bgRaise": "#eefaf7",
+      "bgHover": "#e2f2ee",
+      "border": "#c8e3dc",
+      "text": "#052620",
+      "textDim": "#4c7168",
+      "accent": "#0f7a68",
+      "accentStrong": "#0a5c4e",
+      "danger": "#a82231"
     }
   }
 ]

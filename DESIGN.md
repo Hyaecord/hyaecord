@@ -47,30 +47,30 @@ The palette derives entirely from the logo (see BRANDING.md). But brand anchors 
 
 Never reference ramp steps directly in component code — reference these:
 
-| Token | Dark (default) | Light | AMOLED | Role |
-|---|---|---|---|---|
-| `--bg-deep` | `#16130e` | `#e3e5e8` | `#000000` | window chrome, rails |
-| `--bg-base` | `#1c1812` | `#ffffff` | `#000000` | main content surface |
-| `--bg-raise` | `#241f16` | `#f2f3f5` | `#0d0b07` | cards, inputs, popovers |
-| `--bg-hover` | `#2d271c` | `#e3e5e8` | `#1a160e` | hover/selected fills |
-| `--border` | `#3a3325` | `#d4d7dc` | `#2a2416` | hairlines, outlines |
-| `--text` | `#f2f3f5` | `#060607` | `#f2f3f5` | primary text |
-| `--text-dim` | `#949ba4` | `#5c5e66` | `#949ba4` | secondary text |
-| `--accent` | `#2dd4bf` | `#115e59` | `#2dd4bf` | default-theme accent, focus rings |
-| `--accent-strong` | `#5eead4` | `#0d4f4a` | `#5eead4` | links, emphasized accent text |
-| `--danger` | `#fb5760` | `#a82231` | `#fb5760` | destructive, errors |
-| `--danger-text` | `#ff9593` | `#a82231` | `#ff9593` | error copy on base surfaces |
+| Token | Dark (default) | Light | Role |
+|---|---|---|---|
+| `--bg-deep` | `#16130e` | `#e3e5e8` | window chrome, rails |
+| `--bg-base` | `#1c1812` | `#ffffff` | main content surface |
+| `--bg-raise` | `#241f16` | `#f2f3f5` | cards, inputs, popovers |
+| `--bg-hover` | `#2d271c` | `#e3e5e8` | hover/selected fills |
+| `--border` | `#3a3325` | `#d4d7dc` | hairlines, outlines |
+| `--text` | `#f2f3f5` | `#060607` | primary text |
+| `--text-dim` | `#949ba4` | `#5c5e66` | secondary text |
+| `--accent` | `#2dd4bf` | `#115e59` | default-theme accent, focus rings |
+| `--accent-strong` | `#5eead4` | `#0d4f4a` | links, emphasized accent text |
+| `--danger` | `#fb5760` | `#a82231` | destructive, errors |
+| `--danger-text` | `#ff9593` | `#a82231` | error copy on base surfaces |
+
+> **No separate AMOLED mode (23 July 2026, owner call).** The base theme setting is now just Light/Dark/System. Every theme — the built-in default and every community theme — ships exactly two token sets (light + dark), and the light/dark/system setting picks which one applies; there's no third variant to maintain per theme. `CommunityTheme` in `src/shared/types.ts` changed from one flat `tokens` object to `{ light, dark }`. If OLED power savings ever come back as a real ask, it'd be a dark-theme *option* (e.g. a true-black toggle), not a fourth top-level theme with its own full token set to keep in sync across every registry entry.
 
 > **Light surfaces are true neutral grey, never the brand cream.** Cream (`#f1e9d5`) is reserved for the website's chrome accents — as a *client* background it read dated and heavy, and the owner asked it be dropped from the app entirely (23 July 2026). The client's light theme now uses the same neutral scale as the website's Discord-modeled light theme, so the two surfaces agree on what "light mode" looks like even though their component systems are separate.
 
-> **The default-theme accent is back to the neutral teal (23 July 2026, second reversal — read this whole note before changing it again).** The sequence: teal → brand amber (owner asked for logo colour over Discord's blurple) → amber lightened a step (owner: the dark shade "read as flat brown, not gold") → **back to teal** (owner: still "the brown accent colour", i.e. the amber direction itself was the problem, not the specific shade). The underlying issue is contrast math, not a shade pick: amber only clears 4.5:1 on a white background once it's dark enough that it stops reading as "gold" and starts reading as "brown" — that's not a tuning mistake, it's what a low-lightness orange-family hue *is*. The brand's other colours don't help either: shadow red (`#e44550`) and tongue pink (`#d4495f`) both fail 4.5:1 on white at their raw values, and darkening either one enough to pass lands within a few degrees of hue of `--danger`'s red (`#a82231`) — computed at ~350° for both, functionally the same colour for UI purposes, which would blur the one signal (danger/destructive) this system deliberately keeps rare and specific (§2.5). Teal has none of these problems: it's nowhere near brown at any lightness, nowhere near the danger red's hue, and nowhere near Discord's blurple either. Brand amber/cream/red/pink stay exactly where they belong — the logo and website — and are still available as CSS custom properties (`--amber-*`, `--brand-*`) for an optional future branded client theme, just not the *default* accent. Don't re-attempt an amber or red/pink default accent without solving the hue-collision-with-danger problem first, not just picking a different lightness.
+> **The default-theme accent is back to the neutral teal (23 July 2026, second reversal — read this whole note before changing it again).** The sequence: teal → brand amber (owner asked for logo colour over Discord's blurple) → amber lightened a step (owner: the dark shade "read as flat brown, not gold") → **back to teal** (owner: still "the brown accent colour", i.e. the amber direction itself was the problem, not the specific shade). The underlying issue is contrast math, not a shade pick: amber only clears 4.5:1 on a white background once it's dark enough that it stops reading as "gold" and starts reading as "brown" — that's not a tuning mistake, it's what a low-lightness orange-family hue *is*. The brand's other colours don't help either: shadow red (`#e44550`) and tongue pink (`#d4495f`) both fail 4.5:1 on white at their raw values, and darkening either one enough to pass lands within a few degrees of hue of `--danger`'s red (`#a82231`) — computed at ~350° for both, functionally the same colour for UI purposes, which would blur the one signal (danger/destructive) this system deliberately keeps rare and specific (§2.5). Teal has none of these problems: it's nowhere near brown at any lightness, nowhere near the danger red's hue, and nowhere near Discord's blurple either. Brand amber/cream/red/pink stay exactly where they belong — the logo and website — and are still available as CSS custom properties (`--amber-*`, `--brand-*`) for use in a community theme, just not the *default* accent. The obvious brand-flavoured option shipped as an actual opt-in community theme instead — see the **Hyena** entry in `community-themes/registry.json`, which leans fully into the warm amber/brown palette (a legitimate stylistic choice when it's opt-in, unlike the default accent). Don't re-attempt an amber or red/pink *default* accent without solving the hue-collision-with-danger problem first, not just picking a different lightness.
 
 Notes on why these work:
 
 - **Prefer near-black/near-white over pure black-on-white where the choice is ours** — 21:1 contrast causes halation for astigmatic readers (a large minority) — but the client's light theme deliberately breaks this rule to match Discord's own light theme exactly (`#060607` text on `#ffffff`, ~19:1), because "looks like Discord's light mode" was an explicit requirement and users already tolerate that choice in the app they're switching from.
 - **The accent shifts per theme.** Teal-400 (`#2dd4bf`) reads beautifully on dark (9.5:1+) but is too light for body-text size on white; light mode substitutes teal-800 (`#115e59`, 7.6:1 on white). This per-theme swap is the single most common thing naive theming gets wrong.
-- **AMOLED is not "dark but blacker".** True-black base for OLED power savings, but raised surfaces still step up in lightness, otherwise nothing has edges.
-
 ### 2.4 Verified contrast (computed, WCAG 2.x)
 
 | Pair | Ratio | Passes |
@@ -85,7 +85,6 @@ Notes on why these work:
 | dim text on white (light) | 6.47 | AA |
 | accent teal-800 text on white (light) | 7.58 | AAA |
 | red-600 link on white (light) | 7.15 | AAA |
-| text on black (AMOLED) | 18.91 | AAA |
 | focus ring teal-400 on bg-deep (dark) | 9.95 | ≥3:1 non-text |
 | focus ring teal-800 on bg-deep (light) | 4.34 | ≥3:1 non-text |
 
@@ -175,7 +174,7 @@ Before shipping any UI:
 
 - [ ] All colours via semantic tokens; zero raw hex in components
 - [ ] Text ≥ 4.5:1 (or ≥ 3:1 large); non-text indicators ≥ 3:1 — *measured, not guessed*
-- [ ] Works in Light, Dark, AMOLED without per-theme hacks
+- [ ] Works in Light and Dark, and in every community theme's light/dark pair, without per-theme hacks
 - [ ] Meaning never carried by colour alone
 - [ ] Keyboard: reachable, visible focus, logical order, Esc behaves
 - [ ] Reduced-motion produces a fully usable, non-janky experience
