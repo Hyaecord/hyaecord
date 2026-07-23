@@ -15,7 +15,8 @@ import {
   autoLogin,
   getSessionState,
   fetchMessages,
-  sendMessage
+  sendMessage,
+  deleteChannel
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -69,6 +70,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordSendMessage, (_e, channelId: string, content: string) =>
     sendMessage(channelId, content)
   );
+  ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed
     // and this handler is the one place that can reach outside the app.

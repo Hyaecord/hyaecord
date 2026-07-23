@@ -69,4 +69,5 @@ export interface HyaecordBridge {
   fetchMessages(channelId: string): Promise<unknown[]>;
   sendMessage(channelId: string, content: string): Promise<boolean>;
   openExternal(url: string): Promise<void>;
+  deleteChannel(channelId: string): Promise<boolean>;
 }

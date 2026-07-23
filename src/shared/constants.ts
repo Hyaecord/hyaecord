@@ -39,5 +39,6 @@ export const IPC = {
   discordEvent: "hyaecord:discord-event",
   discordFetchMessages: "hyaecord:discord-fetch-messages",
   discordSendMessage: "hyaecord:discord-send-message",
+  discordDeleteChannel: "hyaecord:discord-delete-channel",
   openExternal: "hyaecord:open-external"
 } as const;

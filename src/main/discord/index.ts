@@ -157,3 +157,14 @@ export async function sendMessage(channelId: string, content: string): Promise<b
     return false;
   }
 }
+
+/** Used by Moderator View. Caller is responsible for permission gating client-side. */
+export async function deleteChannel(channelId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.deleteChannel(channelId);
+    return true;
+  } catch {
+    return false;
+  }
+}

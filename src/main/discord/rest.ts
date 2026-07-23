@@ -59,6 +59,10 @@ export class RestClient {
   createMessage(channelId: string, content: string): Promise<RawMessage> {
     return this.request("POST", `/channels/${channelId}/messages`, { content });
   }
+
+  deleteChannel(channelId: string): Promise<void> {
+    return this.request("DELETE", `/channels/${channelId}`);
+  }
 }
 
 export interface RawMessage {

@@ -3,6 +3,7 @@ import { applySettingsToDocument, state, t } from "./ui";
 import { maybeShowWizard } from "./wizard";
 import { mountSettingsButton } from "./settings-ui";
 import { initSession } from "./session";
+import { initModeratorView } from "./moderator";
 
 declare global {
   interface Window {
@@ -37,6 +38,7 @@ async function init(): Promise<void> {
   renderChrome();
   mountSettingsButton();
   initSession();
+  initModeratorView();
   maybeShowWizard(de);
 }
 

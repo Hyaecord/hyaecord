@@ -175,6 +175,61 @@ export function burstParticles(origin: { x: number; y: number }): void {
   }
 }
 
+/**
+ * A standalone hold-to-confirm button (as opposed to `holdToggleRow`'s
+ * switch shape) — the same "hold instead of a popup" pattern applied to a
+ * one-shot destructive action like a mass-delete. Releasing early cancels.
+ */
+export function holdButton(
+  label: string,
+  holdMs: number,
+  onConfirm: () => void,
+  variant: "danger" | "primary" = "danger"
+): HTMLButtonElement {
+  const fill = el("span", { className: "hold-btn-fill", "aria-hidden": "true" });
+  const text = el("span", { className: "hold-btn-label" }, label);
+  const btn = el("button", { type: "button", className: `btn hold-btn ${variant}` }, fill, text) as HTMLButtonElement;
+
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  const cancel = () => {
+    if (!timer) return;
+    clearTimeout(timer);
+    timer = null;
+    fill.style.transitionDuration = "150ms";
+    fill.style.width = "0%";
+  };
+  const start = () => {
+    if (timer) return;
+    fill.style.transitionDuration = `${holdMs}ms`;
+    requestAnimationFrame(() => (fill.style.width = "100%"));
+    timer = setTimeout(() => {
+      timer = null;
+      fill.style.width = "0%";
+      onConfirm();
+    }, holdMs);
+  };
+  btn.addEventListener("pointerdown", start);
+  btn.addEventListener("pointerup", cancel);
+  btn.addEventListener("pointerleave", cancel);
+  return btn;
+}
+
+let toastContainer: HTMLElement | null = null;
+
+/** A brief, non-blocking status message — used for permission denials, errors, and confirmations. */
+export function showToast(message: string): void {
+  if (!toastContainer) {
+    toastContainer = el("div", { className: "toast-container", role: "status", "aria-live": "polite" });
+    document.body.append(toastContainer);
+  }
+  const toast = el("div", { className: "toast" }, message);
+  toastContainer.append(toast);
+  setTimeout(() => {
+    toast.classList.add("is-leaving");
+    setTimeout(() => toast.remove(), 200);
+  }, 3200);
+}
+
 /** Wrap Tab focus inside `container` and return a cleanup function. */
 export function trapFocus(container: HTMLElement): () => void {
   const selector =

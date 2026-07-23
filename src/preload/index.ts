@@ -22,7 +22,8 @@ const bridge: HyaecordBridge = {
   },
   fetchMessages: channelId => ipcRenderer.invoke(IPC.discordFetchMessages, channelId),
   sendMessage: (channelId, content) => ipcRenderer.invoke(IPC.discordSendMessage, channelId, content),
-  openExternal: url => ipcRenderer.invoke(IPC.openExternal, url)
+  openExternal: url => ipcRenderer.invoke(IPC.openExternal, url),
+  deleteChannel: channelId => ipcRenderer.invoke(IPC.discordDeleteChannel, channelId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);
