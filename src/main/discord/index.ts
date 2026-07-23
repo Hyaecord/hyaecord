@@ -272,3 +272,14 @@ export async function muteGuild(guildId: string, muted: boolean): Promise<boolea
     return false;
   }
 }
+
+/** Used by Server Chomper for individual DMs/group DMs. */
+export async function muteDm(channelId: string, muted: boolean): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.setDmMuted(channelId, muted);
+    return true;
+  } catch {
+    return false;
+  }
+}

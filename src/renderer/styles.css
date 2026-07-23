@@ -239,6 +239,7 @@ body {
   border-radius: var(--radius-s);
   color: color-mix(in srgb, var(--accent) calc(var(--effect) * 55%), var(--text-dim));
   cursor: pointer;
+  touch-action: pan-y;
   transform: translateX(calc(var(--effect) * 3px));
   transition: background var(--dur-fast) var(--ease-standard),
               color var(--dur-fast) var(--ease-standard),
@@ -247,6 +248,7 @@ body {
 .channel-list li:hover,
 .channel-list li:focus-visible { background: var(--bg-hover); color: var(--text); }
 .channel-list li[aria-current="true"] { background: var(--bg-hover); color: var(--text); }
+.channel-list li.chomper-restored { border: 1px dashed var(--border); opacity: 0.75; }
 
 .chat {
   display: flex;

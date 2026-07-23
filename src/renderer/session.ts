@@ -222,61 +222,77 @@ function onReady(data: unknown): void {
   if (first) selectGuild(first.id);
 }
 
-/* ---------- Server Chomper: swipe a server pill away to hide + mute it ---------- */
+/* ---------- Server Chomper: swipe a server pill or DM row away to hide + mute it ---------- */
 
 const CHOMPER_SWIPE_THRESHOLD = 70;
 
-function isChomperHidden(guildId: string): boolean {
-  const { hiddenGuildIds, showHidden } = state.settings.chomper;
-  return hiddenGuildIds.includes(guildId) && !showHidden;
+function isChomperHidden(id: string): boolean {
+  const { hidden, showHidden } = state.settings.chomper;
+  return hidden.some(h => h.id === id) && !showHidden;
 }
 
-async function chomperHide(guildId: string, guildName: string): Promise<void> {
-  const ids = state.settings.chomper.hiddenGuildIds;
-  if (!ids.includes(guildId)) {
-    await patchSettings({ chomper: { ...state.settings.chomper, hiddenGuildIds: [...ids, guildId] } });
+function isChomperTracked(id: string): boolean {
+  return state.settings.chomper.hidden.some(h => h.id === id);
+}
+
+async function chomperHide(id: string, type: "guild" | "dm", name: string): Promise<void> {
+  const hidden = state.settings.chomper.hidden;
+  if (!hidden.some(h => h.id === id)) {
+    await patchSettings({ chomper: { ...state.settings.chomper, hidden: [...hidden, { id, type }] } });
   }
-  void window.hyaecord.muteGuild(guildId, true);
-  showToast(t("chomper.hidden", { name: guildName }));
-  renderRail();
-  if (activeGuildId === guildId) {
-    const next = guilds.find(g => !isChomperHidden(g.id));
-    if (next) selectGuild(next.id);
-    else selectDms();
+  if (type === "guild") void window.hyaecord.muteGuild(id, true);
+  else void window.hyaecord.muteDm(id, true);
+  showToast(t("chomper.hidden", { name }));
+
+  if (type === "guild") {
+    renderRail();
+    if (activeGuildId === id) {
+      const next = guilds.find(g => !isChomperHidden(g.id));
+      if (next) selectGuild(next.id);
+      else selectDms();
+    }
+  } else if (activeGuildId === null) {
+    selectDms(); // re-render the DM list without the one just hidden
   }
 }
 
-/** Wires horizontal drag-to-hide on a server pill. Returns true if the drag exceeded the click threshold (caller should suppress the click). */
-function wireChomperDrag(pill: HTMLElement, guildId: string, guildName: string): void {
+/** Wires horizontal drag-to-hide on a server pill or DM list row. */
+function wireChomperDrag(target: HTMLElement, id: string, type: "guild" | "dm", name: string): void {
   let startX = 0;
   let dx = 0;
   let dragging = false;
 
-  pill.addEventListener("pointerdown", ev => {
+  target.addEventListener("pointerdown", ev => {
     startX = ev.clientX;
     dx = 0;
     dragging = true;
-    pill.setPointerCapture(ev.pointerId);
+    target.setPointerCapture(ev.pointerId);
   });
-  pill.addEventListener("pointermove", ev => {
+  target.addEventListener("pointermove", ev => {
     if (!dragging) return;
     dx = ev.clientX - startX;
-    pill.style.transform = `translateX(${dx}px)`;
-    pill.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 140));
+    target.style.transform = `translateX(${dx}px)`;
+    target.style.opacity = String(Math.max(0.3, 1 - Math.abs(dx) / 140));
   });
   const end = () => {
     if (!dragging) return;
     dragging = false;
-    pill.style.transform = "";
-    pill.style.opacity = "";
+    target.style.transform = "";
+    target.style.opacity = "";
     if (Math.abs(dx) > CHOMPER_SWIPE_THRESHOLD) {
-      pill.dataset.suppressClick = "true";
-      void chomperHide(guildId, guildName);
+      target.dataset.suppressClick = "true";
+      void chomperHide(id, type, name);
     }
     dx = 0;
   };
-  pill.addEventListener("pointerup", end);
-  pill.addEventListener("pointercancel", end);
+  target.addEventListener("pointerup", end);
+  target.addEventListener("pointercancel", end);
+}
+
+/** Re-renders the server rail and, if DMs are the active view, the DM list too — used after the Chomper restore toggle flips, since that can change what's visible in either place. */
+export function refreshChomperViews(): void {
+  renderRail();
+  if (activeGuildId === null) selectDms();
 }
 
 export function renderRail(): void {
@@ -300,7 +316,7 @@ export function renderRail(): void {
   for (const guild of guilds) {
     if (isChomperHidden(guild.id)) continue;
     const pill = el("button", {
-      className: state.settings.chomper.hiddenGuildIds.includes(guild.id) ? "server-pill chomper-restored" : "server-pill",
+      className: isChomperTracked(guild.id) ? "server-pill chomper-restored" : "server-pill",
       type: "button",
       title: guild.name,
       "aria-label": guild.name,
@@ -313,7 +329,7 @@ export function renderRail(): void {
         selectGuild(guild.id);
       }
     });
-    wireChomperDrag(pill, guild.id, guild.name);
+    wireChomperDrag(pill, guild.id, "guild", guild.name);
     if (guild.icon) {
       pill.append(
         el("img", {
@@ -348,8 +364,17 @@ function selectDms(): void {
   const list = document.getElementById("channels")!;
   list.replaceChildren();
   for (const dm of dms) {
-    const li = el("li", { tabindex: "0", "data-channel": dm.id }, dm.name);
+    if (isChomperHidden(dm.id)) continue;
+    const li = el("li", {
+      tabindex: "0",
+      "data-channel": dm.id,
+      className: isChomperTracked(dm.id) ? "chomper-restored" : ""
+    }, dm.name);
     const select = () => {
+      if (li.dataset.suppressClick) {
+        delete li.dataset.suppressClick;
+        return;
+      }
       list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
       li.setAttribute("aria-current", "true");
       document.getElementById("chat-header")!.textContent = dm.name;
@@ -362,6 +387,7 @@ function selectDms(): void {
     li.addEventListener("keydown", ev => {
       if ((ev as KeyboardEvent).key === "Enter") select();
     });
+    wireChomperDrag(li, dm.id, "dm", dm.name);
     list.append(li);
   }
 }

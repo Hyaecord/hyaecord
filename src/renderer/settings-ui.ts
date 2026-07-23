@@ -1,6 +1,6 @@
 import type { ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
-import { renderRail } from "./session";
+import { refreshChomperViews } from "./session";
 import { openThemeStore } from "./theme-store";
 
 const REPO_URL = "https://github.com/Hyaecord/hyaecord";
@@ -153,16 +153,17 @@ export function openSettings(): void {
         )
       ),
       section("settings.section.chomper",
-        el("p", { className: "row-description" }, t("settings.chomper.count", { count: s.chomper.hiddenGuildIds.length })),
+        el("p", { className: "row-description" }, t("settings.chomper.count", { count: s.chomper.hidden.length })),
         toggleRow("settings.chomper.showHidden", "settings.chomper.showHidden.description", s.chomper.showHidden, async next => {
           await patchSettings({ chomper: { ...state.settings.chomper, showHidden: next } });
           // Toggling the visibility override also flips the mute state of
-          // every guild Chomper is tracking — showing them again means
+          // everything Chomper is tracking — showing them again means
           // un-muting, hiding them again re-mutes the same set.
-          for (const guildId of state.settings.chomper.hiddenGuildIds) {
-            void window.hyaecord.muteGuild(guildId, !next);
+          for (const item of state.settings.chomper.hidden) {
+            if (item.type === "guild") void window.hyaecord.muteGuild(item.id, !next);
+            else void window.hyaecord.muteDm(item.id, !next);
           }
-          renderRail();
+          refreshChomperViews();
         })
       ),
       section("settings.section.support", starRepoButton())

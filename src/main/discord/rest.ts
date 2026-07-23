@@ -67,6 +67,29 @@ export class RestClient {
   setGuildMuted(guildId: string, muted: boolean): Promise<void> {
     return this.request("PATCH", `/users/@me/guilds/${guildId}/settings`, { muted });
   }
+
+  /**
+   * Mutes/unmutes a single DM or group DM. Per docs.discord.food/resources/user-settings
+   * (the community-maintained documentation of Discord's undocumented user
+   * API — the same source class as the login endpoints above): DM/private
+   * channel settings live under the guild-settings endpoint with guild.id
+   * literally set to "@me", and individual channels within it are muted via
+   * the same channel_overrides array used for per-channel mutes inside a
+   * real guild. Higher-confidence than most of this file since it's backed
+   * by fetched documentation rather than memory, but still ⚠ not exercised
+   * against a real account this session — see BUILD_PROMPT.md.
+   */
+  setDmMuted(channelId: string, muted: boolean): Promise<void> {
+    return this.request("PATCH", "/users/@me/guilds/@me/settings", {
+      channel_overrides: [
+        {
+          channel_id: channelId,
+          muted,
+          mute_config: muted ? { end_time: null, selected_time_window: -1 } : null
+        }
+      ]
+    });
+  }
 }
 
 /**

@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS = {
     anonId: null
   },
   chomper: {
-    hiddenGuildIds: [] as string[],
+    hidden: [] as Array<{ id: string; type: "guild" | "dm" }>,
     showHidden: false
   },
   communityTheme: null
@@ -49,6 +49,7 @@ export const IPC = {
   discordSendMessage: "hyaecord:discord-send-message",
   discordDeleteChannel: "hyaecord:discord-delete-channel",
   discordMuteGuild: "hyaecord:discord-mute-guild",
+  discordMuteDm: "hyaecord:discord-mute-dm",
   openExternal: "hyaecord:open-external",
   getCommunityThemes: "hyaecord:get-community-themes",
   isUsingVpn: "hyaecord:is-using-vpn"

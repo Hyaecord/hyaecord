@@ -44,9 +44,9 @@ export interface HyaecordSettings {
     anonId: string | null;
   };
   chomper: {
-    /** Guild IDs swiped away by Server Chomper — hidden client-side, muted server-side. */
-    hiddenGuildIds: string[];
-    /** When true, Chomper-hidden guilds are shown again and un-muted; toggling back off re-hides and re-mutes the same set. */
+    /** Guilds and DMs swiped away by Server Chomper — hidden client-side, muted server-side. */
+    hidden: Array<{ id: string; type: "guild" | "dm" }>;
+    /** When true, Chomper-hidden items are shown again and un-muted; toggling back off re-hides and re-mutes the same set. */
     showHidden: boolean;
   };
   /** The applied community theme, cached in full so it still works offline; null = use the base theme (light/dark/amoled) untouched. */
@@ -114,6 +114,7 @@ export interface HyaecordBridge {
   openExternal(url: string): Promise<void>;
   deleteChannel(channelId: string): Promise<boolean>;
   muteGuild(guildId: string, muted: boolean): Promise<boolean>;
+  muteDm(channelId: string, muted: boolean): Promise<boolean>;
   getCommunityThemes(): Promise<CommunityTheme[]>;
   isUsingVpn(): Promise<boolean>;
 }
