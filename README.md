@@ -43,51 +43,66 @@ commits, changes, chatting, or support.
 
 ## Features
 
+> Hyaecord is early alpha. The list below is deliberately honest about
+> what's actually built versus still planned — see the
+> [Feature Parity Checklist](#feature-parity-checklist) for the
+> unvarnished per-feature status, updated as things ship rather than
+> written up front and left stale.
+
 ### Ecosystem & Plugins
 
-- **Full Equicord & Vencord compatibility:** Load standard plugin ecosystems natively without extra wrappers.
-- **Equicord Cloud Saves:** Synchronize client settings and plugin configurations across devices.
-- **Integrated extensions:** Built-in support for UserPFP, UsrBG, GlobalBadges, and RPC Bridge.
+- **A real plugin API**, sandboxed via Node `vm` with a restricted API surface — ergonomically modeled on Vencord's `definePlugin` shape so a simple message-hook plugin ports easily, but **not** a byte-compatible runner for existing Equicord/Vencord plugin files (those patch Discord's real webpack bundle, which this client's original GUI doesn't have). See [Plugin Guidelines](PLUGIN_GUIDELINES.md) and `src/main/plugins/` for exactly what's supported today.
+- **GlobalBadges**, live: fetches the real `badges.vencord.dev` feed and renders it on profiles.
+- **UserPFP, UsrBG, RPC Bridge**: present as Settings toggles, not yet functionally wired up — see the checklist below.
 - **Plugin policy:** Strict no-paywall rule with support for creator donation links. See [Plugin Guidelines](PLUGIN_GUIDELINES.md).
 
 ### Desktop Integration & Visuals
 
 - **Native OS look and feel:** Interfaces designed around GTK4/Libadwaita and KDE Plasma visual standards rather than generic web containers.
 - **Automatic DE theme matching:** Auto-detects GNOME and KDE theme settings on launch, with support for manual overrides.
-- **Stock accessible themes:** Bundles WCAG AA-compliant Light and Dark themes, plus a growing set of community themes (each shipping both a light and dark version) via the in-app Theme Store.
-- **Expanded media rendering:** Server banners and icons render at full source resolution without stock crop masks.
+- **Theme Store:** WCAG AA-compliant Light and Dark themes built in, plus a growing set of community themes (each shipping both a light and dark version, no separate AMOLED mode) via the in-app Theme Store.
+- **Real server banners:** Guild banners render as a full backdrop behind the server name instead of Discord's own tiny cropped sliver.
 - **Platform icon integration:** Multi-resolution `.ico`, `.png`, and `.svg` branding assets for system tray and taskbar rendering.
 
 ### Performance & Behavior
 
-- **Event-driven resource engine:** Replaces background polling loops with event listeners to minimize CPU and RAM usage.
-- **Gaming Mode:** Focus-aware background monitoring across multi-monitor setups. Minimizes client resource consumption during gameplay while preserving mentions, DMs, voice calls, and Push-To-Talk (PTT).
-- **Motion system:** GPU-accelerated FLIP layout animations that respect system and client reduced-motion preferences.
-- **Auto-fading self-pins:** Client-side cleanup that fades self-pinned messages after ~10 seconds with smooth layout reflow.
+- **Event-driven resource engine:** Replaces background polling loops with event listeners to minimize CPU and RAM usage — verified throughout (gateway heartbeats, Gaming Mode's `xprop -spy` watcher, no polling timers anywhere in the codebase).
+- **Gaming Mode:** Event-driven fullscreen detection on X11/XWayland (no portable Wayland-native equivalent exists yet), keeping mention/DM/call notifications live while backgrounded.
+- **Motion system:** A shared set of easing/duration CSS tokens used consistently across the app (hover states, hold-to-confirm fills, the channel-list proximity effect), zeroed out under `prefers-reduced-motion` or the in-app override. Not a FLIP-based reflow system — nothing in the client currently needs one.
 
 ### Accessibility & Utilities
 
-- Screen reader support with semantic ARIA markup.
-- Keyboard-first navigation across all client surfaces.
+- Screen reader support with semantic ARIA markup throughout.
+- Keyboard-first navigation: focus trapping in modals, Escape handling, logical tab order.
 - Independent text and UI scale controls.
-- Non-color-dependent notification cues.
-- Resilient auto-updater with fallback to the last known-good build on failure.
+- Native Chromium spellcheck and IME composition for non-Latin input — this comes from Electron/Chromium's own text-input handling, not custom Hyaecord code.
 
 ---
 
 ## Feature Parity Checklist
 
-Hyaecord maintains full functional parity with stock client operations:
+An honest status table, not an aspirational one — updated as features actually ship rather than written once and left stale:
 
-| Feature                          | Status    | Notes                                  |
-| :-------------------------------- | :-------: | :-------------------------------------- |
-| Search & Pinned Messages          | Supported | Includes auto-fade for self-pins        |
-| Voice, Video, Screen Share & Go-Live | Supported | WebRTC stack                         |
-| Push-To-Talk (PTT)                | Supported | Operates uninterrupted under Gaming Mode |
-| Spellcheck & Input Methods        | Supported | Non-Latin IME input supported           |
-| Emoji, GIF & Sticker Pickers       | Supported | Standard picker support                 |
-| Multi-Account Switching           | Supported | Fast account toggle menu                |
-| Native System Tray & Notifications | Supported | Native OS notification bridge          |
+| Feature                              |     Status      | Notes                                                                 |
+| :------------------------------------ | :--------------: | :---------------------------------------------------------------------- |
+| Sending/receiving messages, DMs       |    Supported     | REST + gateway, live message stream                                     |
+| Server folders                        |    Supported     | Local to this client only — doesn't sync to Discord's real account settings |
+| Member list                           |    Supported     | First 100 entries per channel, gateway lazy-loading protocol            |
+| Profile popout, GlobalBadges          |    Supported     |                                                                           |
+| GIF picker                            |    Supported     | Real Discord GIF search, not a separate Tenor integration               |
+| Avatar upload                         |    Supported     |                                                                           |
+| Native system tray & notifications    |    Supported     | Mentions and DMs only, suppressed while the window is focused           |
+| Spellcheck & IME input                | Native (Chromium) | Free from Electron, not custom-built                                    |
+| Search & pinned messages              |   Not yet built   |                                                                           |
+| Self-pin auto-fade                    |   Not yet built   | Setting exists in Settings; no fade behaviour is wired up yet           |
+| Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
+| Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
+| Emoji picker, sticker picker          |   Not yet built   | Typing/pasting emoji directly works (plain text input); no picker UI    |
+| Multi-account switching               |   Not yet built   |                                                                           |
+| Auto-updater                          |   Not yet built   |                                                                           |
+| Session import (Discord/Vesktop/Equibop) | Declined for now | Requires decrypting another app's local session storage — see `BUILD_PROMPT.md` for why this is a deliberate hold, not an oversight |
+| UserPFP, UsrBG, RPC Bridge            | Toggle only, not wired up | Present in Settings; no functional backend yet                  |
+| Equicord Cloud Saves                  |   Not yet built   |                                                                           |
 
 ---
 
@@ -109,7 +124,7 @@ Windows builds are available on the Releases page as a secondary target
 On initial launch, Hyaecord opens a setup wizard to:
 
 1. Detect your desktop environment and select matching default themes.
-2. Import existing session tokens and settings from Vesktop, Equibop, or Discord.
+2. Log in with the real Discord login page (session import from Vesktop/Equibop/Discord is a placeholder step for now — see the [Feature Parity Checklist](#feature-parity-checklist)).
 3. Configure optional features and privacy toggles in plain language.
 
 ---
