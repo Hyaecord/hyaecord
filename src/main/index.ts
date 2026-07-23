@@ -32,7 +32,8 @@ import {
   updateAvatar,
   subscribeMemberList,
   setActivity,
-  searchMessages
+  searchMessages,
+  toggleEmbedSuppression
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -133,6 +134,9 @@ app.whenReady().then(() => {
   );
   ipcMain.handle(IPC.discordSearchMessages, (_e, query: string, guildId: string | null, channelId: string | null) =>
     searchMessages(query, guildId, channelId)
+  );
+  ipcMain.handle(IPC.discordToggleEmbedSuppression, (_e, channelId: string, messageId: string, currentFlags: number) =>
+    toggleEmbedSuppression(channelId, messageId, currentFlags)
   );
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.getPlugins, () => listPlugins());

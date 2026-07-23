@@ -74,6 +74,19 @@ export class RestClient {
     return this.request("DELETE", `/channels/${channelId}`);
   }
 
+  /**
+   * Per docs.discord.food/resources/message: `PATCH /channels/{channel.id}/messages/{message.id}`.
+   * The original author can edit any field; other users can only edit
+   * `flags`, and only with MANAGE_MESSAGES in that channel — caller is
+   * responsible for that permission check (see session.ts's use of this,
+   * gated on the same Permission.MANAGE_MESSAGES bit Moderator View
+   * already uses for MANAGE_CHANNELS). Must include all previously-set
+   * flag bits, not just the one being toggled — caller's job too.
+   */
+  editMessageFlags(channelId: string, messageId: string, flags: number): Promise<RawMessage> {
+    return this.request("PATCH", `/channels/${channelId}/messages/${messageId}`, { flags });
+  }
+
   setGuildMuted(guildId: string, muted: boolean): Promise<void> {
     return this.request("PATCH", `/users/@me/guilds/${guildId}/settings`, { muted });
   }
@@ -203,6 +216,9 @@ export interface RawMessage {
   timestamp: string;
   /** Message type — 0 is a normal message, 6 is the "X pinned a message" system notice. Full enum: docs.discord.com/developers/resources/message. */
   type: number;
+  /** Bitfield. SUPPRESS_EMBEDS is 1 << 2. Full enum: docs.discord.food/resources/message#message-flags. */
+  flags?: number;
+  embeds?: unknown[];
   author: {
     id: string;
     username: string;

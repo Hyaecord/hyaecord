@@ -140,6 +140,8 @@
   "devMode.copiedUserUrl": "User URL copied to clipboard.",
   "devMode.copyProfileColors": "Copy Profile Colors",
   "devMode.copiedProfileColors": "Profile colors copied to clipboard.",
+  "devMode.suppressEmbeds": "Suppress Embeds",
+  "devMode.unsuppressEmbeds": "Unsuppress Embeds",
   "feature.userPFP": "UserPFP",
   "feature.userPFP.description": "Show community profile pictures from the UserPFP database.",
   "feature.usrBG": "UsrBG",

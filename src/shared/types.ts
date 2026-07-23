@@ -142,6 +142,8 @@ export interface HyaecordBridge {
   subscribeMemberList(guildId: string, channelId: string): void;
   /** `guildId` searches every channel in that guild; pass `channelId` alone (guildId null) for a DM. */
   searchMessages(query: string, guildId: string | null, channelId: string | null): Promise<MessageSearchResult>;
+  /** `currentFlags` must be the message's full current flags bitfield, not just the SUPPRESS_EMBEDS bit. */
+  toggleEmbedSuppression(channelId: string, messageId: string, currentFlags: number): Promise<boolean>;
 }
 
 export interface UserProfile {

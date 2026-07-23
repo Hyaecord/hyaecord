@@ -82,8 +82,8 @@ each is actually attempted, not a final verdict.
 ### Category A — plausible future ports (pure message-content transform, no missing API)
 Same shape as the four already shipped: touches only outgoing message
 text via something equivalent to `onBeforeMessageSend`.
-- `googleThat` — hyperlinks a sent search-style message (needs to check exact mechanism)
-- `unsuppressEmbeds` — may be a REST call (unsuppress a message's embeds), not a content transform — needs a `rest.ts` addition (`PATCH` message flags) if pursued, not just the plugin hook surface
+- `googleThat` — mis-triaged in the original pass; actually reads its source now: it's a **slash command** (`/googlethat <query>`), not a content transform at all. Hyaecord has no application-command registration mechanism whatsoever — reclassified to Category D, and a much bigger one than most entries there (a whole new feature area, not a small hook addition).
+- ~~`unsuppressEmbeds`~~ — ✅ built, but as a **native message context-menu item**, not a plugin: confirmed it's a real REST call (`PATCH /channels/{channel.id}/messages/{message.id}` with `flags`, docs.discord.food) toggling the `SUPPRESS_EMBEDS` bit, which the plugin API's content-only `onMessageSend` can't do. Only offered when a message has embeds or is already suppressed (matches the original's own visibility condition), and only when the current user can actually do it — own messages always allowed; other users' need `MANAGE_MESSAGES` in that channel, confirmed as the exact real permission requirement via docs.discord.food's edit-message notes, reusing the same `Permission`/`hasPermission` machinery Moderator View already built for `MANAGE_CHANNELS`.
 - ~~`copyUserMention`, `copyUserURLs`~~ — ✅ built as native context-menu items (`mentionItem`/`userUrlItem`, `src/renderer/context-menu.ts`), reusing the same right-click infra Developer Mode's "Copy ID" already built, on message authors/member rows/profile popouts. Not gated behind Developer Mode (unlike Copy ID) since there's no real-Discord equivalent feature to match the "off by default" precedent against.
 - ~~`copyProfileColors`~~ — ✅ built as a native context-menu item on the profile popout (`profileColorsItem`, `context-menu.ts`), only shown when a profile actually has theme colours set. Required extending `UserProfile`/`RawUserProfile` with Discord's real `theme_colors` field (a premium-only two-colour gradient, distinct from the older single `accent_color` — confirmed via docs.discord.food's Profile Metadata Object, not assumed) all the way from `rest.ts` through to the renderer.
 - `copyEmojiMarkdown`, `copyStickerLinks` — same "native context-menu item, not a plugin" shape, just not built yet: both need a right-click target on rendered emoji/stickers in message content, and messages render as plain text today with no per-token interactivity.
@@ -114,10 +114,12 @@ per plugin if ever revisited, not a blanket unlock.
 ### Category D — needs UI Hyaecord doesn't have a hook for (not "impossible," just not built)
 Modals, custom settings panes beyond boolean/number/string, chat-bar
 buttons beyond a plain toggle, context-menu injection beyond the
-existing Copy-ID system, command-palette-style overlays, or a
-message-render hook (grouping/annotating how a message displays, not
-just its outgoing content):
-`commandPalette`, `keyboardNavigation`, `previewMessage`, `quoter`,
+existing Copy-ID system, command-palette-style overlays, slash-command
+registration, or a message-render hook (grouping/annotating how a
+message displays, not just its outgoing content):
+`googleThat` (needs slash-command registration — Hyaecord has no
+application-command mechanism at all, a genuinely new feature area, not
+a small hook), `commandPalette`, `keyboardNavigation`, `previewMessage`, `quoter`,
 `petpet`, `expressionCloner`, `iconViewer`, `messageBurst` (needs to
 change how consecutive messages render, not just their content — no
 message-render hook exists), `themeLibrary` (Hyaecord already has its
@@ -156,3 +158,5 @@ the moment they're actually built.
 3. ~~Re-read `sendTimestamps` closely for a modal-free auto-replace path~~ — ✅ done, see the ported-plugins table above.
 4. ~~A plugin key-value store API addition~~ — ✅ built (`api.getData`/`api.setData`); the four plugins that motivated it didn't pan out on closer inspection (see Category B), but the primitive is real and available now.
 5. A "friends list" data model (parse Discord's real relationships from the gateway/REST) would unblock `lastActive`/`pingNotifications` — a genuinely new feature area, not a small extension, so scope it deliberately before starting rather than backing into it via one plugin port.
+6. ~~`unsuppressEmbeds`~~ — ✅ done, see Category A above.
+7. Slash-command registration is now the single biggest lever left — it alone would unblock `googleThat` and several others across the full 361-plugin list that weren't itemized individually here, not just one plugin. Worth scoping as its own feature before picking off more one-plugin-at-a-time wins.

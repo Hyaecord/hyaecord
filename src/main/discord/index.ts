@@ -239,6 +239,27 @@ export async function muteDm(channelId: string, muted: boolean): Promise<boolean
   }
 }
 
+const SUPPRESS_EMBEDS_FLAG = 1 << 2;
+
+/**
+ * Powers the native "Suppress/Unsuppress Embeds" context-menu item
+ * (reimplementation of Equicord's UnsuppressEmbeds). `currentFlags` must
+ * be the message's full current flags bitfield — Discord's edit endpoint
+ * requires every previously-set flag to be included, not just the one
+ * being toggled (per docs.discord.food). Caller is responsible for the
+ * MANAGE_MESSAGES-or-own-message permission check.
+ */
+export async function toggleEmbedSuppression(channelId: string, messageId: string, currentFlags: number): Promise<boolean> {
+  if (!rest) return false;
+  const next = currentFlags & SUPPRESS_EMBEDS_FLAG ? currentFlags & ~SUPPRESS_EMBEDS_FLAG : currentFlags | SUPPRESS_EMBEDS_FLAG;
+  try {
+    await rest.editMessageFlags(channelId, messageId, next);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function toUserProfile(raw: RawUserProfile): UserProfile {
   return {
     id: raw.user.id,

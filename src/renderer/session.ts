@@ -6,7 +6,7 @@ import { openGifPicker } from "./gif-picker";
 import { openEmojiPicker } from "./emoji-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
-import { openContextMenu, copyIdItem, mentionItem, userUrlItem } from "./context-menu";
+import { openContextMenu, copyIdItem, mentionItem, userUrlItem, type ContextMenuItem } from "./context-menu";
 import { openMessageSearch } from "./message-search";
 
 /**
@@ -15,18 +15,56 @@ import { openMessageSearch } from "./message-search";
  * has both its own ID and its author's), plus, when `userId` is given,
  * the always-available Copy Mention / Copy User URL entries (native
  * reimplementations of Equicord's CopyUserMention/CopyUserURLs, see
- * context-menu.ts). A no-op (native browser context menu still shows)
- * only when Developer Mode is off *and* no `userId` was given.
+ * context-menu.ts). `extra` appends more items regardless of Developer
+ * Mode (e.g. messageRow's Suppress/Unsuppress Embeds). A no-op (native
+ * browser context menu still shows) only when nothing applies at all.
  */
-function wireDevModeContextMenu(target: HTMLElement, entries: Array<{ id: string; label?: string }>, userId?: string): void {
+function wireDevModeContextMenu(
+  target: HTMLElement,
+  entries: Array<{ id: string; label?: string }>,
+  userId?: string,
+  extra?: () => ContextMenuItem[]
+): void {
   target.addEventListener("contextmenu", ev => {
-    const items = [];
+    const items: ContextMenuItem[] = [];
     if (userId) items.push(mentionItem(userId), userUrlItem(userId));
     if (state.settings.developerMode) items.push(...entries.map(e => copyIdItem(e.id, e.label)));
+    if (extra) items.push(...extra());
     if (items.length === 0) return;
     ev.preventDefault();
     openContextMenu(ev.clientX, ev.clientY, items);
   });
+}
+
+const SUPPRESS_EMBEDS_FLAG = 1 << 2;
+
+/** Own messages can always have their embeds suppressed/unsuppressed; others' need MANAGE_MESSAGES in that channel (DMs have no such permission concept, so only the author can toggle there). */
+function canToggleEmbeds(msg: MessageSummary): boolean {
+  if (msg.authorId === selfUserId) return true;
+  if (!activeGuildId) return false;
+  const channel = guilds.find(g => g.id === activeGuildId)?.channels.find(ch => ch.id === msg.channelId);
+  return channel ? hasPermission(channel.permissions, Permission.MANAGE_MESSAGES) : false;
+}
+
+/**
+ * Native reimplementation of Equicord's "UnsuppressEmbeds" — see
+ * PLUGIN_PARITY.md. Only offered when a message actually has embeds, or
+ * is already suppressed (its embeds array is empty *because* it's
+ * suppressed — that's the point of the flag), matching the original's
+ * own visibility condition.
+ */
+function suppressEmbedsItem(msg: MessageSummary): ContextMenuItem[] {
+  const isSuppressed = (msg.flags & SUPPRESS_EMBEDS_FLAG) !== 0;
+  if (!msg.hasEmbeds && !isSuppressed) return [];
+  if (!canToggleEmbeds(msg)) return [];
+  return [
+    {
+      label: isSuppressed ? t("devMode.unsuppressEmbeds") : t("devMode.suppressEmbeds"),
+      onClick: () => {
+        void window.hyaecord.toggleEmbedSuppression(msg.channelId, msg.id, msg.flags);
+      }
+    }
+  ];
 }
 
 const CONNECTING_KEYS = [
@@ -82,6 +120,8 @@ interface MessageSummary {
   content: string;
   timestamp: string;
   type: number;
+  flags: number;
+  hasEmbeds: boolean;
 }
 
 let guilds: GuildSummary[] = [];
@@ -817,6 +857,8 @@ function toSummary(raw: unknown): MessageSummary | null {
     content?: string;
     timestamp?: string;
     type?: number;
+    flags?: number;
+    embeds?: unknown[];
     author?: { id?: string; username?: string; global_name?: string | null; avatar?: string | null };
   };
   if (!m?.id || !m.channel_id || !m.author?.id) return null;
@@ -828,7 +870,9 @@ function toSummary(raw: unknown): MessageSummary | null {
     avatar: m.author.avatar ?? null,
     content: m.content ?? "",
     timestamp: m.timestamp ?? "",
-    type: m.type ?? 0
+    type: m.type ?? 0,
+    flags: m.flags ?? 0,
+    hasEmbeds: (m.embeds?.length ?? 0) > 0
   };
 }
 
@@ -910,7 +954,8 @@ function messageRow(msg: MessageSummary): HTMLElement {
       { id: msg.id, label: t("devMode.copyMessageId") },
       { id: msg.authorId, label: t("devMode.copyAuthorId") }
     ],
-    msg.authorId
+    msg.authorId,
+    () => suppressEmbedsItem(msg)
   );
   return row;
 }

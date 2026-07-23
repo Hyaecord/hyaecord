@@ -16,7 +16,8 @@
 // Permission bit flags actually used in this app — add more only as needed.
 export const Permission = {
   MANAGE_CHANNELS: 1n << 4n,
-  ADMINISTRATOR: 1n << 3n
+  ADMINISTRATOR: 1n << 3n,
+  MANAGE_MESSAGES: 1n << 13n
 } as const;
 
 interface RawRole {

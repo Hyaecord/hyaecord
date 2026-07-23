@@ -8,7 +8,7 @@ import { el, showToast, state, t } from "./ui";
  * just enough to show a short list of labelled actions near the cursor.
  */
 
-interface ContextMenuItem {
+export interface ContextMenuItem {
   label: string;
   onClick: () => void;
 }

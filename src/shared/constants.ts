@@ -67,5 +67,6 @@ export const IPC = {
   discordSetAvatar: "hyaecord:discord-set-avatar",
   discordSubscribeMembers: "hyaecord:discord-subscribe-members",
   gamingModeState: "hyaecord:gaming-mode-state",
-  discordSearchMessages: "hyaecord:discord-search-messages"
+  discordSearchMessages: "hyaecord:discord-search-messages",
+  discordToggleEmbedSuppression: "hyaecord:discord-toggle-embed-suppression"
 } as const;
