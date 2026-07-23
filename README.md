@@ -92,7 +92,8 @@ An honest status table, not an aspirational one — updated as features actually
 | Avatar upload                         |    Supported     |                                                                           |
 | Native system tray & notifications    |    Supported     | Mentions and DMs only, suppressed while the window is focused           |
 | Spellcheck & IME input                | Native (Chromium) | Free from Electron, not custom-built                                    |
-| Search & pinned messages              |   Not yet built   |                                                                           |
+| Message search                        |    Supported     | Finds a message and switches to its channel; doesn't jump to the exact message within that channel's history yet |
+| Browsing a channel's pinned messages  |   Not yet built   | Pin notices render inline (see self-pin auto-fade below); no dedicated pinned-messages list view yet |
 | Self-pin auto-fade                    |    Supported     | Other people's pin notices stay visible — no "hide others' pins" toggle exists yet |
 | Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
