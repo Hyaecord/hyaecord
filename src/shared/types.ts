@@ -153,6 +153,8 @@ export interface HyaecordBridge {
   listMessagePins(channelId: string): Promise<PinSummary[]>;
   pinMessage(channelId: string, messageId: string): Promise<boolean>;
   unpinMessage(channelId: string, messageId: string): Promise<boolean>;
+  listStickerPacks(): Promise<StickerPackSummary[]>;
+  sendSticker(channelId: string, stickerId: string): Promise<boolean>;
   /** Name/description of every enabled plugin's registered slash commands — for the composer's autocomplete, merged with the built-in commands. */
   getPluginCommands(): Promise<Array<{ name: string; description: string }>>;
   /** Runs a plugin-registered command by name; returns the message content to send, or null if the command doesn't exist/declined to produce one. */
@@ -183,6 +185,19 @@ export interface RelationshipSummary {
   username: string;
   globalName: string | null;
   avatar: string | null;
+}
+
+export interface StickerSummary {
+  id: string;
+  name: string;
+  /** 1 PNG, 2 APNG, 3 LOTTIE, 4 GIF — docs.discord.food/resources/sticker. */
+  formatType: number;
+}
+
+export interface StickerPackSummary {
+  id: string;
+  name: string;
+  stickers: StickerSummary[];
 }
 
 export interface PinSummary {

@@ -57,7 +57,9 @@ const bridge: HyaecordBridge = {
   runPluginCommand: (name, args) => ipcRenderer.invoke(IPC.runPluginCommand, name, args),
   listMessagePins: channelId => ipcRenderer.invoke(IPC.discordListMessagePins, channelId),
   pinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordPinMessage, channelId, messageId),
-  unpinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordUnpinMessage, channelId, messageId)
+  unpinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.discordUnpinMessage, channelId, messageId),
+  listStickerPacks: () => ipcRenderer.invoke(IPC.getStickerPacks),
+  sendSticker: (channelId, stickerId) => ipcRenderer.invoke(IPC.discordSendSticker, channelId, stickerId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

@@ -184,6 +184,24 @@ export class RestClient {
   }
 
   /**
+   * Real sticker API — per docs.discord.food/resources/sticker:
+   * `GET /sticker-packs` (unauthenticated, standard/official packs only —
+   * guild-uploaded custom stickers are a separate, per-guild endpoint not
+   * used here). Sending one is just `POST /channels/{channel.id}/messages`
+   * with `sticker_ids: [id]` instead of `content` — confirmed via
+   * docs.discord.food/resources/message that `sticker_ids` is real,
+   * documented request-body surface (up to 3 per message; this only ever
+   * sends 1, matching the GIF picker's one-thing-per-click behaviour).
+   */
+  listStickerPacks(): Promise<{ sticker_packs: RawStickerPack[] }> {
+    return this.request("GET", "/sticker-packs");
+  }
+
+  sendSticker(channelId: string, stickerId: string): Promise<RawMessage> {
+    return this.request("POST", `/channels/${channelId}/messages`, { sticker_ids: [stickerId] });
+  }
+
+  /**
    * Real pinned-messages API — per docs.discord.food/resources/message:
    * `GET /channels/{channel.id}/messages/pins` (the current, non-deprecated
    * endpoint — the older `GET /channels/{channel.id}/pins` is explicitly
@@ -240,6 +258,17 @@ export interface RawRelationship {
     global_name?: string | null;
     avatar?: string | null;
   };
+}
+
+export interface RawStickerPack {
+  id: string;
+  name: string;
+  stickers: Array<{
+    id: string;
+    name: string;
+    /** 1 PNG, 2 APNG, 3 LOTTIE, 4 GIF — docs.discord.food/resources/sticker. */
+    format_type: number;
+  }>;
 }
 
 export interface RawGif {

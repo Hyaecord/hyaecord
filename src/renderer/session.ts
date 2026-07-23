@@ -3,6 +3,7 @@ import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui"
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
+import { openStickerPicker } from "./sticker-picker";
 import { openEmojiPicker } from "./emoji-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
@@ -305,6 +306,14 @@ function wireComposer(): void {
     openGifPicker(gifButton, url => {
       if (!activeChannelId) return;
       void window.hyaecord.sendMessage(activeChannelId, url);
+    });
+  });
+
+  const stickerButton = document.getElementById("sticker-picker-button") as HTMLButtonElement;
+  stickerButton.addEventListener("click", () => {
+    openStickerPicker(stickerButton, id => {
+      if (!activeChannelId) return;
+      void window.hyaecord.sendSticker(activeChannelId, id);
     });
   });
 

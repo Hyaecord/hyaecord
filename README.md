@@ -99,7 +99,7 @@ An honest status table, not an aspirational one — updated as features actually
 | Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
 | Emoji picker                          |    Supported     | Search-and-browse picker backed by real Unicode emoji data              |
-| Sticker picker                        |   Not yet built   | No verified Discord sticker endpoint looked up yet                      |
+| Sticker picker                        |    Supported     | Real standard sticker packs; Lottie (vector-animated) stickers send correctly but preview as a name-only tile, no animation |
 | Friends list (add/accept/decline/block/remove) | Supported | Real relationships API; the friend/pending/blocked list itself is fetched fresh on open, not kept live |
 | Friend online status                  |    Supported     | Real gateway PRESENCE_UPDATE tracking for friends (not guild members you haven't opened) — Online tab and status dots update live even while the list is open |
 | Built-in text commands (`/shrug`, `/tableflip`, `/unflip`, `/me`) | Supported | Discord's own real built-in commands, reimplemented locally |

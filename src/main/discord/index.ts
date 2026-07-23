@@ -6,7 +6,8 @@ import {
   type RawUserProfile,
   type RawGif,
   type RawSearchResponse,
-  type RawRelationship
+  type RawRelationship,
+  type RawStickerPack
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
@@ -313,6 +314,47 @@ export async function unpinMessage(channelId: string, messageId: string): Promis
   if (!rest) return false;
   try {
     await rest.unpinMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export interface StickerSummary {
+  id: string;
+  name: string;
+  formatType: number;
+}
+
+export interface StickerPackSummary {
+  id: string;
+  name: string;
+  stickers: StickerSummary[];
+}
+
+let stickerPacksCache: StickerPackSummary[] | null = null;
+
+/** Standard sticker packs only — cached for the process lifetime since Discord's own official pack list changes rarely, same reasoning GlobalBadges' 30-minute cache uses for a slower-moving feed. */
+export async function listStickerPacks(): Promise<StickerPackSummary[]> {
+  if (stickerPacksCache) return stickerPacksCache;
+  if (!rest) return [];
+  try {
+    const res = await rest.listStickerPacks();
+    stickerPacksCache = res.sticker_packs.map(pack => ({
+      id: pack.id,
+      name: pack.name,
+      stickers: pack.stickers.map(s => ({ id: s.id, name: s.name, formatType: s.format_type }))
+    }));
+    return stickerPacksCache;
+  } catch {
+    return [];
+  }
+}
+
+export async function sendSticker(channelId: string, stickerId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.sendSticker(channelId, stickerId);
     return true;
   } catch {
     return false;

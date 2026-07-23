@@ -620,6 +620,79 @@ body {
 }
 .gif-picker-button:hover { color: var(--text); border-color: var(--accent); }
 
+.sticker-picker-button {
+  flex-shrink: 0;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  background: var(--bg-raise);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.sticker-picker-button:hover { border-color: var(--accent); }
+
+.sticker-picker {
+  position: fixed;
+  z-index: 60;
+  width: 320px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.sticker-picker-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  padding: 0.6rem 0.6rem 0;
+}
+.sticker-tab {
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--bg-hover);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sticker-tab:hover { color: var(--text); }
+.sticker-tab.is-active { color: var(--text); border-color: var(--accent); }
+.sticker-picker-grid {
+  overflow-y: auto;
+  padding: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.sticker-picker-empty { color: var(--text-dim); padding: 1rem; margin: 0; text-align: center; grid-column: 1 / -1; }
+.sticker-tile {
+  aspect-ratio: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg-hover);
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+}
+.sticker-tile:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+.sticker-tile img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.sticker-tile-lottie {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .gif-picker {
   position: fixed;
   z-index: 60;

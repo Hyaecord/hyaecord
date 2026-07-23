@@ -78,5 +78,7 @@ export const IPC = {
   runPluginCommand: "hyaecord:run-plugin-command",
   discordListMessagePins: "hyaecord:discord-list-message-pins",
   discordPinMessage: "hyaecord:discord-pin-message",
-  discordUnpinMessage: "hyaecord:discord-unpin-message"
+  discordUnpinMessage: "hyaecord:discord-unpin-message",
+  getStickerPacks: "hyaecord:get-sticker-packs",
+  discordSendSticker: "hyaecord:discord-send-sticker"
 } as const;
