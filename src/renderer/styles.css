@@ -55,8 +55,8 @@
   --border: #3a3325;
   --text: #f2f3f5;
   --text-dim: #949ba4;
-  --accent: var(--teal-400);
-  --accent-strong: var(--teal-300);
+  --accent: var(--amber-300);
+  --accent-strong: var(--amber-200);
   --danger: var(--red-400);
   --danger-text: var(--red-300);
   --danger-solid: var(--red-600);
@@ -73,8 +73,8 @@
   --border: #d4d7dc;
   --text: #060607;
   --text-dim: #5c5e66;
-  --accent: var(--teal-800);
-  --accent-strong: var(--teal-900);
+  --accent: var(--amber-700);
+  --accent-strong: var(--amber-900);
   --danger: var(--red-600);
   --danger-text: var(--red-600);
   --danger-solid: var(--red-600);
@@ -88,8 +88,8 @@
   --border: #2a2416;
   --text: #f2f3f5;
   --text-dim: #949ba4;
-  --accent: var(--teal-400);
-  --accent-strong: var(--teal-300);
+  --accent: var(--amber-300);
+  --accent-strong: var(--amber-200);
   --danger: var(--red-400);
   --danger-text: var(--red-300);
   --danger-solid: var(--red-600);
