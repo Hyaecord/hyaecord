@@ -208,6 +208,16 @@ body {
 }
 .login-vpn-notice .link-button { font-size: inherit; }
 
+.fresh-login-notice {
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+  padding: 0.6rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.fresh-login-notice .link-button { font-size: inherit; }
+
 .channel-list {
   background: var(--bg-base);
   border-right: 1px solid var(--border);

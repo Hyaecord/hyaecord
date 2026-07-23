@@ -72,6 +72,8 @@ export interface DiscordUserSummary {
 export interface DiscordSession {
   state: DiscordSessionState;
   user: DiscordUserSummary | null;
+  /** True only right after an explicit login this launch (not a restored session) — see the caution notice in session.ts. */
+  freshLogin?: boolean;
 }
 
 export interface LoginResult {

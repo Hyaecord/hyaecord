@@ -5,6 +5,8 @@
   "shell.members": "Members",
   "shell.chat.placeholder": "Message #general",
   "shell.directMessages": "Direct Messages",
+  "session.freshLoginNotice": "You just connected. Discord's systems can sometimes flag a brand-new login that sends a message right away — you might want to wait a few minutes before sending your first one.",
+  "session.freshLoginNotice.dismiss": "Got it",
   "moderator.noGuild": "Select a server first.",
   "moderator.noPermission": "You don't have permission to manage channels here.",
   "moderator.entered": "Moderator View — select channels, then hold to delete. Esc to exit.",

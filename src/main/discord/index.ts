@@ -25,12 +25,21 @@ let gateway: GatewayClient | null = null;
 let rest: RestClient | null = null;
 let state: DiscordSessionState = "logged-out";
 let user: DiscordUserSummary | null = null;
+/**
+ * True only for a login that just happened this launch via an explicit user
+ * action (token/credentials/browser) — false when restored from a stored
+ * token on startup. Lets the renderer show a one-time "you just connected,
+ * maybe don't fire off a message immediately" caution — see the real
+ * incident noted in BUILD_PROMPT.md (a fresh login + an immediate message
+ * got an account force-logged-out by Discord's own abuse detection).
+ */
+let freshLogin = false;
 
 const DEFAULT_GATEWAY = "wss://gateway.discord.gg/";
 
 function setState(next: DiscordSessionState): void {
   state = next;
-  send("state", { state, user });
+  send("state", { state, user, freshLogin });
 }
 
 function mapGatewayState(gs: GatewayState): DiscordSessionState {
@@ -128,6 +137,7 @@ export async function login(
 ): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
   const trimmed = token.trim();
   if (!trimmed) return { ok: false, error: "empty" };
+  freshLogin = true;
   return completeLogin(trimmed);
 }
 
@@ -162,6 +172,7 @@ export async function loginWithCredentials(loginField: string, password: string)
     return { ok: false, mfaRequired: true, ticket: res.ticket };
   }
   if (!res.token) return { ok: false, error: "network" };
+  freshLogin = true;
   return completeLogin(res.token);
 }
 
@@ -181,6 +192,7 @@ export async function submitMfa(code: string, ticket: string): Promise<Credentia
   }
 
   if (!res.token) return { ok: false, error: "network" };
+  freshLogin = true;
   return completeLogin(res.token);
 }
 
@@ -193,6 +205,7 @@ export async function submitMfa(code: string, ticket: string): Promise<Credentia
 export async function loginWithBrowser(): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
   const token = await openBrowserLogin();
   if (!token) return { ok: false, error: "cancelled" };
+  freshLogin = true;
   return completeLogin(token);
 }
 
@@ -213,6 +226,7 @@ export function logout(): void {
   gateway = null;
   rest = null;
   user = null;
+  freshLogin = false;
   clearToken();
   setState("logged-out");
 }

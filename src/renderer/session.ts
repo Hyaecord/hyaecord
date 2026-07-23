@@ -111,6 +111,7 @@ function wireComposer(): void {
 }
 
 let stopRotation: (() => void) | null = null;
+let freshLoginNoticeShown = false;
 
 function applySession(session: DiscordSession): void {
   stopRotation?.();
@@ -131,7 +132,38 @@ function applySession(session: DiscordSession): void {
     showLogin();
   } else if (session.state === "ready") {
     hideLogin();
+    if (session.freshLogin && !freshLoginNoticeShown) {
+      freshLoginNoticeShown = true;
+      showFreshLoginNotice();
+    }
   }
+}
+
+/**
+ * A one-time, dismissible caution after a brand-new login (not a restored
+ * session). Discord's own abuse-detection systems can react badly to a new
+ * client immediately sending messages after authenticating — this is a soft
+ * heads-up, not a guarantee, since the detection logic is entirely on
+ * Discord's side. See the incident note in BUILD_PROMPT.md.
+ */
+function showFreshLoginNotice(): void {
+  const notice = el(
+    "div",
+    { className: "fresh-login-notice", role: "status" },
+    t("session.freshLoginNotice"),
+    " ",
+    el(
+      "button",
+      {
+        className: "link-button",
+        type: "button",
+        onClick: (ev: Event) => (ev.currentTarget as HTMLElement).closest(".fresh-login-notice")?.remove()
+      },
+      t("session.freshLoginNotice.dismiss")
+    )
+  );
+  const messages = document.getElementById("messages")!;
+  messages.parentElement?.insertBefore(notice, messages);
 }
 
 /* ---------- READY → guild rail + channels ---------- */
