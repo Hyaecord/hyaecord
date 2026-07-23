@@ -1,5 +1,6 @@
 import type { UserProfile } from "@shared/types";
 import { el, t } from "./ui";
+import { getPfpOverride, getBgOverride } from "./avatar-overrides";
 
 /**
  * The profile popout — click a username or avatar anywhere in the message
@@ -59,14 +60,12 @@ function connectionIcon(type: string): string {
 }
 
 function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: string; tooltip: string }>): HTMLElement {
-  const avatarUrl = profile.avatar
-    ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128`
-    : null;
-  const bannerStyle = profile.banner
-    ? `background-image: url(https://cdn.discordapp.com/banners/${profile.id}/${profile.banner}.png?size=480);`
-    : profile.accentColor !== null
-      ? `background-color: #${profile.accentColor.toString(16).padStart(6, "0")};`
-      : "";
+  // UserPFP/UsrBG overrides win over the real Discord avatar/banner, same
+  // priority the real plugins use.
+  const avatarUrl =
+    getPfpOverride(profile.id) ?? (profile.avatar ? `https://cdn.discordapp.com/avatars/${profile.id}/${profile.avatar}.png?size=128` : null);
+  const bgOverride = getBgOverride(profile.id);
+  const bannerImageUrl = bgOverride ?? (profile.banner ? `https://cdn.discordapp.com/banners/${profile.id}/${profile.banner}.png?size=480` : null);
 
   const discordBadgeIcons = profile.badges.map(b =>
     el("img", {
@@ -115,10 +114,20 @@ function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: str
     ? el("img", { className: "profile-avatar", src: avatarUrl, alt: "" })
     : el("span", { className: "profile-avatar profile-avatar-fallback", "aria-hidden": "true" }, profile.username[0] ?? "?");
 
+  // Inline style="" attributes are blocked by this app's CSP (style-src
+  // 'self', no unsafe-inline); per-property CSSOM sets aren't — same fix
+  // as theme-preview.ts.
+  const banner = el("div", { className: "profile-banner" });
+  if (bannerImageUrl) {
+    banner.style.backgroundImage = `url(${bannerImageUrl})`;
+  } else if (profile.accentColor !== null) {
+    banner.style.backgroundColor = `#${profile.accentColor.toString(16).padStart(6, "0")}`;
+  }
+
   const body = el(
     "div",
     { className: "profile-popout-body" },
-    el("div", { className: "profile-banner", style: bannerStyle }),
+    banner,
     avatar,
     el("div", { className: "profile-identity" }, ...identityChildren)
   );

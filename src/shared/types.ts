@@ -124,6 +124,9 @@ export interface HyaecordBridge {
   onGamingModeState(cb: (state: GamingModeState) => void): void;
   getUserProfile(userId: string): Promise<UserProfile | null>;
   getGlobalBadges(userId: string): Promise<Array<{ icon: string; tooltip: string }>>;
+  /** Full userId -> image URL maps, fetched once and cached client-side — empty object if the integration is off. */
+  getUserPfpMap(): Promise<Record<string, string>>;
+  getUserBgMap(): Promise<Record<string, string>>;
   getPlugins(): Promise<PluginInfo[]>;
   setPluginEnabled(id: string, enabled: boolean): Promise<boolean>;
   setPluginSetting(id: string, key: string, value: boolean | number | string): Promise<boolean>;

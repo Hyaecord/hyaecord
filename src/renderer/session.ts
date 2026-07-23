@@ -4,6 +4,7 @@ import { computeChannelPermissions, hasPermission, Permission } from "./permissi
 import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
+import { getPfpOverride } from "./avatar-overrides";
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -734,10 +735,15 @@ function toSummary(raw: unknown): MessageSummary | null {
 }
 
 function messageRow(msg: MessageSummary): HTMLElement {
-  const avatar = msg.avatar
+  // A UserPFP override, if the user has one and the integration is on,
+  // takes priority over their real Discord avatar — same behaviour as
+  // the real UserPFP plugin.
+  const pfpOverride = getPfpOverride(msg.authorId);
+  const avatarSrc = pfpOverride ?? (msg.avatar ? `https://cdn.discordapp.com/avatars/${msg.authorId}/${msg.avatar}.png?size=64` : null);
+  const avatar = avatarSrc
     ? el("img", {
         className: "msg-avatar",
-        src: `https://cdn.discordapp.com/avatars/${msg.authorId}/${msg.avatar}.png?size=64`,
+        src: avatarSrc,
         alt: "",
         loading: "lazy"
       })

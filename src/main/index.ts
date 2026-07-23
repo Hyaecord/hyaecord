@@ -10,9 +10,12 @@ import { startTelemetry } from "./telemetry";
 import { notifyMessage } from "./notifications";
 import { fetchCommunityThemes } from "./community-themes";
 import { fetchGlobalBadges } from "./global-badges";
+import { fetchUserPfpMap } from "./userpfp";
+import { fetchUserBgMap } from "./usrbg";
 import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
 import { loadPlugins, listPlugins, setPluginEnabled, setPluginSetting } from "./plugins/manager";
+import { startRpcBridge, stopRpcBridge } from "./rpc-bridge";
 import {
   initDiscord,
   loginWithBrowser,
@@ -27,7 +30,8 @@ import {
   fetchUserProfile,
   searchGifs,
   updateAvatar,
-  subscribeMemberList
+  subscribeMemberList,
+  setActivity
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -89,11 +93,17 @@ function applyGamingModeSetting(enabled: boolean): void {
   });
 }
 
+function applyRpcBridgeSetting(enabled: boolean): void {
+  stopRpcBridge();
+  if (enabled) startRpcBridge(activities => setActivity(activities));
+}
+
 app.whenReady().then(() => {
   ipcMain.handle(IPC.getSettings, () => loadSettings());
   ipcMain.handle(IPC.setSettings, (_e, patch: Partial<HyaecordSettings>) => {
     const next = saveSettings(patch);
     if ("gamingMode" in patch) applyGamingModeSetting(next.gamingMode);
+    if (patch.integrations?.rpcBridge !== undefined) applyRpcBridgeSetting(next.integrations.rpcBridge);
     return next;
   });
   ipcMain.handle(IPC.getDesktopEnvironment, () => detectDesktopEnvironment());
@@ -112,6 +122,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.getGlobalBadges, (_e, userId: string) =>
     loadSettings().integrations.globalBadges ? fetchGlobalBadges(userId) : []
   );
+  ipcMain.handle(IPC.getUserPfpMap, () => (loadSettings().integrations.userPFP ? fetchUserPfpMap() : {}));
+  ipcMain.handle(IPC.getUserBgMap, () => (loadSettings().integrations.usrBG ? fetchUserBgMap() : {}));
   ipcMain.handle(IPC.discordSearchGifs, (_e, query: string) => searchGifs(query));
   ipcMain.handle(IPC.discordSetAvatar, (_e, dataUri: string | null) => updateAvatar(dataUri));
   ipcMain.on(IPC.discordSubscribeMembers, (_e, guildId: string, channelId: string) =>
@@ -151,6 +163,7 @@ app.whenReady().then(() => {
   if (mainWindow) createTray(mainWindow);
   startTelemetry();
   if (loadSettings().gamingMode) applyGamingModeSetting(true);
+  if (loadSettings().integrations.rpcBridge) applyRpcBridgeSetting(true);
 
   onSystemThemeChange(prefersDark => {
     mainWindow?.webContents.send(IPC.themeChanged, prefersDark);
@@ -167,4 +180,5 @@ app.on("window-all-closed", () => {
 
 app.on("before-quit", () => {
   stopGamingModeDetection();
+  stopRpcBridge();
 });

@@ -2,6 +2,7 @@ import type { PluginInfo, ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, showToast, state, t, toggleRow, trapFocus } from "./ui";
 import { refreshChomperViews, getCurrentUser } from "./session";
 import { openThemeStore } from "./theme-store";
+import { loadAvatarOverrides } from "./avatar-overrides";
 
 const MAX_AVATAR_BYTES = 8 * 1024 * 1024;
 
@@ -344,9 +345,14 @@ export function openSettings(): void {
       ),
       section("settings.section.integrations",
         ...INTEGRATION_KEYS.map(key =>
-          holdToggleRow(`feature.${key}`, `feature.${key}.description`, s.integrations[key], DISABLE_HOLD_MS, next =>
-            void patchSettings({ integrations: { ...state.settings.integrations, [key]: next } })
-          )
+          holdToggleRow(`feature.${key}`, `feature.${key}.description`, s.integrations[key], DISABLE_HOLD_MS, async next => {
+            await patchSettings({ integrations: { ...state.settings.integrations, [key]: next } });
+            // Re-fetches the override map immediately (or clears it, if just
+            // turned off); already-rendered avatars/banners pick up the
+            // change next time they're re-rendered (new messages, reopening
+            // a profile, switching channels) rather than repainting instantly.
+            if (key === "userPFP" || key === "usrBG") void loadAvatarOverrides();
+          })
         )
       ),
       section("settings.section.plugins", pluginsList()),

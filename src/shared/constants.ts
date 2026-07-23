@@ -54,6 +54,8 @@ export const IPC = {
   isUsingVpn: "hyaecord:is-using-vpn",
   discordGetUserProfile: "hyaecord:discord-get-user-profile",
   getGlobalBadges: "hyaecord:get-global-badges",
+  getUserPfpMap: "hyaecord:get-userpfp-map",
+  getUserBgMap: "hyaecord:get-usrbg-map",
   getPlugins: "hyaecord:get-plugins",
   setPluginEnabled: "hyaecord:set-plugin-enabled",
   setPluginSetting: "hyaecord:set-plugin-setting",

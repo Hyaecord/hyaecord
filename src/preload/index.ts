@@ -33,6 +33,8 @@ const bridge: HyaecordBridge = {
   },
   getUserProfile: userId => ipcRenderer.invoke(IPC.discordGetUserProfile, userId),
   getGlobalBadges: userId => ipcRenderer.invoke(IPC.getGlobalBadges, userId),
+  getUserPfpMap: () => ipcRenderer.invoke(IPC.getUserPfpMap),
+  getUserBgMap: () => ipcRenderer.invoke(IPC.getUserBgMap),
   getPlugins: () => ipcRenderer.invoke(IPC.getPlugins),
   setPluginEnabled: (id, enabled) => ipcRenderer.invoke(IPC.setPluginEnabled, id, enabled),
   setPluginSetting: (id, key, value) => ipcRenderer.invoke(IPC.setPluginSetting, id, key, value),

@@ -12,6 +12,7 @@ const enum Op {
   Dispatch = 0,
   Heartbeat = 1,
   Identify = 2,
+  PresenceUpdate = 3,
   Resume = 6,
   Reconnect = 7,
   InvalidSession = 9,
@@ -94,6 +95,19 @@ export class GatewayClient {
     this.send({
       op: Op.GuildSubscriptions,
       d: { guild_id: guildId, channels: { [channelId]: [[0, 99]] } }
+    });
+  }
+
+  /**
+   * Sets or clears (`activities: []`) Rich Presence — per docs.discord.food's
+   * gateway-events reference: `{ since, activities, status, afk }`. Powers
+   * the RPC Bridge integration (an external app sets an activity over the
+   * local RPC socket; that gets forwarded here as a real presence update).
+   */
+  updatePresence(activities: unknown[]): void {
+    this.send({
+      op: Op.PresenceUpdate,
+      d: { since: null, activities, status: "online", afk: false }
     });
   }
 

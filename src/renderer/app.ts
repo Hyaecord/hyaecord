@@ -4,6 +4,7 @@ import { maybeShowWizard } from "./wizard";
 import { mountSettingsButton } from "./settings-ui";
 import { initSession } from "./session";
 import { initModeratorView } from "./moderator";
+import { loadAvatarOverrides } from "./avatar-overrides";
 
 declare global {
   interface Window {
@@ -38,6 +39,8 @@ async function init(): Promise<void> {
     state.gamingModeState = s;
   });
   api.onPluginToast(showToast);
+
+  void loadAvatarOverrides();
 
   renderChrome();
   mountSettingsButton();

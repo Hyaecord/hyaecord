@@ -92,6 +92,13 @@ export function getSessionState(): { state: DiscordSessionState; user: DiscordUs
   return { state, user };
 }
 
+/** Powers the RPC Bridge. Only meaningful when actually connected — silently a no-op otherwise, since there's nothing to attach the presence to. */
+export function setActivity(activities: unknown[]): boolean {
+  if (!gateway || state !== "ready") return false;
+  gateway.updatePresence(activities);
+  return true;
+}
+
 async function startGateway(token: string): Promise<void> {
   rest = new RestClient(token);
   const me = await rest.getCurrentUser();

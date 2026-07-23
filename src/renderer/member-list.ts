@@ -1,5 +1,6 @@
 import { el, t } from "./ui";
 import { openProfilePopout } from "./profile-popout";
+import { getPfpOverride } from "./avatar-overrides";
 
 /**
  * The member-list sidebar, driven by Discord's gateway "lazy guild loading"
@@ -122,13 +123,9 @@ function render(): void {
       );
       continue;
     }
-    const avatar = item.avatar
-      ? el("img", {
-          className: "member-avatar",
-          src: `https://cdn.discordapp.com/avatars/${item.id}/${item.avatar}.png?size=32`,
-          alt: "",
-          loading: "lazy"
-        })
+    const avatarSrc = getPfpOverride(item.id) ?? (item.avatar ? `https://cdn.discordapp.com/avatars/${item.id}/${item.avatar}.png?size=32` : null);
+    const avatar = avatarSrc
+      ? el("img", { className: "member-avatar", src: avatarSrc, alt: "", loading: "lazy" })
       : el("span", { className: "member-avatar member-avatar-fallback", "aria-hidden": "true" }, item.name[0] ?? "?");
     const row = el(
       "button",
