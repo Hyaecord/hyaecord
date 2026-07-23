@@ -1,0 +1,53 @@
+app-id: io.github.Hyaecord.Hyaecord
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '24.08'
+command: hyaecord
+
+# Discord itself needs network access, mic/camera for calls (pulseaudio
+# covers audio; video calls aren't built yet — see BUILD_PROMPT.md), a
+# display socket, and D-Bus notification access for native notifications.
+# No filesystem access beyond what's needed for the OS keyring/file
+# picker dialogs (those go through the portal, not a broad --filesystem
+# grant).
+finish-args:
+  - --share=ipc
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=pulseaudio
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.secrets
+  - --env=ELECTRON_TRASH=gio
+  - --env=ELECTRON_OZONE_PLATFORM_HINT=auto
+
+modules:
+  - name: hyaecord
+    buildsystem: simple
+    # ⚠ Assumes `pnpm run build` (dist/) and `pnpm install --prod` (a
+    # pruned node_modules) have already been run *outside* the sandbox and
+    # are present alongside this manifest at build time — Flathub's build
+    # sandbox has no network access, so a `pnpm install` step can't run
+    # inside build-commands without a vendored-sources step first (e.g.
+    # via flatpak-node-generator against pnpm-lock.yaml). That vendoring
+    # hasn't been done yet; this manifest is a documented starting point
+    # for a real Flathub submission, not a verified one — see the note in
+    # BUILD_PROMPT.md before assuming `flatpak-builder` succeeds on this
+    # as-is.
+    sources:
+      - type: dir
+        path: ..
+        skip:
+          - .git
+          - flatpak
+          - release
+    build-commands:
+      - install -Dm755 flatpak/hyaecord.sh /app/bin/hyaecord
+      - mkdir -p /app/hyaecord
+      - cp -r dist assets package.json node_modules /app/hyaecord/
+      - install -Dm644 assets/icons/hyaecord-256.png /app/share/icons/hicolor/256x256/apps/io.github.Hyaecord.Hyaecord.png
+      - install -Dm644 flatpak/io.github.Hyaecord.Hyaecord.desktop /app/share/applications/io.github.Hyaecord.Hyaecord.desktop
+      - install -Dm644 flatpak/io.github.Hyaecord.Hyaecord.metainfo.xml /app/share/metainfo/io.github.Hyaecord.Hyaecord.metainfo.xml

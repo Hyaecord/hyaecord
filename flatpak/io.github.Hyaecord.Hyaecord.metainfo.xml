@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ⚠ Starting point, not verified against `appstreamcli validate` (not
+  available in this environment). Before a real Flathub submission: run
+  that validator, fill in real screenshot URLs (Flathub requires at least
+  one), and add a dated <release> entry per actual release.
+-->
+<component type="desktop-application">
+  <id>io.github.Hyaecord.Hyaecord</id>
+  <name>Hyaecord</name>
+  <summary>A performance-focused, native-feeling Discord desktop client</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>LicenseRef-Hyaecord-Public-License</project_license>
+  <description>
+    <p>
+      Hyaecord is a from-scratch Discord desktop client for Linux and Windows,
+      built around a compatibility layer for the Equicord/Vencord plugin
+      ecosystem, native GNOME/KDE-adjacent theming, and an event-driven
+      performance core (no polling loops).
+    </p>
+    <p>
+      Hyaecord is an independent third-party client and is not affiliated
+      with, endorsed by, or sponsored by Discord Inc. Using third-party
+      clients is against Discord's Terms of Service; use is at your own
+      discretion.
+    </p>
+  </description>
+  <launchable type="desktop-id">io.github.Hyaecord.Hyaecord.desktop</launchable>
+  <content_rating type="oars-1.1">
+    <content_attribute id="social-chat">intense</content_attribute>
+    <content_attribute id="social-audio">intense</content_attribute>
+  </content_rating>
+  <url type="homepage">https://hyaecord.vercel.app</url>
+  <url type="vcs-browser">https://github.com/Hyaecord/hyaecord</url>
+  <url type="bugtracker">https://github.com/Hyaecord/hyaecord/issues</url>
+  <developer_name>Hyaecord Contributors</developer_name>
+  <categories>
+    <category>Network</category>
+    <category>InstantMessaging</category>
+  </categories>
+</component>

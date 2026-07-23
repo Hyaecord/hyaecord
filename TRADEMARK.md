@@ -15,7 +15,7 @@ This document explains what that means in practice.
   variants (e.g. "Hyaecord+", "HyaeCord", "Hyae-cord").
 * The official logo, app icon, mascot artwork, and all vector/raster brand
   assets under `assets/branding/`.
-* The `org.hyaecord.Hyaecord` application identifier and associated visual
+* The `io.github.Hyaecord.Hyaecord` application identifier and associated visual
   identity (color palette, wordmark, splash screens).
 
 ## 2. Uses That Don't Require Permission
@@ -49,7 +49,7 @@ This document explains what that means in practice.
   region-specific forks — must be rebranded before distribution. This means:
   removing the Hyaecord name from the app title, replacing the logo/icon/
   splash assets, and using a distinct application identifier (not
-  `org.hyaecord.Hyaecord`).
+  `io.github.Hyaecord.Hyaecord`).
 * **Implying affiliation.** Using Hyaecord's name, logo, or mascot in a way
   that suggests official endorsement, partnership, or sponsorship where
   none exists.

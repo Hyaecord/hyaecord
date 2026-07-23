@@ -97,7 +97,7 @@ Hyaecord maintains full functional parity with stock client operations:
 
 Hyaecord supports standard Linux packaging:
 
-- **Flatpak:** `flatpak install org.hyaecord.Hyaecord` *(or build locally from manifest)*
+- **Flatpak:** `flatpak install io.github.Hyaecord.Hyaecord` *(or build locally from the manifest in `flatpak/`)*
 - **AppImage / `.deb` / `.rpm`:** Available on the [Releases page](https://github.com/hyaecord/hyaecord/releases)
 - **AUR (Arch Linux):** `hyaecord-bin` or `hyaecord-git`
 
@@ -145,7 +145,7 @@ pnpm build
 
 - **Core Framework:** Electron, with an original client shell and GUI; plugin support is provided by a compatibility layer against the [Equicord](https://github.com/Equicord/Equicord)/[Vencord](https://github.com/Vendicated/Vencord) plugin API.
 - **Target Platforms:** Linux (primary, v1), Windows (secondary).
-- **Networking & Split-Tunneling:** Compatible with `mullvad-exclude` using application ID `org.hyaecord.Hyaecord`.
+- **Networking & Split-Tunneling:** Compatible with Mullvad's split tunneling — for the Flatpak build, `mullvad-exclude flatpak run io.github.Hyaecord.Hyaecord` (the app ID alone isn't the right syntax; `mullvad-exclude` wraps a command to run, and for Flatpak apps that command is `flatpak run <id>`).
 - **Localization:** Externalized string bundles (`src/i18n/`) with RTL layout support.
 
 ---

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Hyaecord
+Comment=A performance-focused, native-feeling Discord desktop client
+Exec=hyaecord %U
+Icon=io.github.Hyaecord.Hyaecord
+Categories=Network;InstantMessaging;
+Terminal=false
+StartupWMClass=Hyaecord
