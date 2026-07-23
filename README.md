@@ -96,7 +96,8 @@ An honest status table, not an aspirational one — updated as features actually
 | Self-pin auto-fade                    |    Supported     | Other people's pin notices stay visible — no "hide others' pins" toggle exists yet |
 | Voice, video, screen share, Go Live   |   Not yet built   | No WebRTC stack exists in this client yet                               |
 | Push-to-talk                          |   Not yet built   | Depends on voice support above                                          |
-| Emoji picker, sticker picker          |   Not yet built   | Typing/pasting emoji directly works (plain text input); no picker UI    |
+| Emoji picker                          |    Supported     | Search-and-browse picker backed by real Unicode emoji data              |
+| Sticker picker                        |   Not yet built   | No verified Discord sticker endpoint looked up yet                      |
 | Multi-account switching               |   Not yet built   |                                                                           |
 | Auto-updater                          |   Not yet built   |                                                                           |
 | Session import (Discord/Vesktop/Equibop) | Declined for now | Requires decrypting another app's local session storage — see `BUILD_PROMPT.md` for why this is a deliberate hold, not an oversight |
