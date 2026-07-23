@@ -86,6 +86,11 @@ function maybeNotify(event: string, data: unknown): void {
   notify(title, body);
 }
 
+/** Powers the member list — see gateway.ts's subscribeMemberList for the actual OP 14 payload. */
+export function subscribeMemberList(guildId: string, channelId: string): void {
+  gateway?.subscribeMemberList(guildId, channelId);
+}
+
 export function getSessionState(): { state: DiscordSessionState; user: DiscordUserSummary | null } {
   return { state, user };
 }

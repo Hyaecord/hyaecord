@@ -3,6 +3,7 @@ import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui"
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
+import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -33,6 +34,8 @@ interface GuildSummary {
   channels: ChannelSummary[];
   /** True if the user can manage channels in *any* channel of this guild — gates Moderator View. */
   canManageChannels: boolean;
+  /** Role id -> display name/colour, used to label member-list groups (Discord groups members by hoisted role). */
+  roles: Record<string, { name: string; color: number }>;
 }
 
 interface DmSummary {
@@ -73,6 +76,7 @@ export function initSession(): void {
   window.hyaecord.onDiscordEvent((event, data) => {
     if (event === "READY") onReady(data);
     if (event === "MESSAGE_CREATE") onMessageCreate(data);
+    if (event === "GUILD_MEMBER_LIST_UPDATE") applyMemberListUpdate(data);
   });
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
@@ -207,6 +211,7 @@ function onReady(data: unknown): void {
         position?: number;
         permission_overwrites?: Array<{ id?: string; type?: number; allow?: string; deny?: string }>;
       }>;
+      roles?: Array<{ id: string; name: string; color: number }>;
     };
     const channels: ChannelSummary[] = (g.channels ?? []).map(ch => ({
       id: ch.id,
@@ -215,11 +220,14 @@ function onReady(data: unknown): void {
       position: ch.position ?? 0,
       permissions: selfUserId ? computeChannelPermissions(g, ch, selfUserId) : 0n
     }));
+    const roles: Record<string, { name: string; color: number }> = {};
+    for (const role of g.roles ?? []) roles[role.id] = { name: role.name, color: role.color };
     return {
       id: g.id,
       name: g.properties?.name ?? g.name ?? "?",
       icon: g.properties?.icon ?? g.icon ?? null,
       channels,
+      roles,
       canManageChannels: channels.some(ch => hasPermission(ch.permissions, Permission.MANAGE_CHANNELS))
     };
   });
@@ -606,6 +614,7 @@ function selectDms(): void {
   activeGuildId = null;
   markActivePill(null);
   document.getElementById("server-header")!.textContent = t("shell.directMessages");
+  clearMemberList();
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();
@@ -645,6 +654,7 @@ function selectGuild(id: string): void {
   activeGuildId = id;
   markActivePill(id);
   document.getElementById("server-header")!.textContent = guild.name;
+  setActiveGuildRoles(guild.roles);
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();
@@ -661,6 +671,8 @@ function selectGuild(id: string): void {
       input.placeholder = t("shell.chat.placeholder").replace("#general", `#${channel.name}`);
       activeChannelId = channel.id;
       void loadMessages(channel.id);
+      beginSubscription(id);
+      window.hyaecord.subscribeMemberList(id, channel.id);
     };
     li.addEventListener("click", select);
     li.addEventListener("keydown", ev => {

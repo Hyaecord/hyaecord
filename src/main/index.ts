@@ -29,7 +29,8 @@ import {
   muteDm,
   fetchUserProfile,
   searchGifs,
-  updateAvatar
+  updateAvatar,
+  subscribeMemberList
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -118,6 +119,9 @@ app.whenReady().then(() => {
   );
   ipcMain.handle(IPC.discordSearchGifs, (_e, query: string) => searchGifs(query));
   ipcMain.handle(IPC.discordSetAvatar, (_e, dataUri: string | null) => updateAvatar(dataUri));
+  ipcMain.on(IPC.discordSubscribeMembers, (_e, guildId: string, channelId: string) =>
+    subscribeMemberList(guildId, channelId)
+  );
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {

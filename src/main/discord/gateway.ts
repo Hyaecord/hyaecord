@@ -16,7 +16,9 @@ const enum Op {
   Reconnect = 7,
   InvalidSession = 9,
   Hello = 10,
-  HeartbeatAck = 11
+  HeartbeatAck = 11,
+  /** Unofficially "Lazy Request" — subscribes to a member-list range for a channel. Per docs.discord.food / community lazy-guilds docs, not Discord's own official docs. */
+  GuildSubscriptions = 14
 }
 
 interface GatewayPayload {
@@ -79,6 +81,20 @@ export class GatewayClient {
 
   private send(payload: GatewayPayload): void {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(payload));
+  }
+
+  /**
+   * Requests the member-list sidebar for one channel, first 100 members
+   * only (range [0, 99] — same window the official client preloads).
+   * Powers the GUILD_MEMBER_LIST_UPDATE dispatches the member list renders
+   * from. Undocumented officially; verified against the community lazy-guild
+   * write-up rather than guessed.
+   */
+  subscribeMemberList(guildId: string, channelId: string): void {
+    this.send({
+      op: Op.GuildSubscriptions,
+      d: { guild_id: guildId, channels: { [channelId]: [[0, 99]] } }
+    });
   }
 
   private onMessage(payload: GatewayPayload): void {

@@ -141,6 +141,8 @@ export interface HyaecordBridge {
   searchGifs(query: string): Promise<GifResult[]>;
   /** `dataUri` is a `data:image/...;base64,...` string, or null to reset to the default avatar. */
   setAvatar(dataUri: string | null): Promise<boolean>;
+  /** Requests the member-list sidebar (first 100 entries) for a channel. Fire-and-forget — results arrive as GUILD_MEMBER_LIST_UPDATE over onDiscordEvent. */
+  subscribeMemberList(guildId: string, channelId: string): void;
 }
 
 export interface UserProfile {

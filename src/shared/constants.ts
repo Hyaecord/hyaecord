@@ -59,5 +59,6 @@ export const IPC = {
   getGlobalBadges: "hyaecord:get-global-badges",
   discordSearchGifs: "hyaecord:discord-search-gifs",
   discordSetAvatar: "hyaecord:discord-set-avatar",
+  discordSubscribeMembers: "hyaecord:discord-subscribe-members",
   gamingModeState: "hyaecord:gaming-mode-state"
 } as const;
