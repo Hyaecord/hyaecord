@@ -328,6 +328,7 @@ body {
 .channel-list li.chomper-restored { border: 1px dashed var(--border); opacity: 0.75; }
 
 .chat {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: var(--bg-base);
@@ -338,6 +339,26 @@ body {
   padding: 0.9rem 1rem;
   font-weight: 600;
   border-bottom: 1px solid var(--border);
+}
+
+.message-search-button {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  top: 0.6rem;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.message-search-button:hover,
+.message-search-button:focus-visible {
+  background: var(--bg-hover);
+  color: var(--text);
 }
 
 .messages {
@@ -575,6 +596,68 @@ body {
 }
 .gif-tile video { width: 100%; height: 100%; display: block; object-fit: cover; }
 .gif-tile:hover { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.message-search-panel {
+  position: fixed;
+  z-index: 60;
+  width: 380px;
+  max-height: 420px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-raise);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-l);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+.message-search-input {
+  margin: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text);
+  font: inherit;
+}
+.message-search-results {
+  overflow-y: auto;
+  padding: 0 0.6rem 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.message-search-empty { color: var(--text-dim); padding: 1rem; margin: 0; text-align: center; }
+.message-search-result {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg-hover);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.message-search-result:hover,
+.message-search-result:focus-visible { border-color: var(--accent); }
+.message-search-result-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+.message-search-result-author { font-weight: 700; color: var(--text); }
+.message-search-result-content {
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
 
 .emoji-picker-button {
   flex-shrink: 0;

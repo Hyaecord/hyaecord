@@ -126,6 +126,32 @@ export class RestClient {
   updateAvatar(dataUri: string | null): Promise<{ avatar: string | null }> {
     return this.request("PATCH", "/users/@me", { avatar: dataUri });
   }
+
+  /**
+   * Per docs.discord.food/resources/message: `GET /guilds/{guild.id}/messages/search`
+   * (guild-wide) and `GET /channels/{channel.id}/messages/search` (a single
+   * private channel — used for DMs, which have no guild). Both share the
+   * same query params and response shape; only `content` is used here, the
+   * documented surface is much larger (author/channel/attachment filters,
+   * sort mode, pagination) but nothing in the UI needs it yet. A 202 with a
+   * `documents_indexed`/`retry_after` body (not an error — still `res.ok`)
+   * means the guild/channel hasn't finished being indexed yet; callers must
+   * check for that shape rather than assume `messages` is always present.
+   */
+  searchGuildMessages(guildId: string, content: string): Promise<RawSearchResponse> {
+    return this.request("GET", `/guilds/${guildId}/messages/search?content=${encodeURIComponent(content)}`);
+  }
+
+  searchChannelMessages(channelId: string, content: string): Promise<RawSearchResponse> {
+    return this.request("GET", `/channels/${channelId}/messages/search?content=${encodeURIComponent(content)}`);
+  }
+}
+
+export interface RawSearchResponse {
+  total_results?: number;
+  messages?: RawMessage[][];
+  documents_indexed?: number;
+  retry_after?: number;
 }
 
 export interface RawGif {

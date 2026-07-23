@@ -4,12 +4,13 @@ import {
   DiscordRestError,
   type RawMessage,
   type RawUserProfile,
-  type RawGif
+  type RawGif,
+  type RawSearchResponse
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
 import { runMessageSendHooks, runMessageCreateHooks } from "../plugins/manager";
-import type { DiscordSessionState, DiscordUserSummary, UserProfile, GifResult } from "@shared/types";
+import type { DiscordSessionState, DiscordUserSummary, UserProfile, GifResult, MessageSearchResult } from "@shared/types";
 
 /**
  * Discord session manager: owns the REST client and gateway connection,
@@ -275,6 +276,40 @@ export async function searchGifs(query: string): Promise<GifResult[]> {
     return raw.map(toGifResult);
   } catch {
     return [];
+  }
+}
+
+function toSearchResult(raw: RawSearchResponse): MessageSearchResult {
+  if (!raw.messages) {
+    // Guild/channel isn't indexed yet — see the docs.discord.food note on rest.ts's searchGuildMessages.
+    return { indexing: true, totalResults: 0, messages: [] };
+  }
+  return {
+    indexing: false,
+    totalResults: raw.total_results ?? 0,
+    messages: raw.messages.flat().map(m => ({
+      id: m.id,
+      channelId: m.channel_id,
+      content: m.content,
+      timestamp: m.timestamp,
+      authorId: m.author.id,
+      authorName: m.author.global_name || m.author.username
+    }))
+  };
+}
+
+/** Powers message search. `guildId` searches every channel in that guild; `channelId` alone (DMs, which have no guild) searches just that one channel. */
+export async function searchMessages(query: string, guildId: string | null, channelId: string | null): Promise<MessageSearchResult> {
+  if (!rest || !query.trim()) return { indexing: false, totalResults: 0, messages: [] };
+  try {
+    const raw = guildId
+      ? await rest.searchGuildMessages(guildId, query.trim())
+      : channelId
+        ? await rest.searchChannelMessages(channelId, query.trim())
+        : null;
+    return raw ? toSearchResult(raw) : { indexing: false, totalResults: 0, messages: [] };
+  } catch {
+    return { indexing: false, totalResults: 0, messages: [] };
   }
 }
 

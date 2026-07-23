@@ -31,7 +31,8 @@ import {
   searchGifs,
   updateAvatar,
   subscribeMemberList,
-  setActivity
+  setActivity,
+  searchMessages
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -129,6 +130,9 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordSetAvatar, (_e, dataUri: string | null) => updateAvatar(dataUri));
   ipcMain.on(IPC.discordSubscribeMembers, (_e, guildId: string, channelId: string) =>
     subscribeMemberList(guildId, channelId)
+  );
+  ipcMain.handle(IPC.discordSearchMessages, (_e, query: string, guildId: string | null, channelId: string | null) =>
+    searchMessages(query, guildId, channelId)
   );
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.getPlugins, () => listPlugins());

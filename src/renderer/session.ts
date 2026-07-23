@@ -7,6 +7,7 @@ import { openEmojiPicker } from "./emoji-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
 import { openContextMenu, copyIdItem } from "./context-menu";
+import { openMessageSearch } from "./message-search";
 
 /**
  * Wires Developer Mode's "Copy ID" right-click menu onto one element — a
@@ -103,6 +104,33 @@ export function initSession(): void {
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
   wireChannelProximity();
+  wireMessageSearch();
+}
+
+function resolveChannelName(channelId: string): string {
+  const dm = dms.find(d => d.id === channelId);
+  if (dm) return dm.name;
+  for (const guild of guilds) {
+    const channel = guild.channels.find(ch => ch.id === channelId);
+    if (channel) return `# ${channel.name}`;
+  }
+  return channelId;
+}
+
+/** Switches to the given channel (and its guild, or DMs if guildId is null), reusing the exact same selection path a click in the sidebar takes. */
+function jumpToChannel(guildId: string | null, channelId: string): void {
+  if (guildId) selectGuild(guildId);
+  else selectDms();
+  document.querySelector<HTMLElement>(`#channels li[data-channel="${channelId}"]`)?.click();
+}
+
+function wireMessageSearch(): void {
+  const button = document.getElementById("message-search-button") as HTMLButtonElement;
+  button.addEventListener("click", () => {
+    openMessageSearch(button, { guildId: activeGuildId, channelId: activeGuildId ? null : activeChannelId }, resolveChannelName, channelId =>
+      jumpToChannel(activeGuildId, channelId)
+    );
+  });
 }
 
 /**

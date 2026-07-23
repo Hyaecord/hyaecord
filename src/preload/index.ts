@@ -44,7 +44,8 @@ const bridge: HyaecordBridge = {
   },
   searchGifs: query => ipcRenderer.invoke(IPC.discordSearchGifs, query),
   setAvatar: dataUri => ipcRenderer.invoke(IPC.discordSetAvatar, dataUri),
-  subscribeMemberList: (guildId, channelId) => ipcRenderer.send(IPC.discordSubscribeMembers, guildId, channelId)
+  subscribeMemberList: (guildId, channelId) => ipcRenderer.send(IPC.discordSubscribeMembers, guildId, channelId),
+  searchMessages: (query, guildId, channelId) => ipcRenderer.invoke(IPC.discordSearchMessages, query, guildId, channelId)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

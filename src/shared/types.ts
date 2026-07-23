@@ -139,6 +139,8 @@ export interface HyaecordBridge {
   setAvatar(dataUri: string | null): Promise<boolean>;
   /** Requests the member-list sidebar (first 100 entries) for a channel. Fire-and-forget — results arrive as GUILD_MEMBER_LIST_UPDATE over onDiscordEvent. */
   subscribeMemberList(guildId: string, channelId: string): void;
+  /** `guildId` searches every channel in that guild; pass `channelId` alone (guildId null) for a DM. */
+  searchMessages(query: string, guildId: string | null, channelId: string | null): Promise<MessageSearchResult>;
 }
 
 export interface UserProfile {
@@ -154,6 +156,20 @@ export interface UserProfile {
   badges: Array<{ id: string; description: string; icon: string; link?: string }>;
   connectedAccounts: Array<{ type: string; name: string; verified: boolean }>;
   premiumType: number | null;
+}
+
+export interface MessageSearchResult {
+  /** True when the guild/channel hasn't finished being indexed yet — Discord's search returns a 202 with no results in this case. Callers should show "still indexing" rather than "no results". */
+  indexing: boolean;
+  totalResults: number;
+  messages: Array<{
+    id: string;
+    channelId: string;
+    content: string;
+    timestamp: string;
+    authorId: string;
+    authorName: string;
+  }>;
 }
 
 export interface GifResult {
