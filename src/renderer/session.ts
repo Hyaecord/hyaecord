@@ -62,6 +62,9 @@ interface DmSummary {
   type: number;
 }
 
+/** 0 = normal message; 6 = the automatic "X pinned a message" system notice. Full enum: docs.discord.com/developers/resources/message. */
+const MESSAGE_TYPE_PIN_NOTICE = 6;
+
 interface MessageSummary {
   id: string;
   channelId: string;
@@ -70,6 +73,7 @@ interface MessageSummary {
   avatar: string | null;
   content: string;
   timestamp: string;
+  type: number;
 }
 
 let guilds: GuildSummary[] = [];
@@ -738,6 +742,7 @@ function toSummary(raw: unknown): MessageSummary | null {
     channel_id?: string;
     content?: string;
     timestamp?: string;
+    type?: number;
     author?: { id?: string; username?: string; global_name?: string | null; avatar?: string | null };
   };
   if (!m?.id || !m.channel_id || !m.author?.id) return null;
@@ -748,11 +753,47 @@ function toSummary(raw: unknown): MessageSummary | null {
     authorName: m.author.global_name ?? m.author.username ?? "?",
     avatar: m.author.avatar ?? null,
     content: m.content ?? "",
-    timestamp: m.timestamp ?? ""
+    timestamp: m.timestamp ?? "",
+    type: m.type ?? 0
   };
 }
 
+/**
+ * Discord's automatic "X pinned a message to this channel" system notice.
+ * When it's *your own* pin action and the self-pin-fade setting is on, it
+ * fades out and removes itself after `selfPinFade.delaySeconds` — the
+ * DOM removal alone gives the smooth reflow (no layout jump), no manual
+ * height animation needed since it's just one line in a flex column.
+ * Pins by other people are left alone (always visible) — there's no
+ * "hide other people's pins" setting in the UI to honour yet.
+ */
+function pinNoticeRow(msg: MessageSummary): HTMLElement {
+  const row = el(
+    "div",
+    { className: "pin-notice", "data-message": msg.id },
+    "📌 ",
+    el("span", { className: "pin-notice-author" }, msg.authorName),
+    ` ${t("message.pinNotice")}`
+  );
+  const { enabled, delaySeconds } = state.settings.selfPinFade;
+  if (enabled && msg.authorId === selfUserId) {
+    setTimeout(() => {
+      row.classList.add("is-fading");
+      // Not just transitionend: a 0ms transition (reduced-motion zeroes
+      // --dur-slow) never fires that event at all, which would leave the
+      // notice stuck forever instead of disappearing instantly. The
+      // timeout guarantees removal either way; whichever fires first wins,
+      // and removing an already-removed node is a harmless no-op.
+      row.addEventListener("transitionend", () => row.remove(), { once: true });
+      setTimeout(() => row.remove(), 400);
+    }, delaySeconds * 1000);
+  }
+  return row;
+}
+
 function messageRow(msg: MessageSummary): HTMLElement {
+  if (msg.type === MESSAGE_TYPE_PIN_NOTICE) return pinNoticeRow(msg);
+
   // A UserPFP override, if the user has one and the integration is on,
   // takes priority over their real Discord avatar — same behaviour as
   // the real UserPFP plugin.

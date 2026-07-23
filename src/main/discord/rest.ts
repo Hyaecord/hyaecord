@@ -163,6 +163,8 @@ export interface RawMessage {
   channel_id: string;
   content: string;
   timestamp: string;
+  /** Message type — 0 is a normal message, 6 is the "X pinned a message" system notice. Full enum: docs.discord.com/developers/resources/message. */
+  type: number;
   author: {
     id: string;
     username: string;
