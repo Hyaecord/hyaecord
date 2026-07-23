@@ -1,5 +1,4 @@
-import type { DiscordSession, QrLoginEvent } from "@shared/types";
-import QRCode from "qrcode";
+import type { DiscordSession } from "@shared/types";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 
@@ -57,8 +56,6 @@ let loginOverlay: HTMLElement | null = null;
 let activeChannelId: string | null = null;
 let activeGuildId: string | null = null;
 let selfUserId: string | null = null;
-/** Set only while the QR login screen is mounted; the IPC listener itself is registered once, in initSession(). */
-let qrEventHandler: ((event: QrLoginEvent) => void) | null = null;
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 const DM_TYPES = new Set([1, 3]);
@@ -69,7 +66,6 @@ export function initSession(): void {
     if (event === "READY") onReady(data);
     if (event === "MESSAGE_CREATE") onMessageCreate(data);
   });
-  window.hyaecord.onDiscordQrLoginEvent(event => qrEventHandler?.(event));
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
   wireChannelProximity();
@@ -454,7 +450,7 @@ function onMessageCreate(data: unknown): void {
  * (some people prefer them, and they hit the exact same real endpoints),
  * but demoted to secondary links rather than the default screen. */
 
-type LoginScreen = "welcome" | "credentials" | "mfa" | "token" | "qr";
+type LoginScreen = "welcome" | "credentials" | "mfa" | "token";
 
 function showLogin(): void {
   if (loginOverlay) return;
@@ -473,10 +469,6 @@ function showLogin(): void {
   document.body.append(loginOverlay);
 
   function goTo(next: LoginScreen, ticket = ""): void {
-    if (screen === "qr" && next !== "qr") {
-      window.hyaecord.discordCancelQrLogin();
-      qrEventHandler = null;
-    }
     screen = next;
     if (ticket) mfaTicket = ticket;
     render();
@@ -487,7 +479,6 @@ function showLogin(): void {
     if (screen === "welcome") body.append(welcomeScreen(goTo));
     else if (screen === "credentials") body.append(credentialsScreen(goTo));
     else if (screen === "mfa") body.append(mfaScreen(mfaTicket, goTo));
-    else if (screen === "qr") body.append(qrScreen(goTo));
     else body.append(tokenScreen(goTo));
     body.querySelector("input")?.focus();
   }
@@ -537,43 +528,10 @@ function welcomeScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HT
     vpnNotice,
     browserButton,
     browserError,
-    el("button", { className: "btn login-big-btn", type: "button", onClick: () => goTo("qr") }, t("login.withQr")),
     el("p", { className: "login-switch" },
       el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.useCredentials")),
       " · ",
       el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
-    )
-  );
-}
-
-function qrScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
-  const canvas = el("canvas", { className: "login-qr", width: "220", height: "220" }) as HTMLCanvasElement;
-  const status = el("p", { className: "step-hint login-qr-status" }, t("login.qr.waiting"));
-  const error = el("p", { className: "login-error", role: "alert" });
-
-  qrEventHandler = event => {
-    if (event.type === "url") {
-      void QRCode.toCanvas(canvas, event.url, { width: 220, margin: 1 });
-      status.textContent = t("login.qr.waiting");
-    } else if (event.type === "confirming") {
-      status.textContent = t("login.qr.confirming");
-    } else if (event.type === "expired") {
-      error.textContent = t("login.qr.expired");
-    } else if (event.type === "error") {
-      error.textContent = t(`login.error.${event.error}`);
-    }
-  };
-  window.hyaecord.discordStartQrLogin();
-
-  return el(
-    "div",
-    {},
-    el("p", { className: "modal-subtitle" }, t("login.qr.body")),
-    el("div", { className: "login-qr-wrap" }, canvas),
-    status,
-    error,
-    el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back"))
     )
   );
 }
@@ -727,5 +685,4 @@ function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
 function hideLogin(): void {
   loginOverlay?.remove();
   loginOverlay = null;
-  qrEventHandler = null;
 }

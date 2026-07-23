@@ -16,8 +16,6 @@ import {
   loginWithCredentials,
   submitMfa,
   loginWithBrowser,
-  startQrLogin,
-  cancelQrLogin,
   logout,
   autoLogin,
   getSessionState,
@@ -77,11 +75,6 @@ app.whenReady().then(() => {
   );
   ipcMain.handle(IPC.discordSubmitMfa, (_e, code: string, ticket: string) => submitMfa(code, ticket));
   ipcMain.handle(IPC.discordLoginBrowser, () => loginWithBrowser());
-  ipcMain.on(IPC.discordStartQrLogin, e => {
-    const win = BrowserWindow.fromWebContents(e.sender);
-    startQrLogin(event => win?.webContents.send(IPC.discordQrLoginEvent, event));
-  });
-  ipcMain.on(IPC.discordCancelQrLogin, () => cancelQrLogin());
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());
   ipcMain.handle(IPC.discordFetchMessages, (_e, channelId: string) => fetchMessages(channelId));

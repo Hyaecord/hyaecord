@@ -12,9 +12,12 @@ const DESKTOP_CHROME_UA =
  * Opens a real, unmodified browser window at the actual discord.com login
  * page — no custom form, no injected script into the page itself. This is
  * the trustworthy login path: users see Discord's real page, their
- * password manager recognises the real domain and offers autofill, and any
- * 2FA method (SMS, backup codes, authenticator) "just works" because it's
- * Discord's own JS handling it, not ours.
+ * password manager recognises the real domain and offers autofill, any 2FA
+ * method (SMS, backup codes, authenticator) "just works" because it's
+ * Discord's own JS handling it, and Discord's own QR-code login toggle is
+ * right there on the page too — no need for Hyaecord to reimplement it.
+ * The window is sized for Discord's actual login layout (form + QR toggle
+ * + illustration) rather than a narrow mobile-ish popup that clips it.
  *
  * We never touch the page's content. The token is captured by watching this
  * window's own network requests for the Authorization header Discord's web
@@ -38,8 +41,10 @@ export function openBrowserLogin(): Promise<string | null> {
     };
 
     const win = new BrowserWindow({
-      width: 480,
+      width: 920,
       height: 760,
+      minWidth: 700,
+      minHeight: 600,
       title: "discord.com — Log in",
       autoHideMenuBar: true,
       webPreferences: {

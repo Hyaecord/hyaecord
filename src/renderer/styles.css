@@ -196,18 +196,6 @@ body {
   margin-bottom: 0.6rem;
   padding: 0.85rem;
 }
-.login-qr-wrap {
-  display: flex;
-  justify-content: center;
-  padding: 1rem;
-  /* Fixed white, not a theme token — QR codes need real light-on-dark
-     contrast to scan reliably regardless of which app theme is active. */
-  background: #fff;
-  border-radius: var(--radius-m);
-  margin: 0.75rem 0;
-}
-.login-qr { display: block; }
-.login-qr-status { text-align: center; }
 .login-vpn-notice {
   background: var(--bg-hover);
   border: 1px solid var(--border);
