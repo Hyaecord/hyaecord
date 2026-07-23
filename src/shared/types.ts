@@ -68,4 +68,5 @@ export interface HyaecordBridge {
   onDiscordEvent(cb: (event: string, data: unknown) => void): void;
   fetchMessages(channelId: string): Promise<unknown[]>;
   sendMessage(channelId: string, content: string): Promise<boolean>;
+  openExternal(url: string): Promise<void>;
 }

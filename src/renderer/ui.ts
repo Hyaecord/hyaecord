@@ -124,6 +124,57 @@ export function holdToggleRow(
   return el("div", { className: "setting-row" }, text, button);
 }
 
+/**
+ * Cycles `el`'s text through the given i18n keys with a cross-fade, looping
+ * continuously. Used for the "Connecting…" header so a slow gateway
+ * handshake has something to look at instead of a static string. Returns a
+ * cleanup function that stops the rotation (call it once the state that
+ * triggered it — e.g. "connecting" — is no longer true).
+ */
+export function mountRotatingText(target: HTMLElement, keys: string[], intervalMs = 2800): () => void {
+  if (keys.length === 0) return () => {};
+  let i = 0;
+  target.textContent = t(keys[0] as string);
+  target.classList.add("rotating-text");
+  const timer = setInterval(() => {
+    i = (i + 1) % keys.length;
+    target.classList.add("is-fading");
+    setTimeout(() => {
+      target.textContent = t(keys[i] as string);
+      target.classList.remove("is-fading");
+    }, 180);
+  }, intervalMs);
+  return () => clearInterval(timer);
+}
+
+/**
+ * A small burst of particles from `origin`, used as positive feedback on
+ * low-stakes celebratory actions (e.g. starring the repo). Uses the Web
+ * Animations API directly — no motion library needed for six dots.
+ */
+export function burstParticles(origin: { x: number; y: number }): void {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  for (let i = 0; i < 6; i++) {
+    const dot = el("span", { className: "particle-dot", "aria-hidden": "true" });
+    dot.style.left = `${origin.x}px`;
+    dot.style.top = `${origin.y}px`;
+    document.body.append(dot);
+    const angle = (i / 6) * Math.PI * 2 + Math.random() * 0.5;
+    const distance = 28 + Math.random() * 20;
+    const anim = dot.animate(
+      [
+        { transform: "translate(-50%, -50%) scale(0)", opacity: 1 },
+        {
+          transform: `translate(calc(-50% + ${Math.cos(angle) * distance}px), calc(-50% + ${Math.sin(angle) * distance}px)) scale(1)`,
+          opacity: 0
+        }
+      ],
+      { duration: 550, easing: "cubic-bezier(0.2, 0, 0, 1)", delay: i * 25 }
+    );
+    anim.onfinish = () => dot.remove();
+  }
+}
+
 /** Wrap Tab focus inside `container` and return a cleanup function. */
 export function trapFocus(container: HTMLElement): () => void {
   const selector =

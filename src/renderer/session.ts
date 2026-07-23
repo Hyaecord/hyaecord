@@ -1,5 +1,12 @@
 import type { DiscordSession } from "@shared/types";
-import { el, t } from "./ui";
+import { el, mountRotatingText, t } from "./ui";
+
+const CONNECTING_KEYS = [
+  "shell.status.connecting.0",
+  "shell.status.connecting.1",
+  "shell.status.connecting.2",
+  "shell.status.connecting.3"
+];
 
 /**
  * Discord session presentation: the login view when logged out, and the
@@ -45,6 +52,33 @@ export function initSession(): void {
   });
   void window.hyaecord.getDiscordSession().then(applySession);
   wireComposer();
+  wireChannelProximity();
+}
+
+/**
+ * Channel names brighten and nudge toward the accent colour as the cursor
+ * passes near them vertically — a lightweight CSS-custom-property version of
+ * the "proximity sidebar" effect (no rAF loop needed at this list size; the
+ * CSS transition on --effect does the smoothing).
+ */
+function wireChannelProximity(): void {
+  const list = document.getElementById("channels")!;
+  const PROXIMITY_RADIUS = 90;
+  list.addEventListener("pointermove", ev => {
+    const rect = list.getBoundingClientRect();
+    const pointerY = ev.clientY - rect.top;
+    for (const item of list.querySelectorAll<HTMLElement>("li")) {
+      const center = item.offsetTop + item.offsetHeight / 2;
+      const distance = Math.abs(pointerY - center);
+      const effect = Math.max(0, 1 - distance / PROXIMITY_RADIUS);
+      item.style.setProperty("--effect", effect.toFixed(3));
+    }
+  });
+  list.addEventListener("pointerleave", () => {
+    for (const item of list.querySelectorAll<HTMLElement>("li")) {
+      item.style.setProperty("--effect", "0");
+    }
+  });
 }
 
 function wireComposer(): void {
@@ -60,21 +94,23 @@ function wireComposer(): void {
   });
 }
 
-function statusText(session: DiscordSession): string {
-  switch (session.state) {
-    case "ready":
-      return session.user?.globalName ?? session.user?.username ?? "";
-    case "connecting":
-      return t("shell.status.connecting");
-    case "reconnecting":
-      return t("shell.status.reconnecting");
-    default:
-      return t("shell.status.loggedOut");
-  }
-}
+let stopRotation: (() => void) | null = null;
 
 function applySession(session: DiscordSession): void {
-  document.getElementById("chat-header")!.textContent = statusText(session);
+  stopRotation?.();
+  stopRotation = null;
+
+  const header = document.getElementById("chat-header")!;
+  if (session.state === "connecting" || session.state === "reconnecting") {
+    stopRotation = mountRotatingText(header, CONNECTING_KEYS);
+  } else if (session.state === "ready") {
+    header.classList.remove("rotating-text", "is-fading");
+    header.textContent = session.user?.globalName ?? session.user?.username ?? "";
+  } else {
+    header.classList.remove("rotating-text", "is-fading");
+    header.textContent = t("shell.status.loggedOut");
+  }
+
   if (session.state === "logged-out") {
     showLogin();
   } else if (session.state === "ready") {

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron";
+import { app, BrowserWindow, ipcMain, shell } from "electron";
 import { join } from "node:path";
 import { IPC, PRODUCT_NAME } from "@shared/constants";
 import type { HyaecordSettings } from "@shared/types";
@@ -69,6 +69,12 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.discordSendMessage, (_e, channelId: string, content: string) =>
     sendMessage(channelId, content)
   );
+  ipcMain.handle(IPC.openExternal, (_e, url: string) => {
+    // Only ever hand https:// links to the OS — the renderer is sandboxed
+    // and this handler is the one place that can reach outside the app.
+    if (!/^https:\/\//.test(url)) return;
+    return shell.openExternal(url);
+  });
 
   initDiscord(
     (channel, ...args) => {

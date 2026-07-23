@@ -38,5 +38,6 @@ export const IPC = {
   discordState: "hyaecord:discord-state",
   discordEvent: "hyaecord:discord-event",
   discordFetchMessages: "hyaecord:discord-fetch-messages",
-  discordSendMessage: "hyaecord:discord-send-message"
+  discordSendMessage: "hyaecord:discord-send-message",
+  openExternal: "hyaecord:open-external"
 } as const;

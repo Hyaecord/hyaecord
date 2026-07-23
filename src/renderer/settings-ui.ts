@@ -1,5 +1,31 @@
 import type { ThemeId } from "@shared/types";
-import { el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
+import { burstParticles, el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
+
+const REPO_URL = "https://github.com/Hyaecord/hyaecord";
+
+function starRepoButton(): HTMLElement {
+  const button = el(
+    "button",
+    {
+      className: "btn star-btn",
+      type: "button",
+      onClick: (ev: Event) => {
+        const rect = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+        burstParticles({ x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+        void window.hyaecord.openExternal(REPO_URL);
+      }
+    },
+    "★ ",
+    t("settings.starRepo")
+  );
+  return el("div", { className: "setting-row" },
+    el("span", { className: "row-text" },
+      el("span", { className: "row-label" }, t("settings.support")),
+      el("span", { className: "row-description" }, t("settings.support.description"))
+    ),
+    button
+  );
+}
 
 /**
  * Settings panel (modal). Every control applies live via patchSettings.
@@ -114,7 +140,8 @@ export function openSettings(): void {
         toggleRow("settings.telemetry", "settings.telemetry.description", s.telemetry.enabled, next =>
           void patchSettings({ telemetry: { ...state.settings.telemetry, enabled: next } })
         )
-      )
+      ),
+      section("settings.section.support", starRepoButton())
     )
   );
 
