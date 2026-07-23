@@ -3,8 +3,10 @@ import {
   RestClient,
   DiscordRestError,
   loginWithCredentials as restLoginWithCredentials,
-  submitMfaTotp as restSubmitMfaTotp,
-  type RawMessage
+  submitMfaCode as restSubmitMfaCode,
+  requestMfaSms as restRequestMfaSms,
+  type RawMessage,
+  type MfaMethod
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
@@ -143,14 +145,15 @@ export async function login(
 
 export type CredentialLoginResult =
   | { ok: true; persisted?: boolean }
-  | { ok: false; mfaRequired: true; ticket: string }
+  | { ok: false; mfaRequired: true; ticket: string; methods: MfaMethod[] }
   | { ok: false; mfaRequired?: false; error: string };
 
 /**
  * The normal Discord login: email/phone + password, same endpoint the
- * official client uses. Handles the TOTP-authenticator-app MFA case; SMS
- * and backup-code MFA, and hCaptcha challenges, aren't implemented yet and
- * surface as a clear error rather than failing silently.
+ * official client uses. Handles all three account MFA methods Discord
+ * supports at login (authenticator app, SMS, backup code) — hCaptcha
+ * challenges are the one thing still unhandled, surfaced as a clear error
+ * rather than failing silently.
  */
 export async function loginWithCredentials(loginField: string, password: string): Promise<CredentialLoginResult> {
   const trimmedLogin = loginField.trim();
@@ -168,8 +171,14 @@ export async function loginWithCredentials(loginField: string, password: string)
 
   if (res.captcha_key) return { ok: false, error: "captcha-unsupported" };
   if (res.mfa) {
-    if (!res.totp || !res.ticket) return { ok: false, error: "mfa-unsupported" };
-    return { ok: false, mfaRequired: true, ticket: res.ticket };
+    if (!res.ticket) return { ok: false, error: "mfa-unsupported" };
+    const methods: MfaMethod[] = [
+      ...(res.totp ? (["totp"] as const) : []),
+      ...(res.sms ? (["sms"] as const) : []),
+      ...(res.backup ? (["backup"] as const) : [])
+    ];
+    if (methods.length === 0) return { ok: false, error: "mfa-unsupported" };
+    return { ok: false, mfaRequired: true, ticket: res.ticket, methods };
   }
   if (!res.token) return { ok: false, error: "network" };
   freshLogin = true;
@@ -177,13 +186,13 @@ export async function loginWithCredentials(loginField: string, password: string)
 }
 
 /** Second step after `loginWithCredentials` returns `mfaRequired`. */
-export async function submitMfa(code: string, ticket: string): Promise<CredentialLoginResult> {
+export async function submitMfa(method: MfaMethod, code: string, ticket: string): Promise<CredentialLoginResult> {
   const trimmedCode = code.trim();
   if (!trimmedCode) return { ok: false, error: "empty" };
 
   let res;
   try {
-    res = await restSubmitMfaTotp(trimmedCode, ticket);
+    res = await restSubmitMfaCode(method, trimmedCode, ticket);
   } catch (err) {
     if (err instanceof DiscordRestError && (err.status === 400 || err.status === 401)) {
       return { ok: false, error: "invalid-code" };
@@ -194,6 +203,16 @@ export async function submitMfa(code: string, ticket: string): Promise<Credentia
   if (!res.token) return { ok: false, error: "network" };
   freshLogin = true;
   return completeLogin(res.token);
+}
+
+/** Asks Discord to text a code to the account's phone for the SMS MFA method. Returns the redacted phone number on success. */
+export async function requestMfaSms(ticket: string): Promise<{ ok: boolean; phone?: string }> {
+  try {
+    const res = await restRequestMfaSms(ticket);
+    return { ok: true, phone: res.phone };
+  } catch {
+    return { ok: false };
+  }
 }
 
 /**

@@ -1,4 +1,4 @@
-import type { DiscordSession } from "@shared/types";
+import type { DiscordSession, MfaMethod } from "@shared/types";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 
@@ -515,6 +515,7 @@ function showLogin(): void {
 
   let screen: LoginScreen = "welcome";
   let mfaTicket = "";
+  let mfaMethods: MfaMethod[] = [];
 
   const body = el("div", { className: "login-body" });
   const dialog = el(
@@ -526,9 +527,10 @@ function showLogin(): void {
   loginOverlay = el("div", { className: "overlay" }, dialog);
   document.body.append(loginOverlay);
 
-  function goTo(next: LoginScreen, ticket = ""): void {
+  function goTo(next: LoginScreen, ticket = "", methods: MfaMethod[] = []): void {
     screen = next;
     if (ticket) mfaTicket = ticket;
+    if (methods.length) mfaMethods = methods;
     render();
   }
 
@@ -536,7 +538,7 @@ function showLogin(): void {
     body.replaceChildren();
     if (screen === "welcome") body.append(welcomeScreen(goTo));
     else if (screen === "credentials") body.append(credentialsScreen(goTo));
-    else if (screen === "mfa") body.append(mfaScreen(mfaTicket, goTo));
+    else if (screen === "mfa") body.append(mfaScreen(mfaTicket, mfaMethods, goTo));
     else body.append(tokenScreen(goTo));
     body.querySelector("input")?.focus();
   }
@@ -544,7 +546,9 @@ function showLogin(): void {
   render();
 }
 
-function welcomeScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HTMLElement {
+type GoTo = (screen: LoginScreen, ticket?: string, methods?: MfaMethod[]) => void;
+
+function welcomeScreen(goTo: GoTo): HTMLElement {
   const browserError = el("p", { className: "login-error", role: "alert" });
   const browserButton = el(
     "button",
@@ -594,7 +598,7 @@ function welcomeScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HT
   );
 }
 
-function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void): HTMLElement {
+function credentialsScreen(goTo: GoTo): HTMLElement {
   const emailInput = el("input", {
     type: "text",
     id: "login-email",
@@ -630,7 +634,7 @@ function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void)
     button.removeAttribute("disabled");
     if (result.ok) return;
     if (result.mfaRequired) {
-      goTo("mfa", result.ticket);
+      goTo("mfa", result.ticket, result.methods);
       return;
     }
     error.textContent = t(`login.error.${result.error}`);
@@ -650,47 +654,127 @@ function credentialsScreen(goTo: (screen: LoginScreen, ticket?: string) => void)
   );
 }
 
-function mfaScreen(ticket: string, goTo: (screen: LoginScreen) => void): HTMLElement {
-  const codeInput = el("input", {
-    type: "text",
-    id: "login-mfa-code",
-    className: "login-input",
-    inputmode: "numeric",
-    autocomplete: "one-time-code",
-    placeholder: t("login.mfaPlaceholder")
-  }) as HTMLInputElement;
-  const error = el("p", { className: "login-error", role: "alert" });
-  const button = el("button", { className: "btn primary", type: "submit" }, t("login.verify"));
+const MFA_METHOD_LABEL: Record<MfaMethod, string> = {
+  totp: "login.mfaMethod.totp",
+  sms: "login.mfaMethod.sms",
+  backup: "login.mfaMethod.backup"
+};
 
-  const form = el(
-    "form",
-    { className: "login-form" },
-    el("label", { for: "login-mfa-code", className: "row-label" }, t("login.mfaLabel")),
-    codeInput,
-    error,
-    el("div", { className: "modal-actions" }, button)
-  ) as HTMLFormElement;
+/**
+ * All three account MFA methods Discord supports at login share this one
+ * screen. SMS needs an extra step first (request the code be sent) before
+ * the same code input applies; the picker only appears when the account
+ * actually has more than one method available.
+ */
+function mfaScreen(ticket: string, methods: MfaMethod[], goTo: GoTo): HTMLElement {
+  const container = el("div", {});
+  let method: MfaMethod = methods.includes("totp") ? "totp" : (methods[0] ?? "totp");
+  let smsSent = false;
 
-  form.addEventListener("submit", async ev => {
-    ev.preventDefault();
-    error.textContent = "";
-    button.setAttribute("disabled", "");
-    const result = await window.hyaecord.discordSubmitMfa(codeInput.value, ticket);
-    button.removeAttribute("disabled");
-    if (result.ok) return;
-    error.textContent = t(`login.error.${result.mfaRequired ? "mfa-unsupported" : result.error}`);
-    codeInput.focus();
-  });
+  function renderBody(): void {
+    container.replaceChildren();
 
-  return el(
-    "div",
-    {},
-    el("p", { className: "modal-subtitle" }, t("login.mfaBody")),
-    form,
-    el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.back"))
-    )
-  );
+    const codeInput = el("input", {
+      type: "text",
+      id: "login-mfa-code",
+      className: "login-input",
+      inputmode: method === "backup" ? "text" : "numeric",
+      autocomplete: "one-time-code",
+      placeholder: t(method === "backup" ? "login.backupPlaceholder" : "login.mfaPlaceholder")
+    }) as HTMLInputElement;
+    const error = el("p", { className: "login-error", role: "alert" });
+    const button = el(
+      "button",
+      { className: "btn primary", type: "submit" },
+      t("login.verify")
+    ) as HTMLButtonElement;
+
+    const form = el(
+      "form",
+      { className: "login-form" },
+      el("label", { for: "login-mfa-code", className: "row-label" }, t("login.mfaLabel")),
+      codeInput,
+      error,
+      el("div", { className: "modal-actions" }, button)
+    ) as HTMLFormElement;
+
+    form.addEventListener("submit", async ev => {
+      ev.preventDefault();
+      error.textContent = "";
+      button.setAttribute("disabled", "");
+      const result = await window.hyaecord.discordSubmitMfa(method, codeInput.value, ticket);
+      button.removeAttribute("disabled");
+      if (result.ok) return;
+      error.textContent = t(`login.error.${result.mfaRequired ? "mfa-unsupported" : result.error}`);
+      codeInput.focus();
+    });
+
+    const parts: (Node | string)[] = [el("p", { className: "modal-subtitle" }, t("login.mfaBody"))];
+
+    if (methods.length > 1) {
+      parts.push(
+        el(
+          "div",
+          { className: "login-method-switch" },
+          ...methods.map(m =>
+            el(
+              "button",
+              {
+                type: "button",
+                className: `link-button${m === method ? " is-active" : ""}`,
+                onClick: () => {
+                  method = m;
+                  smsSent = false;
+                  renderBody();
+                }
+              },
+              t(MFA_METHOD_LABEL[m])
+            )
+          )
+        )
+      );
+    }
+
+    if (method === "sms" && !smsSent) {
+      const smsError = el("p", { className: "login-error", role: "alert" });
+      const sendButton = el(
+        "button",
+        {
+          className: "btn primary",
+          type: "button",
+          onClick: async () => {
+            smsError.textContent = "";
+            sendButton.setAttribute("disabled", "");
+            const res = await window.hyaecord.discordRequestMfaSms(ticket);
+            sendButton.removeAttribute("disabled");
+            if (!res.ok) {
+              smsError.textContent = t("login.error.network");
+              return;
+            }
+            smsSent = true;
+            renderBody();
+          }
+        },
+        t("login.sendSmsCode")
+      );
+      parts.push(el("p", {}, t("login.smsBody")), sendButton, smsError);
+    } else {
+      if (method === "sms") parts.push(el("p", { className: "row-description" }, t("login.smsSent")));
+      parts.push(form);
+    }
+
+    parts.push(
+      el("p", { className: "login-switch" },
+        el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.back"))
+      )
+    );
+
+    container.append(...parts);
+    container.querySelector("input")?.focus();
+  }
+
+  renderBody();
+  return container;
 }
 
 function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {

@@ -40,6 +40,7 @@ export const IPC = {
   discordLogin: "hyaecord:discord-login",
   discordLoginCredentials: "hyaecord:discord-login-credentials",
   discordSubmitMfa: "hyaecord:discord-submit-mfa",
+  discordRequestMfaSms: "hyaecord:discord-request-mfa-sms",
   discordLoginBrowser: "hyaecord:discord-login-browser",
   discordLogout: "hyaecord:discord-logout",
   discordGetSession: "hyaecord:discord-get-session",

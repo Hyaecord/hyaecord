@@ -84,9 +84,11 @@ export interface LoginResult {
   persisted?: boolean;
 }
 
+export type MfaMethod = "totp" | "sms" | "backup";
+
 export type CredentialLoginResult =
   | { ok: true; persisted?: boolean }
-  | { ok: false; mfaRequired: true; ticket: string }
+  | { ok: false; mfaRequired: true; ticket: string; methods: MfaMethod[] }
   | {
       ok: false;
       mfaRequired?: false;
@@ -103,7 +105,8 @@ export interface HyaecordBridge {
   onThemeChanged(cb: (prefersDark: boolean) => void): void;
   discordLogin(token: string): Promise<LoginResult>;
   discordLoginCredentials(login: string, password: string): Promise<CredentialLoginResult>;
-  discordSubmitMfa(code: string, ticket: string): Promise<CredentialLoginResult>;
+  discordSubmitMfa(method: MfaMethod, code: string, ticket: string): Promise<CredentialLoginResult>;
+  discordRequestMfaSms(ticket: string): Promise<{ ok: boolean; phone?: string }>;
   discordLoginBrowser(): Promise<LoginResult>;
   discordLogout(): Promise<void>;
   getDiscordSession(): Promise<DiscordSession>;

@@ -208,6 +208,19 @@ body {
 }
 .login-vpn-notice .link-button { font-size: inherit; }
 
+.login-method-switch {
+  display: flex;
+  gap: 0.9rem;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  font-size: 0.85rem;
+}
+.login-method-switch .link-button.is-active {
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+}
+
 .fresh-login-notice {
   background: var(--bg-hover);
   border-bottom: 1px solid var(--border);

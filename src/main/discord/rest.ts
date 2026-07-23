@@ -139,8 +139,16 @@ export function loginWithCredentials(login: string, password: string): Promise<L
   return unauthenticatedRequest("/auth/login", { login, password, undelete: false });
 }
 
-export function submitMfaTotp(code: string, ticket: string): Promise<LoginResponse> {
-  return unauthenticatedRequest("/auth/mfa/totp", { code, ticket });
+/** `totp` also accepts a backup code — Discord's own client uses the same field for both. */
+export type MfaMethod = "totp" | "sms" | "backup";
+
+export function submitMfaCode(method: MfaMethod, code: string, ticket: string): Promise<LoginResponse> {
+  return unauthenticatedRequest(`/auth/mfa/${method}`, { code, ticket });
+}
+
+/** Asks Discord to text a code to the account's phone number, ahead of an `/auth/mfa/sms` submit. */
+export function requestMfaSms(ticket: string): Promise<{ phone?: string }> {
+  return unauthenticatedRequest("/auth/mfa/sms/send", { ticket });
 }
 
 export interface RawMessage {

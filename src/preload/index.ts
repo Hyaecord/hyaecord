@@ -14,7 +14,8 @@ const bridge: HyaecordBridge = {
   discordLogin: token => ipcRenderer.invoke(IPC.discordLogin, token),
   discordLoginCredentials: (login, password) =>
     ipcRenderer.invoke(IPC.discordLoginCredentials, login, password),
-  discordSubmitMfa: (code, ticket) => ipcRenderer.invoke(IPC.discordSubmitMfa, code, ticket),
+  discordSubmitMfa: (method, code, ticket) => ipcRenderer.invoke(IPC.discordSubmitMfa, method, code, ticket),
+  discordRequestMfaSms: ticket => ipcRenderer.invoke(IPC.discordRequestMfaSms, ticket),
   discordLoginBrowser: () => ipcRenderer.invoke(IPC.discordLoginBrowser),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
