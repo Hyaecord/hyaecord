@@ -61,6 +61,7 @@ real webpack bundle and cannot run here."
 | `write-upper-case.js` | WriteUpperCase (Equicord) | [source](https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/writeUpperCase/index.ts) | Sentence-split + capitalize logic ported as-is |
 | `signature.js` | Signature (Equicord) | [source](https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/signature/index.tsx) | Core "append header + text" behaviour; original's random-pick-from-list variant not ported |
 | `polish-wording.js` | PolishWording (Equicord) | [source](https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/polishWording/index.ts) | Only "fix apostrophes" + "expand contractions" ported (self-contained find/replace against a fixed map); "capitalize sentences" and "add periods" use more involved sentence-boundary regexes, left out this pass rather than risking a subtly-wrong port |
+| `send-timestamps.js` | SendTimestamps (Vencord) | [source](https://github.com/Equicord/Equicord/blob/main/src/plugins/sendTimestamps/index.tsx) | Only the regex-auto-replace half ported; the chat-bar date-picker modal wasn't (no modal API) |
 
 All four verified with a standalone Node harness that loads each file
 through the same `node:vm` evaluation `sandbox.ts` uses, force-enables
@@ -88,7 +89,7 @@ text via something equivalent to `onBeforeMessageSend`.
 
 ### Category B — needs a plugin-API extension that doesn't exist yet, but is a reasonable one to add
 - ~~`silentMessageToggle`~~ — ✅ built, but as a **native composer feature**, not a plugin: the plugin API's `onMessageSend` can only transform the content *string*, and this needed to set the real `flags` field on the REST request (`SUPPRESS_NOTIFICATIONS`, `1 << 12`) — confirmed via docs.discord.food that this is genuine request-body surface, not the `"@silent "` content-prefix trick the original plugin uses (that trick only works because Discord's *own* official composer parses and strips it client-side before building the request; a client hitting the REST API directly, like this one, has to set the real flag). A 🔕 toggle button next to the composer sets it for the next message only, auto-disabling after send (matches the original's default `autoDisable: true`; its optional cross-channel/cross-restart persistence wasn't ported — no state store for it).
-- `sendTimestamps` — the useful core (typing `[3:00pm]` and having it become a real Discord `<t:...:t>` timestamp) is a content transform; the original's date-picker *modal* isn't portable (no modal API), but the auto-replace-on-send half might be, pending a closer read of the original's actual listener wiring (its `PickerModal` UI dominates the file; unclear yet whether there's also a plain regex auto-replace path independent of the modal).
+- ~~`sendTimestamps`~~ — ✅ built (`plugins/send-timestamps.js`): the auto-replace-on-send half (`onBeforeMessageSend`'s regex + `parseTime`, both self-contained and independent of the file's `PickerModal` UI) ported faithfully. Type a time in backticks (`` `3:51` ``, `` `17:59` ``, `` `0:13PM` ``) and it becomes a real `<t:...:t>` timestamp. The chat-bar date-picker button/modal isn't ported (no modal API in the sandbox).
 - `messageBurst`, `streaks`, `lastActive`, `pingNotifications` — need per-user/per-channel state persisted across messages (e.g. "have I DMed this person today"). `onMessageCreate` gives the raw events; the plugin API has no persistent structured storage beyond flat settings values today. Feasible with a small "plugin key-value store" API addition, not built yet.
 
 ### Category C — needs a capability the plugin sandbox deliberately doesn't grant
@@ -140,5 +141,5 @@ the moment they're actually built.
 
 1. ~~Native "Copy Mention" / "Copy User URL" context-menu items~~ — ✅ done, see Category A above.
 2. ~~`silentMessageToggle`~~ — ✅ done, see Category B above.
-3. Re-read `sendTimestamps` closely for a modal-free auto-replace path.
+3. ~~Re-read `sendTimestamps` closely for a modal-free auto-replace path~~ — ✅ done, see the ported-plugins table above.
 4. A plugin key-value store API addition, unlocking the Category B "needs state across messages" group as a batch.
