@@ -122,6 +122,10 @@ export interface HyaecordBridge {
   onGamingModeState(cb: (state: GamingModeState) => void): void;
   getUserProfile(userId: string): Promise<UserProfile | null>;
   getGlobalBadges(userId: string): Promise<Array<{ icon: string; tooltip: string }>>;
+  getPlugins(): Promise<PluginInfo[]>;
+  setPluginEnabled(id: string, enabled: boolean): Promise<boolean>;
+  setPluginSetting(id: string, key: string, value: boolean | number | string): Promise<boolean>;
+  onPluginToast(cb: (message: string) => void): void;
   searchGifs(query: string): Promise<GifResult[]>;
   /** `dataUri` is a `data:image/...;base64,...` string, or null to reset to the default avatar. */
   setAvatar(dataUri: string | null): Promise<boolean>;
@@ -151,6 +155,28 @@ export interface GifResult {
   width: number;
   height: number;
   title: string;
+}
+
+export interface PluginSettingSchemaEntry {
+  type: "boolean" | "number" | "string";
+  label: string;
+  description?: string;
+  default: boolean | number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+export interface PluginInfo {
+  id: string;
+  name: string;
+  description: string;
+  authors: string[];
+  enabled: boolean;
+  /** Non-null when the plugin file failed to load (syntax error, threw during evaluation, etc.) — the toggle is disabled in the UI until fixed. */
+  error: string | null;
+  settingsSchema?: Record<string, PluginSettingSchemaEntry>;
+  settingsValues: Record<string, boolean | number | string>;
 }
 
 export interface GamingModeState {

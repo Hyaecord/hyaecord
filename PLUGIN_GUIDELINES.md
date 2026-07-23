@@ -1,12 +1,20 @@
 # Hyaecord Plugin & Extension Policy
 
 Hyaecord is committed to keeping the entire client experience free,
-accessible, and open. Hyaecord's compatibility layer runs most existing
-Vencord and Equicord plugins unmodified; a small number that rely on
-Equicord/Vencord-specific internals may need porting. To maintain a fair
-and safe ecosystem, all plugins submitted to or bundled with Hyaecord —
-whether run as-is or ported from the Vencord and Equicord ecosystems —
-must adhere to these guidelines.
+accessible, and open. Hyaecord has its own plugin API, run in a sandboxed
+Node `vm` context — ergonomically modeled on Vencord's `definePlugin`
+shape (name/description/authors/settings/start/stop) so a simple plugin
+feels familiar to port, but it is **not** byte-compatible with real
+Vencord/Equicord plugin files. Those rely on patching Discord's own
+webpack bundle at runtime (`Vencord.Webpack.findByProps`, direct component
+patches); Hyaecord's client GUI is original code, not a webpack bundle, so
+there's nothing for that kind of patch to attach to, sandboxed or not. A
+plugin that only needs message-level hooks (intercepting/transforming
+outgoing messages, reacting to incoming ones) can be ported with minor
+changes; a plugin that reaches into Discord's real component tree cannot
+run here regardless of effort. See `src/main/plugins/sandbox.ts` for the
+exact API surface. To maintain a fair and safe ecosystem, all plugins
+submitted to or bundled with Hyaecord must adhere to these guidelines.
 
 ## 1. No Paywalls or Commercial Features
 

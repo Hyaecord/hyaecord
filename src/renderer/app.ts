@@ -1,5 +1,5 @@
 import type { HyaecordBridge } from "@shared/types";
-import { applySettingsToDocument, state, t } from "./ui";
+import { applySettingsToDocument, showToast, state, t } from "./ui";
 import { maybeShowWizard } from "./wizard";
 import { mountSettingsButton } from "./settings-ui";
 import { initSession } from "./session";
@@ -37,6 +37,7 @@ async function init(): Promise<void> {
   api.onGamingModeState(s => {
     state.gamingModeState = s;
   });
+  api.onPluginToast(showToast);
 
   renderChrome();
   mountSettingsButton();

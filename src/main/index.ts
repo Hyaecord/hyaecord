@@ -12,6 +12,7 @@ import { fetchCommunityThemes } from "./community-themes";
 import { fetchGlobalBadges } from "./global-badges";
 import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
+import { loadPlugins, listPlugins, setPluginEnabled, setPluginSetting } from "./plugins/manager";
 import {
   initDiscord,
   loginWithBrowser,
@@ -117,6 +118,11 @@ app.whenReady().then(() => {
     subscribeMemberList(guildId, channelId)
   );
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
+  ipcMain.handle(IPC.getPlugins, () => listPlugins());
+  ipcMain.handle(IPC.setPluginEnabled, (_e, id: string, enabled: boolean) => setPluginEnabled(id, enabled));
+  ipcMain.handle(IPC.setPluginSetting, (_e, id: string, key: string, value: boolean | number | string) =>
+    setPluginSetting(id, key, value)
+  );
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     // Only ever hand https:// links to the OS — the renderer is sandboxed
@@ -139,6 +145,7 @@ app.whenReady().then(() => {
     }
   );
   void autoLogin();
+  loadPlugins(message => mainWindow?.webContents.send(IPC.pluginToast, message));
 
   createWindow();
   if (mainWindow) createTray(mainWindow);

@@ -8,6 +8,7 @@ import {
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
+import { runMessageSendHooks, runMessageCreateHooks } from "../plugins/manager";
 import type { DiscordSessionState, DiscordUserSummary, UserProfile, GifResult } from "@shared/types";
 
 /**
@@ -113,6 +114,7 @@ async function startGateway(token: string): Promise<void> {
     onDispatch: (event, data) => {
       send("event", event, data);
       maybeNotify(event, data);
+      if (event === "MESSAGE_CREATE") runMessageCreateHooks(data);
     },
     onStateChange: gs => setState(mapGatewayState(gs))
   });
@@ -183,8 +185,11 @@ export async function fetchMessages(channelId: string): Promise<RawMessage[]> {
 
 export async function sendMessage(channelId: string, content: string): Promise<boolean> {
   if (!rest || !content.trim()) return false;
+  const transformed = await runMessageSendHooks(content, channelId);
+  if (transformed === null) return false; // a plugin cancelled the send
+  if (!transformed.trim()) return false;
   try {
-    await rest.createMessage(channelId, content);
+    await rest.createMessage(channelId, transformed);
     return true;
   } catch {
     return false;

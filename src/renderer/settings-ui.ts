@@ -1,4 +1,4 @@
-import type { ThemeId } from "@shared/types";
+import type { PluginInfo, ThemeId } from "@shared/types";
 import { burstParticles, el, holdToggleRow, patchSettings, showToast, state, t, toggleRow, trapFocus } from "./ui";
 import { refreshChomperViews, getCurrentUser } from "./session";
 import { openThemeStore } from "./theme-store";
@@ -113,6 +113,113 @@ function starRepoButton(): HTMLElement {
     ),
     button
   );
+}
+
+/**
+ * Renders one plugin's own settings schema (boolean/number/string) as
+ * plain controls beneath its row — the same shapes used elsewhere
+ * (toggle, slider, text input), just driven by a schema instead of a
+ * fixed list of app settings.
+ */
+function pluginSettingRow(pluginId: string, key: string, plugin: PluginInfo): HTMLElement {
+  const entry = plugin.settingsSchema![key]!;
+  const current = plugin.settingsValues[key] ?? entry.default;
+
+  if (entry.type === "boolean") {
+    const input = el("input", { type: "checkbox", className: "switch-input" }) as HTMLInputElement;
+    input.checked = Boolean(current);
+    input.addEventListener("change", () => void window.hyaecord.setPluginSetting(pluginId, key, input.checked));
+    return el(
+      "label",
+      { className: "setting-row plugin-setting-row" },
+      el("span", { className: "row-text" },
+        el("span", { className: "row-label" }, entry.label),
+        entry.description ? el("span", { className: "row-description" }, entry.description) : ""
+      ),
+      el("span", { className: "switch" }, input, el("span", { className: "switch-thumb", "aria-hidden": "true" }))
+    );
+  }
+
+  if (entry.type === "number") {
+    const input = el("input", {
+      type: "range",
+      min: String(entry.min ?? 0),
+      max: String(entry.max ?? 100),
+      step: String(entry.step ?? 1),
+      className: "slider",
+      "aria-label": entry.label
+    }) as HTMLInputElement;
+    input.value = String(current);
+    const value = el("output", { className: "slider-value" }, String(current));
+    input.addEventListener("input", () => {
+      value.textContent = input.value;
+    });
+    input.addEventListener("change", () => void window.hyaecord.setPluginSetting(pluginId, key, Number(input.value)));
+    return el(
+      "div",
+      { className: "setting-row plugin-setting-row" },
+      el("span", { className: "row-text" },
+        el("span", { className: "row-label" }, entry.label),
+        entry.description ? el("span", { className: "row-description" }, entry.description) : ""
+      ),
+      el("span", { className: "slider-wrap" }, input, value)
+    );
+  }
+
+  const input = el("input", { type: "text", className: "select" }) as HTMLInputElement;
+  input.value = String(current);
+  input.addEventListener("change", () => void window.hyaecord.setPluginSetting(pluginId, key, input.value));
+  return el(
+    "label",
+    { className: "setting-row plugin-setting-row" },
+    el("span", { className: "row-text" },
+      el("span", { className: "row-label" }, entry.label),
+      entry.description ? el("span", { className: "row-description" }, entry.description) : ""
+    ),
+    input
+  );
+}
+
+function pluginRow(plugin: PluginInfo): HTMLElement {
+  const toggle = el("input", { type: "checkbox", className: "switch-input" }) as HTMLInputElement;
+  toggle.checked = plugin.enabled;
+  toggle.disabled = !!plugin.error;
+  toggle.addEventListener("change", () => void window.hyaecord.setPluginEnabled(plugin.id, toggle.checked));
+
+  const authors = plugin.authors.length ? t("plugins.by", { authors: plugin.authors.join(", ") }) : "";
+  const header = el(
+    "label",
+    { className: "setting-row" },
+    el("span", { className: "row-text" },
+      el("span", { className: "row-label" }, plugin.name),
+      el("span", { className: "row-description" }, plugin.description || authors),
+      plugin.error ? el("span", { className: "row-description plugin-error" }, plugin.error) : ""
+    ),
+    el("span", { className: "switch" }, toggle, el("span", { className: "switch-thumb", "aria-hidden": "true" }))
+  );
+
+  const schemaKeys = Object.keys(plugin.settingsSchema ?? {});
+  if (schemaKeys.length === 0) return header;
+
+  return el(
+    "div",
+    { className: "plugin-card" },
+    header,
+    el("div", { className: "plugin-settings" }, ...schemaKeys.map(key => pluginSettingRow(plugin.id, key, plugin)))
+  );
+}
+
+function pluginsList(): HTMLElement {
+  const list = el("div", { className: "plugin-list" }, el("p", { className: "step-hint" }, t("plugins.loading")));
+  void window.hyaecord.getPlugins().then(plugins => {
+    list.replaceChildren();
+    if (plugins.length === 0) {
+      list.append(el("p", { className: "step-hint" }, t("plugins.empty")));
+      return;
+    }
+    for (const plugin of plugins) list.append(pluginRow(plugin));
+  });
+  return list;
 }
 
 /**
@@ -243,6 +350,7 @@ export function openSettings(): void {
           )
         )
       ),
+      section("settings.section.plugins", pluginsList()),
       section("settings.section.privacy",
         toggleRow("settings.telemetry", "settings.telemetry.description", s.telemetry.enabled, next =>
           void patchSettings({ telemetry: { ...state.settings.telemetry, enabled: next } })

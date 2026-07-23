@@ -143,7 +143,7 @@ pnpm build
 
 ## Technical Specifications
 
-- **Core Framework:** Electron, with an original client shell and GUI; plugin support is provided by a compatibility layer against the [Equicord](https://github.com/Equicord/Equicord)/[Vencord](https://github.com/Vendicated/Vencord) plugin API.
+- **Core Framework:** Electron, with an original client shell and GUI; plugin support is Hyaecord's own sandboxed API (`src/main/plugins/`), ergonomically modeled on [Equicord](https://github.com/Equicord/Equicord)/[Vencord](https://github.com/Vendicated/Vencord)'s `definePlugin` shape — not a byte-compatible runner for their actual plugin files, which rely on patching Discord's real webpack bundle that this client's original GUI doesn't have. See `PLUGIN_GUIDELINES.md` for exactly what that means for porting a plugin.
 - **Target Platforms:** Linux (primary, v1), Windows (secondary).
 - **Networking & Split-Tunneling:** Compatible with Mullvad's split tunneling — for the Flatpak build, `mullvad-exclude flatpak run io.github.Hyaecord.Hyaecord` (the app ID alone isn't the right syntax; `mullvad-exclude` wraps a command to run, and for Flatpak apps that command is `flatpak run <id>`).
 - **Localization:** Externalized string bundles (`src/i18n/`) with RTL layout support.
