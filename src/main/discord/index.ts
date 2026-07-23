@@ -10,8 +10,10 @@ import type { DiscordSessionState, DiscordUserSummary } from "@shared/types";
  */
 
 type Sender = (channel: "state" | "event", ...args: unknown[]) => void;
+export type NotifyFn = (title: string, body: string) => void;
 
 let send: Sender = () => {};
+let notify: NotifyFn = () => {};
 let gateway: GatewayClient | null = null;
 let rest: RestClient | null = null;
 let state: DiscordSessionState = "logged-out";
@@ -37,8 +39,31 @@ function mapGatewayState(gs: GatewayState): DiscordSessionState {
   }
 }
 
-export function initDiscord(sender: Sender): void {
+export function initDiscord(sender: Sender, notifier: NotifyFn): void {
   send = sender;
+  notify = notifier;
+}
+
+interface RawMessagePayload {
+  author?: { id?: string; global_name?: string | null; username?: string };
+  content?: string;
+  guild_id?: string;
+  mentions?: Array<{ id?: string }>;
+}
+
+/** DMs and direct @-mentions only — never a blanket "new message" notifier. */
+function maybeNotify(event: string, data: unknown): void {
+  if (event !== "MESSAGE_CREATE" || !user) return;
+  const msg = data as RawMessagePayload;
+  if (msg.author?.id === user.id) return;
+  const isDM = !msg.guild_id;
+  const isMentioned = msg.mentions?.some(m => m.id === user!.id) ?? false;
+  if (!isDM && !isMentioned) return;
+
+  const authorName = msg.author?.global_name || msg.author?.username || "Someone";
+  const title = isDM ? authorName : `${authorName} mentioned you`;
+  const body = msg.content?.slice(0, 200) || "Sent an attachment";
+  notify(title, body);
 }
 
 export function getSessionState(): { state: DiscordSessionState; user: DiscordUserSummary | null } {
@@ -64,7 +89,10 @@ async function startGateway(token: string): Promise<void> {
 
   gateway?.destroy();
   gateway = new GatewayClient(token, url, {
-    onDispatch: (event, data) => send("event", event, data),
+    onDispatch: (event, data) => {
+      send("event", event, data);
+      maybeNotify(event, data);
+    },
     onStateChange: gs => setState(mapGatewayState(gs))
   });
   gateway.connect();

@@ -7,6 +7,7 @@ import { detectDesktopEnvironment, onSystemThemeChange } from "./theme";
 import { getLocaleStrings } from "./i18n";
 import { createTray } from "./tray";
 import { startTelemetry } from "./telemetry";
+import { notifyMessage } from "./notifications";
 import {
   initDiscord,
   login,
@@ -69,10 +70,19 @@ app.whenReady().then(() => {
     sendMessage(channelId, content)
   );
 
-  initDiscord((channel, ...args) => {
-    const ipcChannel = channel === "state" ? IPC.discordState : IPC.discordEvent;
-    mainWindow?.webContents.send(ipcChannel, ...args);
-  });
+  initDiscord(
+    (channel, ...args) => {
+      const ipcChannel = channel === "state" ? IPC.discordState : IPC.discordEvent;
+      mainWindow?.webContents.send(ipcChannel, ...args);
+    },
+    (title, body) => {
+      // Skip the notification if the user is already looking at the window —
+      // this is the "keep working while gaming/backgrounded" listener, not a
+      // duplicate of what's already visible on screen.
+      if (mainWindow?.isFocused()) return;
+      notifyMessage(mainWindow, title, body);
+    }
+  );
   void autoLogin();
 
   createWindow();
