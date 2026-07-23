@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, shell } from "electron";
 import { join } from "node:path";
 import { IPC, PRODUCT_NAME } from "@shared/constants";
-import type { HyaecordSettings, MfaMethod } from "@shared/types";
+import type { HyaecordSettings } from "@shared/types";
 import { loadSettings, saveSettings } from "./settings";
 import { detectDesktopEnvironment, onSystemThemeChange } from "./theme";
 import { getLocaleStrings } from "./i18n";
@@ -14,10 +14,6 @@ import { isLikelyUsingVpn } from "./vpn-detect";
 import { startGamingModeDetection, stopGamingModeDetection } from "./gaming-mode";
 import {
   initDiscord,
-  login,
-  loginWithCredentials,
-  submitMfa,
-  requestMfaSms,
   loginWithBrowser,
   logout,
   autoLogin,
@@ -101,14 +97,6 @@ app.whenReady().then(() => {
   });
   ipcMain.handle(IPC.getDesktopEnvironment, () => detectDesktopEnvironment());
   ipcMain.handle(IPC.getLocaleStrings, () => getLocaleStrings());
-  ipcMain.handle(IPC.discordLogin, (_e, token: string) => login(token));
-  ipcMain.handle(IPC.discordLoginCredentials, (_e, loginField: string, password: string) =>
-    loginWithCredentials(loginField, password)
-  );
-  ipcMain.handle(IPC.discordSubmitMfa, (_e, method: MfaMethod, code: string, ticket: string) =>
-    submitMfa(method, code, ticket)
-  );
-  ipcMain.handle(IPC.discordRequestMfaSms, (_e, ticket: string) => requestMfaSms(ticket));
   ipcMain.handle(IPC.discordLoginBrowser, () => loginWithBrowser());
   ipcMain.handle(IPC.discordLogout, () => logout());
   ipcMain.handle(IPC.discordGetSession, () => getSessionState());

@@ -2,13 +2,9 @@ import { GatewayClient, type GatewayState } from "./gateway";
 import {
   RestClient,
   DiscordRestError,
-  loginWithCredentials as restLoginWithCredentials,
-  submitMfaCode as restSubmitMfaCode,
-  requestMfaSms as restRequestMfaSms,
   type RawMessage,
   type RawUserProfile,
-  type RawGif,
-  type MfaMethod
+  type RawGif
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
@@ -138,88 +134,6 @@ async function completeLogin(
   }
   const persisted = setToken(token);
   return { ok: true, persisted };
-}
-
-/** Advanced/fallback path: paste a token directly. */
-export async function login(
-  token: string
-): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
-  const trimmed = token.trim();
-  if (!trimmed) return { ok: false, error: "empty" };
-  freshLogin = true;
-  return completeLogin(trimmed);
-}
-
-export type CredentialLoginResult =
-  | { ok: true; persisted?: boolean }
-  | { ok: false; mfaRequired: true; ticket: string; methods: MfaMethod[] }
-  | { ok: false; mfaRequired?: false; error: string };
-
-/**
- * The normal Discord login: email/phone + password, same endpoint the
- * official client uses. Handles all three account MFA methods Discord
- * supports at login (authenticator app, SMS, backup code) — hCaptcha
- * challenges are the one thing still unhandled, surfaced as a clear error
- * rather than failing silently.
- */
-export async function loginWithCredentials(loginField: string, password: string): Promise<CredentialLoginResult> {
-  const trimmedLogin = loginField.trim();
-  if (!trimmedLogin || !password) return { ok: false, error: "empty" };
-
-  let res;
-  try {
-    res = await restLoginWithCredentials(trimmedLogin, password);
-  } catch (err) {
-    if (err instanceof DiscordRestError && (err.status === 400 || err.status === 401)) {
-      return { ok: false, error: "invalid-credentials" };
-    }
-    return { ok: false, error: "network" };
-  }
-
-  if (res.captcha_key) return { ok: false, error: "captcha-unsupported" };
-  if (res.mfa) {
-    if (!res.ticket) return { ok: false, error: "mfa-unsupported" };
-    const methods: MfaMethod[] = [
-      ...(res.totp ? (["totp"] as const) : []),
-      ...(res.sms ? (["sms"] as const) : []),
-      ...(res.backup ? (["backup"] as const) : [])
-    ];
-    if (methods.length === 0) return { ok: false, error: "mfa-unsupported" };
-    return { ok: false, mfaRequired: true, ticket: res.ticket, methods };
-  }
-  if (!res.token) return { ok: false, error: "network" };
-  freshLogin = true;
-  return completeLogin(res.token);
-}
-
-/** Second step after `loginWithCredentials` returns `mfaRequired`. */
-export async function submitMfa(method: MfaMethod, code: string, ticket: string): Promise<CredentialLoginResult> {
-  const trimmedCode = code.trim();
-  if (!trimmedCode) return { ok: false, error: "empty" };
-
-  let res;
-  try {
-    res = await restSubmitMfaCode(method, trimmedCode, ticket);
-  } catch (err) {
-    if (err instanceof DiscordRestError && (err.status === 400 || err.status === 401)) {
-      return { ok: false, error: "invalid-code" };
-    }
-    return { ok: false, error: "network" };
-  }
-
-  if (!res.token) return { ok: false, error: "network" };
-  freshLogin = true;
-  return completeLogin(res.token);
-}
-
-/** Asks Discord to text a code to the account's phone for the SMS MFA method. Returns the redacted phone number on success. */
-export async function requestMfaSms(ticket: string): Promise<{ ok: boolean; phone?: string }> {
-  try {
-    const res = await restRequestMfaSms(ticket);
-    return { ok: true, phone: res.phone };
-  } catch {
-    return { ok: false };
-  }
 }
 
 /**

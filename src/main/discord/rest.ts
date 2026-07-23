@@ -158,65 +158,6 @@ export interface RawUserProfile {
   premium_since?: string | null;
 }
 
-/**
- * Unauthenticated login endpoints — used before we have a token at all, so
- * these are free functions rather than RestClient methods (RestClient
- * requires a token to construct). Same shape Discord's own web/desktop
- * client uses for email+password login: POST /auth/login, then if MFA is
- * enabled, POST /auth/mfa/totp with the code and the ticket from the first
- * response.
- *
- * ⚠ Unverified live in this session (no real account was used to test it) —
- * this is one of the most stable, widely-relied-on parts of Discord's
- * unofficial API (every self-bot library uses this exact shape), but if
- * Discord ever changes it, the errors here should surface as a clear
- * "couldn't reach Discord" rather than fail silently.
- */
-
-export interface LoginResponse {
-  token?: string;
-  mfa?: boolean;
-  ticket?: string;
-  totp?: boolean;
-  sms?: boolean;
-  backup?: boolean;
-  /** Present when Discord wants an hCaptcha solve — not supported yet, surfaced as a clear error. */
-  captcha_key?: string[];
-}
-
-async function unauthenticatedRequest<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "user-agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-    },
-    body: JSON.stringify(body)
-  });
-  const data = (await res.json().catch(() => ({}))) as T & { message?: string };
-  if (!res.ok) {
-    throw new DiscordRestError(res.status, (data as { message?: string }).message ?? res.statusText);
-  }
-  return data;
-}
-
-export function loginWithCredentials(login: string, password: string): Promise<LoginResponse> {
-  return unauthenticatedRequest("/auth/login", { login, password, undelete: false });
-}
-
-/** `totp` also accepts a backup code — Discord's own client uses the same field for both. */
-export type MfaMethod = "totp" | "sms" | "backup";
-
-export function submitMfaCode(method: MfaMethod, code: string, ticket: string): Promise<LoginResponse> {
-  return unauthenticatedRequest(`/auth/mfa/${method}`, { code, ticket });
-}
-
-/** Asks Discord to text a code to the account's phone number, ahead of an `/auth/mfa/sms` submit. */
-export function requestMfaSms(ticket: string): Promise<{ phone?: string }> {
-  return unauthenticatedRequest("/auth/mfa/sms/send", { ticket });
-}
-
 export interface RawMessage {
   id: string;
   channel_id: string;

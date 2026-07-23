@@ -1,4 +1,4 @@
-import type { DiscordSession, MfaMethod } from "@shared/types";
+import type { DiscordSession } from "@shared/types";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
@@ -772,47 +772,16 @@ function onMessageCreate(data: unknown): void {
  * (some people prefer them, and they hit the exact same real endpoints),
  * but demoted to secondary links rather than the default screen. */
 
-type LoginScreen = "welcome" | "credentials" | "mfa" | "token";
-
+/**
+ * Login is browser-only by design: it opens the real discord.com/login page
+ * in an embedded window rather than any form of ours, so there's nothing
+ * here that could be mistaken for a phishing-shaped credential prompt and
+ * nothing asking a user to trust this app with a pasted token. See
+ * browser-login.ts / loginWithBrowser() for the actual implementation.
+ */
 function showLogin(): void {
   if (loginOverlay) return;
 
-  let screen: LoginScreen = "welcome";
-  let mfaTicket = "";
-  let mfaMethods: MfaMethod[] = [];
-
-  const body = el("div", { className: "login-body" });
-  const dialog = el(
-    "div",
-    { className: "modal login", role: "dialog", "aria-modal": "true", "aria-labelledby": "login-title" },
-    el("h1", { id: "login-title" }, t("login.title")),
-    body
-  );
-  loginOverlay = el("div", { className: "overlay" }, dialog);
-  document.body.append(loginOverlay);
-
-  function goTo(next: LoginScreen, ticket = "", methods: MfaMethod[] = []): void {
-    screen = next;
-    if (ticket) mfaTicket = ticket;
-    if (methods.length) mfaMethods = methods;
-    render();
-  }
-
-  function render(): void {
-    body.replaceChildren();
-    if (screen === "welcome") body.append(welcomeScreen(goTo));
-    else if (screen === "credentials") body.append(credentialsScreen(goTo));
-    else if (screen === "mfa") body.append(mfaScreen(mfaTicket, mfaMethods, goTo));
-    else body.append(tokenScreen(goTo));
-    body.querySelector("input")?.focus();
-  }
-
-  render();
-}
-
-type GoTo = (screen: LoginScreen, ticket?: string, methods?: MfaMethod[]) => void;
-
-function welcomeScreen(goTo: GoTo): HTMLElement {
   const browserError = el("p", { className: "login-error", role: "alert" });
   const browserButton = el(
     "button",
@@ -826,11 +795,13 @@ function welcomeScreen(goTo: GoTo): HTMLElement {
         browserButton.removeAttribute("disabled");
         if (!result.ok && result.error !== "cancelled") {
           browserError.textContent = t(`login.error.${result.error}`);
+        } else if (result.ok && result.persisted === false) {
+          showToast(t("login.sessionOnly"));
         }
       }
     },
     t("login.withBrowser")
-  );
+  ) as HTMLButtonElement;
 
   const vpnNotice = el("div", { className: "login-vpn-notice", hidden: true });
   void window.hyaecord.isUsingVpn().then(detected => {
@@ -847,245 +818,23 @@ function welcomeScreen(goTo: GoTo): HTMLElement {
     );
   });
 
-  return el(
+  const body = el(
     "div",
-    {},
+    { className: "login-body" },
     el("p", { className: "modal-subtitle" }, t("login.welcomeBody")),
     vpnNotice,
     browserButton,
-    browserError,
-    el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.useCredentials")),
-      " · ",
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
-    )
+    browserError
   );
-}
-
-function credentialsScreen(goTo: GoTo): HTMLElement {
-  const emailInput = el("input", {
-    type: "text",
-    id: "login-email",
-    className: "login-input",
-    autocomplete: "username",
-    placeholder: t("login.emailPlaceholder")
-  }) as HTMLInputElement;
-  const passwordInput = el("input", {
-    type: "password",
-    id: "login-password",
-    className: "login-input",
-    autocomplete: "current-password"
-  }) as HTMLInputElement;
-  const error = el("p", { className: "login-error", role: "alert" });
-  const button = el("button", { className: "btn primary", type: "submit" }, t("login.connect"));
-
-  const form = el(
-    "form",
-    { className: "login-form" },
-    el("label", { for: "login-email", className: "row-label" }, t("login.emailLabel")),
-    emailInput,
-    el("label", { for: "login-password", className: "row-label" }, t("login.passwordLabel")),
-    passwordInput,
-    error,
-    el("div", { className: "modal-actions" }, button)
-  ) as HTMLFormElement;
-
-  form.addEventListener("submit", async ev => {
-    ev.preventDefault();
-    error.textContent = "";
-    button.setAttribute("disabled", "");
-    const result = await window.hyaecord.discordLoginCredentials(emailInput.value, passwordInput.value);
-    button.removeAttribute("disabled");
-    if (result.ok) return;
-    if (result.mfaRequired) {
-      goTo("mfa", result.ticket, result.methods);
-      return;
-    }
-    error.textContent = t(`login.error.${result.error}`);
-    passwordInput.focus();
-  });
-
-  return el(
+  const dialog = el(
     "div",
-    {},
-    el("p", { className: "modal-subtitle" }, t("login.body")),
-    form,
-    el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back")),
-      " · ",
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("token") }, t("login.useToken"))
-    )
+    { className: "modal login", role: "dialog", "aria-modal": "true", "aria-labelledby": "login-title" },
+    el("h1", { id: "login-title" }, t("login.title")),
+    body
   );
-}
-
-const MFA_METHOD_LABEL: Record<MfaMethod, string> = {
-  totp: "login.mfaMethod.totp",
-  sms: "login.mfaMethod.sms",
-  backup: "login.mfaMethod.backup"
-};
-
-/**
- * All three account MFA methods Discord supports at login share this one
- * screen. SMS needs an extra step first (request the code be sent) before
- * the same code input applies; the picker only appears when the account
- * actually has more than one method available.
- */
-function mfaScreen(ticket: string, methods: MfaMethod[], goTo: GoTo): HTMLElement {
-  const container = el("div", {});
-  let method: MfaMethod = methods.includes("totp") ? "totp" : (methods[0] ?? "totp");
-  let smsSent = false;
-
-  function renderBody(): void {
-    container.replaceChildren();
-
-    const codeInput = el("input", {
-      type: "text",
-      id: "login-mfa-code",
-      className: "login-input",
-      inputmode: method === "backup" ? "text" : "numeric",
-      autocomplete: "one-time-code",
-      placeholder: t(method === "backup" ? "login.backupPlaceholder" : "login.mfaPlaceholder")
-    }) as HTMLInputElement;
-    const error = el("p", { className: "login-error", role: "alert" });
-    const button = el(
-      "button",
-      { className: "btn primary", type: "submit" },
-      t("login.verify")
-    ) as HTMLButtonElement;
-
-    const form = el(
-      "form",
-      { className: "login-form" },
-      el("label", { for: "login-mfa-code", className: "row-label" }, t("login.mfaLabel")),
-      codeInput,
-      error,
-      el("div", { className: "modal-actions" }, button)
-    ) as HTMLFormElement;
-
-    form.addEventListener("submit", async ev => {
-      ev.preventDefault();
-      error.textContent = "";
-      button.setAttribute("disabled", "");
-      const result = await window.hyaecord.discordSubmitMfa(method, codeInput.value, ticket);
-      button.removeAttribute("disabled");
-      if (result.ok) return;
-      error.textContent = t(`login.error.${result.mfaRequired ? "mfa-unsupported" : result.error}`);
-      codeInput.focus();
-    });
-
-    const parts: (Node | string)[] = [el("p", { className: "modal-subtitle" }, t("login.mfaBody"))];
-
-    if (methods.length > 1) {
-      parts.push(
-        el(
-          "div",
-          { className: "login-method-switch" },
-          ...methods.map(m =>
-            el(
-              "button",
-              {
-                type: "button",
-                className: `link-button${m === method ? " is-active" : ""}`,
-                onClick: () => {
-                  method = m;
-                  smsSent = false;
-                  renderBody();
-                }
-              },
-              t(MFA_METHOD_LABEL[m])
-            )
-          )
-        )
-      );
-    }
-
-    if (method === "sms" && !smsSent) {
-      const smsError = el("p", { className: "login-error", role: "alert" });
-      const sendButton = el(
-        "button",
-        {
-          className: "btn primary",
-          type: "button",
-          onClick: async () => {
-            smsError.textContent = "";
-            sendButton.setAttribute("disabled", "");
-            const res = await window.hyaecord.discordRequestMfaSms(ticket);
-            sendButton.removeAttribute("disabled");
-            if (!res.ok) {
-              smsError.textContent = t("login.error.network");
-              return;
-            }
-            smsSent = true;
-            renderBody();
-          }
-        },
-        t("login.sendSmsCode")
-      );
-      parts.push(el("p", {}, t("login.smsBody")), sendButton, smsError);
-    } else {
-      if (method === "sms") parts.push(el("p", { className: "row-description" }, t("login.smsSent")));
-      parts.push(form);
-    }
-
-    parts.push(
-      el("p", { className: "login-switch" },
-        el("button", { className: "link-button", type: "button", onClick: () => goTo("credentials") }, t("login.back"))
-      )
-    );
-
-    container.append(...parts);
-    container.querySelector("input")?.focus();
-  }
-
-  renderBody();
-  return container;
-}
-
-function tokenScreen(goTo: (screen: LoginScreen) => void): HTMLElement {
-  const input = el("input", {
-    type: "password",
-    id: "login-token",
-    className: "login-input",
-    autocomplete: "off",
-    spellcheck: "false"
-  }) as HTMLInputElement;
-  const error = el("p", { className: "login-error", role: "alert" });
-  const note = el("p", { className: "step-hint" });
-  const button = el("button", { className: "btn primary", type: "submit" }, t("login.connect"));
-
-  const form = el(
-    "form",
-    { className: "login-form" },
-    el("label", { for: "login-token", className: "row-label" }, t("login.tokenLabel")),
-    input,
-    error,
-    note,
-    el("div", { className: "modal-actions" }, button)
-  ) as HTMLFormElement;
-
-  form.addEventListener("submit", async ev => {
-    ev.preventDefault();
-    error.textContent = "";
-    button.setAttribute("disabled", "");
-    const result = await window.hyaecord.discordLogin(input.value);
-    button.removeAttribute("disabled");
-    if (!result.ok) {
-      error.textContent = t(`login.error.${result.error ?? "network"}`);
-      input.focus();
-      return;
-    }
-    if (result.persisted === false) note.textContent = t("login.sessionOnly");
-  });
-
-  return el(
-    "div",
-    {},
-    el("p", { className: "modal-subtitle" }, t("login.tokenBody")),
-    form,
-    el("p", { className: "login-switch" },
-      el("button", { className: "link-button", type: "button", onClick: () => goTo("welcome") }, t("login.back"))
-    )
-  );
+  loginOverlay = el("div", { className: "overlay" }, dialog);
+  document.body.append(loginOverlay);
+  browserButton.focus();
 }
 
 function hideLogin(): void {

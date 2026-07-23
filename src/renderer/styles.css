@@ -244,19 +244,7 @@ body {
 }
 
 /* ---------- login ---------- */
-.login-form { display: flex; flex-direction: column; gap: 0.6rem; }
-.login-input {
-  font: inherit;
-  padding: 0.65rem 0.9rem;
-  border-radius: var(--radius-m);
-  border: 1px solid var(--border);
-  background: var(--bg-raise);
-  color: var(--text);
-}
-.login-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .login-error { color: var(--danger-text); min-height: 1.2em; margin: 0; }
-.login-form .modal-actions { justify-content: flex-end; }
-.login-switch { margin-top: 0.9rem; text-align: center; }
 .link-button {
   background: none;
   border: none;
@@ -287,19 +275,6 @@ body {
   margin-bottom: 0.8rem;
 }
 .login-vpn-notice .link-button { font-size: inherit; }
-
-.login-method-switch {
-  display: flex;
-  gap: 0.9rem;
-  justify-content: center;
-  margin-bottom: 0.9rem;
-  font-size: 0.85rem;
-}
-.login-method-switch .link-button.is-active {
-  color: var(--text);
-  text-decoration: none;
-  font-weight: 600;
-}
 
 .fresh-login-notice {
   background: var(--bg-hover);
