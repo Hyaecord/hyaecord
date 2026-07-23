@@ -83,6 +83,9 @@ function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: str
     el("img", { className: "profile-badge", src: b.icon, alt: b.tooltip, title: b.tooltip, loading: "lazy" })
   );
   const allBadgeIcons = [...discordBadgeIcons, ...globalBadgeIcons];
+  // Per-badge stagger delay (CSS var, not an inline style="" attribute —
+  // those are CSP-blocked here, see the note in theme-preview.ts).
+  allBadgeIcons.forEach((icon, i) => icon.style.setProperty("--i", String(i)));
   const badges = allBadgeIcons.length > 0 ? el("div", { className: "profile-badges" }, ...allBadgeIcons) : null;
 
   const connections =
