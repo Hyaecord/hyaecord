@@ -7,11 +7,12 @@ import {
   requestMfaSms as restRequestMfaSms,
   type RawMessage,
   type RawUserProfile,
+  type RawGif,
   type MfaMethod
 } from "./rest";
 import { getToken, setToken, clearToken } from "./token-store";
 import { openBrowserLogin } from "./browser-login";
-import type { DiscordSessionState, DiscordUserSummary, UserProfile } from "@shared/types";
+import type { DiscordSessionState, DiscordUserSummary, UserProfile, GifResult } from "@shared/types";
 
 /**
  * Discord session manager: owns the REST client and gateway connection,
@@ -328,5 +329,20 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
     return toUserProfile(await rest.getUserProfile(userId));
   } catch {
     return null;
+  }
+}
+
+function toGifResult(raw: RawGif): GifResult {
+  return { id: raw.id, url: raw.url, videoSrc: raw.gif_src, width: raw.width, height: raw.height, title: raw.title };
+}
+
+/** Powers the GIF picker. Empty query means "show trending" — matches how the official picker opens. */
+export async function searchGifs(query: string): Promise<GifResult[]> {
+  if (!rest) return [];
+  try {
+    const raw = query.trim() ? await rest.searchGifs(query.trim()) : await rest.trendingGifs();
+    return raw.map(toGifResult);
+  } catch {
+    return [];
   }
 }

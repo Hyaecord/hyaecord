@@ -138,6 +138,7 @@ export interface HyaecordBridge {
   onGamingModeState(cb: (state: GamingModeState) => void): void;
   getUserProfile(userId: string): Promise<UserProfile | null>;
   getGlobalBadges(userId: string): Promise<Array<{ icon: string; tooltip: string }>>;
+  searchGifs(query: string): Promise<GifResult[]>;
 }
 
 export interface UserProfile {
@@ -153,6 +154,15 @@ export interface UserProfile {
   badges: Array<{ id: string; description: string; icon: string; link?: string }>;
   connectedAccounts: Array<{ type: string; name: string; verified: boolean }>;
   premiumType: number | null;
+}
+
+export interface GifResult {
+  id: string;
+  url: string;
+  videoSrc: string;
+  width: number;
+  height: number;
+  title: string;
 }
 
 export interface GamingModeState {

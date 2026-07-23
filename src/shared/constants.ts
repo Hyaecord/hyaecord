@@ -57,5 +57,6 @@ export const IPC = {
   isUsingVpn: "hyaecord:is-using-vpn",
   discordGetUserProfile: "hyaecord:discord-get-user-profile",
   getGlobalBadges: "hyaecord:get-global-badges",
+  discordSearchGifs: "hyaecord:discord-search-gifs",
   gamingModeState: "hyaecord:gaming-mode-state"
 } as const;

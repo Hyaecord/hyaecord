@@ -27,7 +27,8 @@ import {
   deleteChannel,
   muteGuild,
   muteDm,
-  fetchUserProfile
+  fetchUserProfile,
+  searchGifs
 } from "./discord";
 
 let mainWindow: BrowserWindow | null = null;
@@ -114,6 +115,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.getGlobalBadges, (_e, userId: string) =>
     loadSettings().integrations.globalBadges ? fetchGlobalBadges(userId) : []
   );
+  ipcMain.handle(IPC.discordSearchGifs, (_e, query: string) => searchGifs(query));
   ipcMain.handle(IPC.getCommunityThemes, () => fetchCommunityThemes());
   ipcMain.handle(IPC.isUsingVpn, () => isLikelyUsingVpn());
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {

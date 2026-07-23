@@ -103,6 +103,30 @@ export class RestClient {
       `/users/${userId}/profile?with_mutual_guilds=false&with_mutual_friends=false&with_mutual_friends_count=false`
     );
   }
+
+  /**
+   * GIF search/trending, proxied through Discord's own API — per
+   * docs.discord.food/resources/integration: `GET /gifs/search` and
+   * `GET /gifs/trending-gifs`, both sourced from Tenor but authenticated
+   * with the user's own Discord token rather than a separate Tenor API key.
+   */
+  searchGifs(query: string): Promise<RawGif[]> {
+    return this.request("GET", `/gifs/search?q=${encodeURIComponent(query)}&media_format=mp4`);
+  }
+
+  trendingGifs(): Promise<RawGif[]> {
+    return this.request("GET", "/gifs/trending-gifs?media_format=mp4");
+  }
+}
+
+export interface RawGif {
+  id: string;
+  url: string;
+  src: string;
+  gif_src: string;
+  width: number;
+  height: number;
+  title: string;
 }
 
 export interface RawUserProfile {

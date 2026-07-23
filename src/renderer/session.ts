@@ -2,6 +2,7 @@ import type { DiscordSession, MfaMethod } from "@shared/types";
 import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
+import { openGifPicker } from "./gif-picker";
 
 const CONNECTING_KEYS = [
   "shell.status.connecting.0",
@@ -108,6 +109,14 @@ function wireComposer(): void {
     if (!ok) {
       input.value = content; // don't lose what they typed
     }
+  });
+
+  const gifButton = document.getElementById("gif-picker-button") as HTMLButtonElement;
+  gifButton.addEventListener("click", () => {
+    openGifPicker(gifButton, url => {
+      if (!activeChannelId) return;
+      void window.hyaecord.sendMessage(activeChannelId, url);
+    });
   });
 }
 
