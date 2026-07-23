@@ -58,6 +58,12 @@ let loginOverlay: HTMLElement | null = null;
 let activeChannelId: string | null = null;
 let activeGuildId: string | null = null;
 let selfUserId: string | null = null;
+let currentUser: DiscordSession["user"] = null;
+
+/** The logged-in user's own summary (id/username/avatar), for UI like the avatar picker that needs to show/act on it. */
+export function getCurrentUser(): DiscordSession["user"] {
+  return currentUser;
+}
 
 const TEXT_CHANNEL_TYPES = new Set([0, 5]);
 const DM_TYPES = new Set([1, 3]);
@@ -124,6 +130,7 @@ let stopRotation: (() => void) | null = null;
 let freshLoginNoticeShown = false;
 
 function applySession(session: DiscordSession): void {
+  currentUser = session.user;
   stopRotation?.();
   stopRotation = null;
 

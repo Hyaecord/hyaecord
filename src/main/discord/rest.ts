@@ -117,6 +117,15 @@ export class RestClient {
   trendingGifs(): Promise<RawGif[]> {
     return this.request("GET", "/gifs/trending-gifs?media_format=mp4");
   }
+
+  /**
+   * Per docs.discord.food/resources/user: `PATCH /users/@me` with `avatar`
+   * as a data URI (`data:image/png;base64,...`), or `null` to reset to the
+   * default avatar.
+   */
+  updateAvatar(dataUri: string | null): Promise<{ avatar: string | null }> {
+    return this.request("PATCH", "/users/@me", { avatar: dataUri });
+  }
 }
 
 export interface RawGif {

@@ -1,7 +1,93 @@
 import type { ThemeId } from "@shared/types";
-import { burstParticles, el, holdToggleRow, patchSettings, state, t, toggleRow, trapFocus } from "./ui";
-import { refreshChomperViews } from "./session";
+import { burstParticles, el, holdToggleRow, patchSettings, showToast, state, t, toggleRow, trapFocus } from "./ui";
+import { refreshChomperViews, getCurrentUser } from "./session";
 import { openThemeStore } from "./theme-store";
+
+const MAX_AVATAR_BYTES = 8 * 1024 * 1024;
+
+function readFileAsDataUri(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function avatarSection(): HTMLElement {
+  const user = getCurrentUser();
+  const avatarUrl = user?.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=128` : null;
+
+  const preview = avatarUrl
+    ? (el("img", { className: "account-avatar-preview", src: avatarUrl, alt: "" }) as HTMLImageElement)
+    : el("span", { className: "account-avatar-preview account-avatar-fallback", "aria-hidden": "true" }, (user?.username ?? "?")[0] ?? "?");
+
+  const status = el("p", { className: "row-description" });
+  const fileInput = el("input", { type: "file", accept: "image/png,image/jpeg,image/gif", hidden: true }) as HTMLInputElement;
+
+  const changeButton = el(
+    "button",
+    {
+      className: "btn",
+      type: "button",
+      onClick: () => fileInput.click()
+    },
+    t("settings.account.changeAvatar")
+  ) as HTMLButtonElement;
+
+  const removeButton = el(
+    "button",
+    {
+      className: "btn ghost",
+      type: "button",
+      onClick: async () => {
+        if (!user) return;
+        removeButton.setAttribute("disabled", "");
+        const ok = await window.hyaecord.setAvatar(null);
+        removeButton.removeAttribute("disabled");
+        status.textContent = ok ? "" : t("settings.account.error");
+        if (ok) showToast(t("settings.account.updated"));
+      }
+    },
+    t("settings.account.removeAvatar")
+  ) as HTMLButtonElement;
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files?.[0];
+    fileInput.value = "";
+    if (!file || !user) return;
+    if (file.size > MAX_AVATAR_BYTES) {
+      status.textContent = t("settings.account.tooLarge");
+      return;
+    }
+    status.textContent = "";
+    changeButton.setAttribute("disabled", "");
+    try {
+      const dataUri = await readFileAsDataUri(file);
+      const ok = await window.hyaecord.setAvatar(dataUri);
+      status.textContent = ok ? "" : t("settings.account.error");
+      if (ok) {
+        showToast(t("settings.account.updated"));
+        if (preview instanceof HTMLImageElement) preview.src = dataUri;
+      }
+    } finally {
+      changeButton.removeAttribute("disabled");
+    }
+  });
+
+  return el(
+    "div",
+    { className: "setting-row account-avatar-row" },
+    preview,
+    el(
+      "div",
+      { className: "row-text" },
+      el("span", { className: "row-label" }, user?.globalName ?? user?.username ?? ""),
+      el("div", { className: "account-avatar-actions" }, changeButton, removeButton, fileInput),
+      status
+    )
+  );
+}
 
 const REPO_URL = "https://github.com/Hyaecord/hyaecord";
 
@@ -121,6 +207,7 @@ export function openSettings(): void {
       el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, "✕")
     ),
     el("div", { className: "settings-scroll" },
+      ...(getCurrentUser() ? [section("settings.section.account", avatarSection())] : []),
       section("settings.section.appearance",
         selectRow("settings.theme", themeOptions, s.theme, value => void patchSettings({ theme: value as ThemeId })),
         el("div", { className: "setting-row" },

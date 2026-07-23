@@ -38,7 +38,8 @@ const bridge: HyaecordBridge = {
   },
   getUserProfile: userId => ipcRenderer.invoke(IPC.discordGetUserProfile, userId),
   getGlobalBadges: userId => ipcRenderer.invoke(IPC.getGlobalBadges, userId),
-  searchGifs: query => ipcRenderer.invoke(IPC.discordSearchGifs, query)
+  searchGifs: query => ipcRenderer.invoke(IPC.discordSearchGifs, query),
+  setAvatar: dataUri => ipcRenderer.invoke(IPC.discordSetAvatar, dataUri)
 };
 
 contextBridge.exposeInMainWorld("hyaecord", bridge);

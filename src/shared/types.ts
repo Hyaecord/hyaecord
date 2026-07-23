@@ -139,6 +139,8 @@ export interface HyaecordBridge {
   getUserProfile(userId: string): Promise<UserProfile | null>;
   getGlobalBadges(userId: string): Promise<Array<{ icon: string; tooltip: string }>>;
   searchGifs(query: string): Promise<GifResult[]>;
+  /** `dataUri` is a `data:image/...;base64,...` string, or null to reset to the default avatar. */
+  setAvatar(dataUri: string | null): Promise<boolean>;
 }
 
 export interface UserProfile {

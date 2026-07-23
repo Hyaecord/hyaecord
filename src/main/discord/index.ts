@@ -346,3 +346,16 @@ export async function searchGifs(query: string): Promise<GifResult[]> {
     return [];
   }
 }
+
+/** Sets or clears (dataUri === null) the account's avatar, then pushes the updated user out so the UI reflects it immediately. */
+export async function updateAvatar(dataUri: string | null): Promise<boolean> {
+  if (!rest || !user) return false;
+  try {
+    const res = await rest.updateAvatar(dataUri);
+    user = { ...user, avatar: res.avatar };
+    send("state", { state, user, freshLogin });
+    return true;
+  } catch {
+    return false;
+  }
+}

@@ -58,5 +58,6 @@ export const IPC = {
   discordGetUserProfile: "hyaecord:discord-get-user-profile",
   getGlobalBadges: "hyaecord:get-global-badges",
   discordSearchGifs: "hyaecord:discord-search-gifs",
+  discordSetAvatar: "hyaecord:discord-set-avatar",
   gamingModeState: "hyaecord:gaming-mode-state"
 } as const;
