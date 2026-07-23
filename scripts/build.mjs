@@ -7,6 +7,7 @@ const common = {
   format: "cjs",
   target: "node20",
   sourcemap: true,
+  minify: true,
   external: ["electron"],
   logLevel: "info"
 };
@@ -31,6 +32,7 @@ await build({
   format: "esm",
   target: "chrome120",
   sourcemap: true,
+  minify: true,
   logLevel: "info"
 });
 

@@ -3,6 +3,7 @@ import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui"
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
+import { openEmojiPicker } from "./emoji-picker";
 import { setActiveGuildRoles, clearMemberList, applyMemberListUpdate, beginSubscription } from "./member-list";
 import { getPfpOverride } from "./avatar-overrides";
 import { openContextMenu, copyIdItem } from "./context-menu";
@@ -147,6 +148,18 @@ function wireComposer(): void {
     openGifPicker(gifButton, url => {
       if (!activeChannelId) return;
       void window.hyaecord.sendMessage(activeChannelId, url);
+    });
+  });
+
+  const emojiButton = document.getElementById("emoji-picker-button") as HTMLButtonElement;
+  emojiButton.addEventListener("click", () => {
+    openEmojiPicker(emojiButton, emoji => {
+      const start = input.selectionStart ?? input.value.length;
+      const end = input.selectionEnd ?? input.value.length;
+      input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
+      const caret = start + emoji.length;
+      input.setSelectionRange(caret, caret);
+      input.focus();
     });
   });
 }

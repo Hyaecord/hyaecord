@@ -28,6 +28,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
+    "unicode-emoji-json": "^0.9.0",
     "ws": "^8.21.1"
   }
 }
