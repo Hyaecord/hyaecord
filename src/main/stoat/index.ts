@@ -121,10 +121,40 @@ export function getSessionState(): { state: StoatSessionState; user: StoatUserSu
   return { state, user };
 }
 
+export interface StoatAttachmentSummary {
+  url: string;
+  filename: string;
+  contentType: string;
+  isImage: boolean;
+  width: number | null;
+  height: number | null;
+}
+
+function toAttachment(file: { _id: string; filename: string; content_type: string; metadata: { type: string; width?: number; height?: number } }): StoatAttachmentSummary {
+  return {
+    url: stoatFileUrl("attachments", file._id),
+    filename: file.filename,
+    contentType: file.content_type,
+    isImage: file.metadata.type === "Image",
+    width: file.metadata.width ?? null,
+    height: file.metadata.height ?? null
+  };
+}
+
 function toSummary(
   raw: RawStoatMessage,
   users: Map<string, RawStoatUser>
-): { id: string; channelId: string; authorId: string; authorName: string; avatar: string | null; content: string; pinned: boolean } {
+): {
+  id: string;
+  channelId: string;
+  authorId: string;
+  authorName: string;
+  avatar: string | null;
+  content: string;
+  pinned: boolean;
+  edited: boolean;
+  attachments: StoatAttachmentSummary[];
+} {
   const author = raw.user ?? users.get(raw.author);
   return {
     id: raw._id,
@@ -133,7 +163,9 @@ function toSummary(
     authorName: author?.display_name || author?.username || "?",
     avatar: author?.avatar ? stoatFileUrl("avatars", author.avatar._id) : null,
     content: raw.content ?? "",
-    pinned: raw.pinned ?? false
+    pinned: raw.pinned ?? false,
+    edited: !!raw.edited,
+    attachments: (raw.attachments ?? []).map(toAttachment)
   };
 }
 
@@ -199,6 +231,22 @@ export async function unpinMessage(channelId: string, messageId: string): Promis
     return true;
   } catch {
     return false;
+  }
+}
+
+/** Resolves an author the renderer hasn't cached yet (e.g. someone who posts a live message but wasn't in Ready's initial user snapshot) — real `GET /users/{id}`, not a guess at what the gateway would eventually send. */
+export async function getUser(userId: string): Promise<{ id: string; username: string; displayName: string | null; avatar: string | null } | null> {
+  if (!rest) return null;
+  try {
+    const u = await rest.getUser(userId);
+    return {
+      id: u._id,
+      username: u.username,
+      displayName: u.display_name ?? null,
+      avatar: u.avatar ? stoatFileUrl("avatars", u.avatar._id) : null
+    };
+  } catch {
+    return null;
   }
 }
 

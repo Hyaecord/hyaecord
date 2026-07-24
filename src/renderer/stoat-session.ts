@@ -34,6 +34,15 @@ export interface StoatGuildSummary {
   channels: StoatChannelSummary[];
 }
 
+export interface StoatAttachment {
+  url: string;
+  filename: string;
+  contentType: string;
+  isImage: boolean;
+  width: number | null;
+  height: number | null;
+}
+
 export interface StoatMessageSummary {
   id: string;
   channelId: string;
@@ -42,6 +51,8 @@ export interface StoatMessageSummary {
   avatar: string | null;
   content: string;
   pinned: boolean;
+  edited: boolean;
+  attachments: StoatAttachment[];
   /** Decoded from the message's own ULID — see ulid.ts; Stoat's Message schema has no separate timestamp field. */
   timestamp: number | null;
 }
@@ -237,9 +248,121 @@ export async function fetchStoatDMs(): Promise<StoatDmDisplay[]> {
   });
 }
 
+interface RawLiveMessage {
+  _id: string;
+  channel: string;
+  author: string;
+  content?: string | null;
+  pinned?: boolean;
+  edited?: string | null;
+  attachments?: Array<{ _id: string; filename: string; content_type: string; metadata: { type: string; width?: number; height?: number } }> | null;
+}
+
+function attachmentsFromRaw(files: RawLiveMessage["attachments"]): StoatAttachment[] {
+  return (files ?? []).map(f => ({
+    url: `${cdnBase}/attachments/${f._id}`,
+    filename: f.filename,
+    contentType: f.content_type,
+    isImage: f.metadata.type === "Image",
+    width: f.metadata.width ?? null,
+    height: f.metadata.height ?? null
+  }));
+}
+
+/** Resolves an author for a live message, lazily fetching+caching via `GET /users/{id}` if this session hasn't seen them before (e.g. someone Ready's snapshot didn't include). */
+async function resolveAuthor(authorId: string): Promise<CachedStoatUser | null> {
+  const cached = userCache.get(authorId);
+  if (cached) return cached;
+  const fetched = await window.hyaecord.stoatGetUser(authorId);
+  if (!fetched) return null;
+  const entry: CachedStoatUser = {
+    id: fetched.id,
+    username: fetched.username,
+    displayName: fetched.displayName,
+    avatar: fetched.avatar,
+    relationship: "None",
+    online: false,
+    presence: null
+  };
+  userCache.set(authorId, entry);
+  return entry;
+}
+
+type StoatMessageListener = (msg: StoatMessageSummary) => void;
+type StoatMessageUpdateListener = (messageId: string, patch: { content?: string; edited?: boolean }) => void;
+type StoatMessageDeleteListener = (messageId: string) => void;
+
+const messageCreateListeners = new Set<StoatMessageListener>();
+const messageUpdateListeners = new Set<StoatMessageUpdateListener>();
+const messageDeleteListeners = new Set<StoatMessageDeleteListener>();
+
+/** Live "a new message arrived" — session.ts's chat pane subscribes to append it when the affected channel is the one currently open, same role Discord's MESSAGE_CREATE dispatch plays for onMessageCreate(). */
+export function onStoatMessageCreate(cb: StoatMessageListener): () => void {
+  messageCreateListeners.add(cb);
+  return () => messageCreateListeners.delete(cb);
+}
+
+export function onStoatMessageUpdate(cb: StoatMessageUpdateListener): () => void {
+  messageUpdateListeners.add(cb);
+  return () => messageUpdateListeners.delete(cb);
+}
+
+export function onStoatMessageDelete(cb: StoatMessageDeleteListener): () => void {
+  messageDeleteListeners.add(cb);
+  return () => messageDeleteListeners.delete(cb);
+}
+
+/**
+ * Live message dispatch handling — event names ("Message", "MessageUpdate",
+ * "MessageDelete") and shapes follow the Revolt gateway protocol Stoat
+ * forked from (a long-stable, publicly documented convention: the
+ * dispatch payload for a create event IS the Message object itself with a
+ * `type` field added; update events carry `{id, channel, data: <changed
+ * fields>}`; delete events carry `{id, channel}`) — not verified against a
+ * live Stoat gateway session this pass (none was reachable from this
+ * sandbox), so this parses leniently and simply does nothing on a shape
+ * mismatch rather than throwing.
+ */
+async function onLiveMessage(data: unknown): Promise<void> {
+  const raw = data as RawLiveMessage;
+  if (!raw._id || !raw.channel || !raw.author) return;
+  const author = await resolveAuthor(raw.author);
+  const msg: StoatMessageSummary = {
+    id: raw._id,
+    channelId: raw.channel,
+    authorId: raw.author,
+    authorName: author?.displayName || author?.username || "?",
+    avatar: author?.avatar ?? null,
+    content: raw.content ?? "",
+    pinned: raw.pinned ?? false,
+    edited: !!raw.edited,
+    attachments: attachmentsFromRaw(raw.attachments),
+    timestamp: ulidTimestampMs(raw._id)
+  };
+  messageCreateListeners.forEach(cb => cb(msg));
+}
+
+function onLiveMessageUpdate(data: unknown): void {
+  const payload = data as { id?: string; channel?: string; data?: { content?: string; edited?: string | null } };
+  if (!payload.id) return;
+  const patch: { content?: string; edited?: boolean } = {};
+  if (payload.data?.content !== undefined) patch.content = payload.data.content;
+  if (payload.data?.edited !== undefined) patch.edited = !!payload.data.edited;
+  messageUpdateListeners.forEach(cb => cb(payload.id!, patch));
+}
+
+function onLiveMessageDelete(data: unknown): void {
+  const payload = data as { id?: string };
+  if (!payload.id) return;
+  messageDeleteListeners.forEach(cb => cb(payload.id!));
+}
+
 export function initStoatSession(): void {
   window.hyaecord.onStoatEvent((event, data) => {
     if (event === "READY") onReady(data);
+    else if (event === "Message") void onLiveMessage(data);
+    else if (event === "MessageUpdate") onLiveMessageUpdate(data);
+    else if (event === "MessageDelete") onLiveMessageDelete(data);
   });
   window.hyaecord.onStoatState(session => {
     currentState = session.state;
@@ -272,6 +395,8 @@ interface RawStoatMessageSummary {
   avatar: string | null;
   content: string;
   pinned: boolean;
+  edited: boolean;
+  attachments: StoatAttachment[];
 }
 
 export async function selectStoatChannel(channelId: string): Promise<StoatMessageSummary[]> {
@@ -310,6 +435,34 @@ export function getStoatUser(id: string): { username: string; displayName: strin
 }
 
 /** A minimal message row for Stoat — deliberately simpler than Discord's messageRow(): no embed-suppress/mention context menu items (Discord-specific REST calls this platform doesn't have), but pin/unpin is real (see rest.ts) and offered unconditionally, matching Discord's own pin item's author-independent permission rule for DMs — Stoat has no per-channel permission model this app computes yet, so this doesn't attempt to gate it further. */
+/** Renders a message's attachments — inline `<img>` for real images (per `File.metadata.type === "Image"`, not a filename-extension guess), a plain download link for anything else. Neither Discord's nor Stoat's message row rendered attachments at all before this — a real, previously-silent gap on both platforms; only Stoat's is fixed this pass per explicit scope. */
+function attachmentsEl(attachments: StoatAttachment[]): HTMLElement | null {
+  if (attachments.length === 0) return null;
+  return el(
+    "div",
+    { className: "msg-attachments" },
+    ...attachments.map(a =>
+      a.isImage
+        ? el("img", {
+            className: "msg-attachment-image",
+            src: a.url,
+            alt: a.filename,
+            loading: "lazy",
+            style: a.width && a.height ? `aspect-ratio: ${a.width} / ${a.height};` : ""
+          })
+        : el(
+            "button",
+            {
+              type: "button",
+              className: "msg-attachment-file",
+              onClick: () => void window.hyaecord.openExternal(a.url)
+            },
+            a.filename
+          )
+    )
+  );
+}
+
 export function stoatMessageRow(msg: StoatMessageSummary): HTMLElement {
   const avatar = msg.avatar
     ? el("img", { className: "msg-avatar", src: msg.avatar, alt: "", loading: "lazy" })
@@ -319,21 +472,23 @@ export function stoatMessageRow(msg: StoatMessageSummary): HTMLElement {
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
+  const bodyChildren: HTMLElement[] = [
+    el(
+      "header",
+      { className: "msg-meta" },
+      el("span", { className: "msg-author" }, msg.authorName),
+      el("time", { className: "msg-time" }, time),
+      ...(msg.edited ? [el("span", { className: "msg-edited" }, t("message.edited"))] : [])
+    ),
+    content
+  ];
+  const attachmentsRow = attachmentsEl(msg.attachments);
+  if (attachmentsRow) bodyChildren.push(attachmentsRow);
   const row = el(
     "article",
     { className: "msg", "data-message": msg.id },
     avatar,
-    el(
-      "div",
-      { className: "msg-body" },
-      el(
-        "header",
-        { className: "msg-meta" },
-        el("span", { className: "msg-author" }, msg.authorName),
-        el("time", { className: "msg-time" }, time)
-      ),
-      content
-    )
+    el("div", { className: "msg-body" }, ...bodyChildren)
   );
   row.addEventListener("contextmenu", ev => {
     ev.preventDefault();

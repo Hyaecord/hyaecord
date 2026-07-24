@@ -46,6 +46,11 @@ export class StoatRestClient {
     return this.request("GET", "/users/@me");
   }
 
+  /** Per `GET /users/{target}` — used to lazily resolve an author id the client hasn't seen before (e.g. a live message from someone outside Ready's initial user snapshot). */
+  getUser(userId: string): Promise<RawStoatUser> {
+    return this.request("GET", `/users/${userId}`);
+  }
+
   /**
    * `include_users=true` switches the response from a bare message array
    * to `{ messages, users, members? }` — confirmed via the OpenAPI spec's
@@ -115,6 +120,13 @@ export interface RawStoatUser {
   status?: { text?: string | null; presence?: string | null } | null;
 }
 
+export interface RawStoatFile {
+  _id: string;
+  filename: string;
+  content_type: string;
+  metadata: { type: string; width?: number; height?: number };
+}
+
 export interface RawStoatMessage {
   _id: string;
   channel: string;
@@ -123,6 +135,8 @@ export interface RawStoatMessage {
   user?: RawStoatUser | null;
   /** Real field on the Message schema — confirmed via the OpenAPI spec, not derived. */
   pinned?: boolean;
+  attachments?: RawStoatFile[] | null;
+  edited?: string | null;
 }
 
 export interface RawStoatBulkMessages {

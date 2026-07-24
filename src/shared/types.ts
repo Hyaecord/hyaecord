@@ -192,6 +192,7 @@ export interface HyaecordBridge {
   stoatGetServerMembers(serverId: string): Promise<StoatMemberSummary[]>;
   stoatPinMessage(channelId: string, messageId: string): Promise<boolean>;
   stoatUnpinMessage(channelId: string, messageId: string): Promise<boolean>;
+  stoatGetUser(userId: string): Promise<{ id: string; username: string; displayName: string | null; avatar: string | null } | null>;
 }
 
 export interface StoatDMSummary {

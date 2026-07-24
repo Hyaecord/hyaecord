@@ -19,6 +19,7 @@
   "moderator.deletedPartial": "Deleted {ok}, {failed} failed.",
   "chomper.hidden": "{name} hidden and muted. Swipe left on a server icon or DM any time, or restore it in Settings.",
   "message.pinNotice": "pinned a message to this channel.",
+  "message.edited": "(edited)",
   "serverFolders.untitled": "Folder",
   "serverFolders.remove": "Remove {name} from folder",
   "profile.title": "User profile",

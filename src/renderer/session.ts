@@ -32,7 +32,11 @@ import {
   fetchStoatPins,
   pinStoatMessage,
   unpinStoatMessage,
-  type StoatChannelSummary
+  onStoatMessageCreate,
+  onStoatMessageUpdate,
+  onStoatMessageDelete,
+  type StoatChannelSummary,
+  type StoatMessageSummary
 } from "./stoat-session";
 
 /**
@@ -213,6 +217,38 @@ export function initSession(): void {
   initStoatSession();
   onStoatGuildsChanged(renderRail);
   onStoatStateChange(() => updateLoginGate());
+  onStoatMessageCreate(onStoatMessageCreated);
+  onStoatMessageUpdate(onStoatMessageUpdated);
+  onStoatMessageDelete(onStoatMessageDeleted);
+}
+
+/** Stoat's half of onMessageCreate() — live messages weren't shown at all before this; the chat pane only ever updated by reselecting the channel. */
+function onStoatMessageCreated(msg: StoatMessageSummary): void {
+  if (activeChatPlatform !== "stoat" || msg.channelId !== activeChannelId) return;
+  const container = document.getElementById("messages")!;
+  const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
+  container.append(stoatMessageRow(msg));
+  if (atBottom) container.scrollTop = container.scrollHeight;
+}
+
+function onStoatMessageUpdated(messageId: string, patch: { content?: string; edited?: boolean }): void {
+  if (activeChatPlatform !== "stoat") return;
+  const row = document.querySelector<HTMLElement>(`#messages .msg[data-message="${messageId}"]`);
+  if (!row) return;
+  if (patch.content !== undefined) {
+    const content = row.querySelector<HTMLElement>(".msg-content");
+    if (content) {
+      content.textContent = patch.content;
+      applyTwemoji(content);
+    }
+  }
+  if (patch.edited && !row.querySelector(".msg-edited")) {
+    row.querySelector(".msg-meta")?.append(el("span", { className: "msg-edited" }, t("message.edited")));
+  }
+}
+
+function onStoatMessageDeleted(messageId: string): void {
+  document.querySelector<HTMLElement>(`#messages .msg[data-message="${messageId}"]`)?.remove();
 }
 
 function resolveChannelName(channelId: string): string {
