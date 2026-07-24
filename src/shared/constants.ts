@@ -106,5 +106,7 @@ export const IPC = {
   stoatEditMessage: "hyaecord:stoat-edit-message",
   stoatDeleteMessage: "hyaecord:stoat-delete-message",
   stoatSearchMessages: "hyaecord:stoat-search-messages",
-  stoatGetPinnedMessages: "hyaecord:stoat-get-pinned-messages"
+  stoatGetPinnedMessages: "hyaecord:stoat-get-pinned-messages",
+  stoatStartTyping: "hyaecord:stoat-start-typing",
+  stoatStopTyping: "hyaecord:stoat-stop-typing"
 } as const;

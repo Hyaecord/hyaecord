@@ -322,6 +322,14 @@ export async function getUser(userId: string): Promise<{ id: string; username: s
   }
 }
 
+export function startTyping(channelId: string): void {
+  gateway?.beginTyping(channelId);
+}
+
+export function stopTyping(channelId: string): void {
+  gateway?.endTyping(channelId);
+}
+
 export async function getDMs(): Promise<StoatDMSummary[]> {
   if (!rest) return [];
   try {

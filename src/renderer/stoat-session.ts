@@ -380,10 +380,51 @@ function onLiveReaction(data: unknown, added: boolean): void {
   messageReactionListeners.forEach(cb => cb(payload.id!, payload.emoji_id!, payload.user_id!, added));
 }
 
+type StoatTypingListener = (channelId: string, userId: string, started: boolean) => void;
+const typingListeners = new Set<StoatTypingListener>();
+
+export function onStoatTyping(cb: StoatTypingListener): () => void {
+  typingListeners.add(cb);
+  return () => typingListeners.delete(cb);
+}
+
+/** `ChannelStartTyping`/`ChannelStopTyping` — real per the protocol docs, `{id: channelId, user: userId}`. */
+function onLiveTyping(data: unknown, started: boolean): void {
+  const payload = data as { id?: string; user?: string };
+  if (!payload.id || !payload.user) return;
+  typingListeners.forEach(cb => cb(payload.id!, payload.user!, started));
+}
+
+const TYPING_STOP_DELAY_MS = 4000;
+let typingStopTimer: ReturnType<typeof setTimeout> | null = null;
+let typingChannelId: string | null = null;
+
+/**
+ * Call on every composer keystroke while a Stoat channel is open — sends
+ * a real `BeginTyping` at most every `TYPING_STOP_DELAY_MS` (not on every
+ * keystroke, that would flood the gateway) and schedules a real
+ * `EndTyping` once typing actually pauses, same debounce shape Discord's
+ * own official client uses for its typing indicator.
+ */
+export function notifyStoatTyping(channelId: string): void {
+  if (typingStopTimer === null || typingChannelId !== channelId) {
+    window.hyaecord.stoatStartTyping(channelId);
+  }
+  typingChannelId = channelId;
+  if (typingStopTimer) clearTimeout(typingStopTimer);
+  typingStopTimer = setTimeout(() => {
+    window.hyaecord.stoatStopTyping(channelId);
+    typingStopTimer = null;
+    typingChannelId = null;
+  }, TYPING_STOP_DELAY_MS);
+}
+
 export function initStoatSession(): void {
   window.hyaecord.onStoatEvent((event, data) => {
     if (event === "READY") onReady(data);
     else if (event === "Message") void onLiveMessage(data);
+    else if (event === "ChannelStartTyping") onLiveTyping(data, true);
+    else if (event === "ChannelStopTyping") onLiveTyping(data, false);
     else if (event === "MessageUpdate") onLiveMessageUpdate(data);
     else if (event === "MessageDelete") onLiveMessageDelete(data);
     else if (event === "MessageReact") onLiveReaction(data, true);

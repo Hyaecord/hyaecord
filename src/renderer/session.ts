@@ -38,6 +38,10 @@ import {
   onStoatMessageDelete,
   onStoatMessageReaction,
   applyLiveStoatReaction,
+  onStoatTyping,
+  notifyStoatTyping,
+  getSelfStoatUserId,
+  getStoatUser,
   lastRenderedMessageMeta,
   type StoatChannelSummary,
   type StoatMessageSummary
@@ -228,6 +232,51 @@ export function initSession(): void {
     if (activeChatPlatform !== "stoat") return;
     applyLiveStoatReaction(document.getElementById("messages")!, messageId, emoji, userId, added);
   });
+  onStoatTyping(onStoatTypingEvent);
+}
+
+/** channelId -> userId -> auto-expiry timer (in case a real EndTyping is missed — the same defensive-timeout shape Discord's own client uses for its typing indicator). */
+const stoatTypingByChannel = new Map<string, Map<string, ReturnType<typeof setTimeout>>>();
+const TYPING_EXPIRE_MS = 6000;
+
+function onStoatTypingEvent(channelId: string, userId: string, started: boolean): void {
+  if (userId === getSelfStoatUserId()) return; // never show your own typing back at yourself
+  let users = stoatTypingByChannel.get(channelId);
+  if (!users) {
+    users = new Map();
+    stoatTypingByChannel.set(channelId, users);
+  }
+  const existing = users.get(userId);
+  if (existing) clearTimeout(existing);
+  if (started) {
+    users.set(
+      userId,
+      setTimeout(() => {
+        users!.delete(userId);
+        renderStoatTypingIndicator(channelId);
+      }, TYPING_EXPIRE_MS)
+    );
+  } else {
+    users.delete(userId);
+  }
+  renderStoatTypingIndicator(channelId);
+}
+
+function renderStoatTypingIndicator(channelId: string): void {
+  const indicator = document.getElementById("typing-indicator")!;
+  if (activeChatPlatform !== "stoat" || channelId !== activeChannelId) return;
+  const users = stoatTypingByChannel.get(channelId);
+  const names = [...(users?.keys() ?? [])].map(id => getStoatUser(id)?.displayName || getStoatUser(id)?.username || "Someone");
+  if (names.length === 0) {
+    indicator.textContent = "";
+    return;
+  }
+  indicator.textContent =
+    names.length === 1
+      ? t("typing.one", { name: names[0]! })
+      : names.length === 2
+        ? t("typing.two", { a: names[0]!, b: names[1]! })
+        : t("typing.many", { count: names.length });
 }
 
 /** Stoat's half of onMessageCreate() — live messages weren't shown at all before this; the chat pane only ever updated by reselecting the channel. */
@@ -421,6 +470,9 @@ function wireComposer(): void {
   });
 
   input.addEventListener("input", () => {
+    if (activeChatPlatform === "stoat" && activeChannelId && input.value.trim()) {
+      notifyStoatTyping(activeChannelId);
+    }
     const match = input.value.match(/^\/(\w*)$/);
     if (match) {
       showSlashSuggestions(input, match[1] ?? "", name => {
@@ -1386,6 +1438,7 @@ function messageRow(msg: MessageSummary, previous: { authorId: string; timestamp
 
 async function loadMessages(channelId: string): Promise<void> {
   activeChatPlatform = "discord";
+  document.getElementById("typing-indicator")!.textContent = "";
   const container = document.getElementById("messages")!;
   container.replaceChildren();
   const raw = await window.hyaecord.fetchMessages(channelId);
@@ -1403,6 +1456,7 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
   activeChannelId = channelId;
   activeChatPlatform = "stoat";
   document.getElementById("chat-header")!.textContent = `# ${channelName}`;
+  document.getElementById("typing-indicator")!.textContent = "";
   // Stoat channels do have a real permission model (default_permissions /
   // role_permissions on TextChannel), but this app doesn't compute
   // effective per-channel permissions for Stoat yet the way it does for

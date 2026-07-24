@@ -59,6 +59,15 @@ export class StoatGatewayClient {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(payload));
   }
 
+  /** `BeginTyping`/`EndTyping` — the real client->server typing-indicator messages per the protocol docs, each just `{type, channel}`. */
+  beginTyping(channelId: string): void {
+    this.send({ type: "BeginTyping", channel: channelId });
+  }
+
+  endTyping(channelId: string): void {
+    this.send({ type: "EndTyping", channel: channelId });
+  }
+
   private setState(state: StoatGatewayState): void {
     this.state = state;
     this.handlers.onStateChange(state);

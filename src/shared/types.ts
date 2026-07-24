@@ -200,6 +200,8 @@ export interface HyaecordBridge {
   stoatDeleteMessage(channelId: string, messageId: string): Promise<boolean>;
   stoatSearchMessages(channelId: string, query: string): Promise<unknown[]>;
   stoatGetPinnedMessages(channelId: string): Promise<unknown[]>;
+  stoatStartTyping(channelId: string): void;
+  stoatStopTyping(channelId: string): void;
 }
 
 export interface CreditsContributor {
