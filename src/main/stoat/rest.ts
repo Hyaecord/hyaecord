@@ -107,14 +107,22 @@ export class StoatRestClient {
     return this.request("GET", `/users/${userId}/dm`);
   }
 
-  /** `GET /invites/{code}` — "Fetch Invite", real per the OpenAPI spec's `InviteResponse`. Accepts a bare code, not a full URL — the caller strips any `stoat.chat/invite/` prefix first. */
+  /**
+   * `GET /invites/{code}` — "Fetch Invite", real per the OpenAPI spec's
+   * `InviteResponse`. Accepts a bare code, not a full URL — the caller
+   * strips any `stoat.chat/invite/` prefix first — but `code` is still
+   * free-typed/pasted user input (unlike this file's other path params,
+   * which are always well-formed IDs from the server's own responses), so
+   * it's URL-encoded here rather than trusted to only ever contain
+   * URL-safe characters.
+   */
   fetchInvite(code: string): Promise<RawInviteResponse> {
-    return this.request("GET", `/invites/${code}`);
+    return this.request("GET", `/invites/${encodeURIComponent(code)}`);
   }
 
-  /** `POST /invites/{code}` — "Join Invite", real per the OpenAPI spec's `InviteJoinResponse`. */
+  /** `POST /invites/{code}` — "Join Invite", real per the OpenAPI spec's `InviteJoinResponse`. Same encoding note as fetchInvite above. */
   joinInvite(code: string): Promise<RawInviteJoinResponse> {
-    return this.request("POST", `/invites/${code}`);
+    return this.request("POST", `/invites/${encodeURIComponent(code)}`);
   }
 
   /** `DELETE /servers/{target}` — "Delete / Leave Server" (same endpoint, real per the OpenAPI spec's own summary). `leave_silently` skips the "X left the server" system message. */
