@@ -153,17 +153,39 @@ function accountsSection(): HTMLElement {
   };
   void refreshStoatRow();
 
+  // With merge off, the rail shows only `activeSidebarPlatform` — real
+  // setting, real read (session.ts's renderRail), but there was no actual
+  // control anywhere to *change* it, which meant turning merge off left
+  // whichever platform it happened to default to with no way to switch —
+  // exactly the "account switcher" the owner originally asked for,
+  // missing its other half. Only shown while merge is actually off, since
+  // it does nothing when both platforms already show together.
+  const platformSwitchRow = selectRow(
+    "settings.accounts.activePlatform",
+    [
+      { value: "discord", labelKey: "settings.accounts.activePlatform.discord" },
+      { value: "stoat", labelKey: "settings.accounts.activePlatform.stoat" }
+    ],
+    state.settings.activeSidebarPlatform,
+    value => {
+      void patchSettings({ activeSidebarPlatform: value as "discord" | "stoat" });
+      renderRail();
+    }
+  );
+  platformSwitchRow.hidden = state.settings.mergeSidebar;
+
   const mergeToggle = toggleRow(
     "settings.accounts.merge",
     "settings.accounts.merge.description",
     state.settings.mergeSidebar,
     next => {
       void patchSettings({ mergeSidebar: next });
+      platformSwitchRow.hidden = next;
       renderRail();
     }
   );
 
-  return el("div", { className: "accounts-section" }, stoatRow, mergeToggle);
+  return el("div", { className: "accounts-section" }, stoatRow, mergeToggle, platformSwitchRow);
 }
 
 function avatarSection(): HTMLElement {
