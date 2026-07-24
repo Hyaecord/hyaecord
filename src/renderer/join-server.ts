@@ -24,10 +24,6 @@ export function openJoinServerDialog(): void {
     cleanup();
     overlay.remove();
     openDialog = null;
-    document.removeEventListener("keydown", onEscape, true);
-  };
-  const onEscape = (ev: KeyboardEvent) => {
-    if (ev.key === "Escape") close();
   };
 
   const codeInput = el("input", {
@@ -120,5 +116,4 @@ export function openJoinServerDialog(): void {
   openDialog = overlay;
   const cleanup = trapFocus(overlay);
   codeInput.focus();
-  document.addEventListener("keydown", onEscape, true);
 }
