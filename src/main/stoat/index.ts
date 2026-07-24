@@ -420,7 +420,14 @@ export interface StoatInvitePreview {
 /** Real "preview a server invite before joining" — `GET /invites/{code}`, strips any `stoat.chat/invite/`-style prefix the user might have pasted in whole. */
 export async function previewInvite(codeOrUrl: string): Promise<{ ok: true; invite: StoatInvitePreview } | { ok: false; error: string }> {
   if (!rest) return { ok: false, error: "network" };
-  const code = codeOrUrl.trim().replace(/^https?:\/\/(www\.)?stoat\.chat\/invite\//, "").replace(/\/$/, "");
+  // Also strips a trailing query string/fragment (e.g. a pasted link with
+  // `?ref=...` tracking params) and any trailing slash — found on review:
+  // without this, a pasted link with tracking params would send the whole
+  // "CODE?ref=x" blob as the code and always fail to resolve.
+  const code = codeOrUrl
+    .trim()
+    .replace(/^https?:\/\/(www\.)?stoat\.chat\/invite\//, "")
+    .replace(/[/?#].*$/, "");
   if (!code) return { ok: false, error: "invalid" };
   try {
     const raw = await rest.fetchInvite(code);
