@@ -42,10 +42,6 @@ function toGifResult(raw: RawGiphyGif): GifResult {
   };
 }
 
-export function isGiphyConfigured(): boolean {
-  return !!process.env.GIPHY_API_KEY;
-}
-
 export async function giphySearchGifs(query: string): Promise<GifResult[]> {
   const key = process.env.GIPHY_API_KEY;
   if (!key) return [];
