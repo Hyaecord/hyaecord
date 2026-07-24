@@ -463,30 +463,51 @@ function attachmentsEl(attachments: StoatAttachment[]): HTMLElement | null {
   );
 }
 
-export function stoatMessageRow(msg: StoatMessageSummary): HTMLElement {
-  const avatar = msg.avatar
-    ? el("img", { className: "msg-avatar", src: msg.avatar, alt: "", loading: "lazy" })
-    : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
-  const content = el("p", { className: "msg-content" }, msg.content);
-  applyTwemoji(content);
+/** Same window Discord's own client uses for grouping consecutive messages from one author — see GROUP_WINDOW_MS's twin in session.ts. */
+const GROUP_WINDOW_MS = 7 * 60 * 1000;
+
+/** Reads the previous message's author/timestamp straight off the last rendered `.msg` row rather than tracking separate JS state — works identically whether the new row comes from the initial bulk load or a live "Message" dispatch. */
+export function lastRenderedMessageMeta(container: HTMLElement): { authorId: string; timestamp: number } | null {
+  const last = container.lastElementChild as HTMLElement | null;
+  if (!last?.classList.contains("msg")) return null;
+  const authorId = last.dataset.author;
+  const timestamp = Number(last.dataset.timestamp);
+  if (!authorId || !timestamp) return null;
+  return { authorId, timestamp };
+}
+
+export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: string; timestamp: number } | null = null): HTMLElement {
+  const grouped = !!previous && previous.authorId === msg.authorId && msg.timestamp !== null && msg.timestamp - previous.timestamp < GROUP_WINDOW_MS;
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
-  const bodyChildren: HTMLElement[] = [
-    el(
-      "header",
-      { className: "msg-meta" },
-      el("span", { className: "msg-author" }, msg.authorName),
-      el("time", { className: "msg-time" }, time),
-      ...(msg.edited ? [el("span", { className: "msg-edited" }, t("message.edited"))] : [])
-    ),
-    content
-  ];
+  const avatar = grouped
+    ? el("time", { className: "msg-hover-time" }, time)
+    : msg.avatar
+      ? el("img", { className: "msg-avatar", src: msg.avatar, alt: "", loading: "lazy" })
+      : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
+  const content = el("p", { className: "msg-content" }, msg.content);
+  applyTwemoji(content);
+  const bodyChildren: HTMLElement[] = [];
+  if (!grouped) {
+    bodyChildren.push(
+      el(
+        "header",
+        { className: "msg-meta" },
+        el("span", { className: "msg-author" }, msg.authorName),
+        el("time", { className: "msg-time" }, time),
+        ...(msg.edited ? [el("span", { className: "msg-edited" }, t("message.edited"))] : [])
+      )
+    );
+  } else if (msg.edited) {
+    bodyChildren.push(el("span", { className: "msg-edited" }, t("message.edited")));
+  }
+  bodyChildren.push(content);
   const attachmentsRow = attachmentsEl(msg.attachments);
   if (attachmentsRow) bodyChildren.push(attachmentsRow);
   const row = el(
     "article",
-    { className: "msg", "data-message": msg.id },
+    { className: grouped ? "msg msg-grouped" : "msg", "data-message": msg.id, "data-author": msg.authorId, "data-timestamp": String(msg.timestamp ?? 0) },
     avatar,
     el("div", { className: "msg-body" }, ...bodyChildren)
   );

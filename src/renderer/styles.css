@@ -521,7 +521,6 @@ body {
   padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   color: var(--text-dim);
 }
 
@@ -529,7 +528,29 @@ body {
   display: flex;
   gap: 0.7rem;
   align-items: flex-start;
+  margin-top: 0.75rem;
 }
+.msg:first-child { margin-top: 0; }
+/*
+ * Consecutive messages from the same author within a few minutes group
+ * together — same real Discord/Stoat convention this app's message list
+ * didn't have at all before: every message always got its own avatar and
+ * name, however small the gap to the previous one. Grouped rows sit
+ * tighter and skip repeating the avatar/name; a small hover-only
+ * timestamp takes the avatar's place instead, matching Discord's own
+ * behaviour rather than just deleting the gutter outright.
+ */
+.msg.msg-grouped { margin-top: 0.15rem; }
+.msg-hover-time {
+  width: 36px;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  opacity: 0;
+  padding-top: 0.15rem;
+}
+.msg.msg-grouped:hover .msg-hover-time { opacity: 1; }
 .msg-avatar {
   width: 36px;
   height: 36px;

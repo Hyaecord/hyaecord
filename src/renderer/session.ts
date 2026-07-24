@@ -35,6 +35,7 @@ import {
   onStoatMessageCreate,
   onStoatMessageUpdate,
   onStoatMessageDelete,
+  lastRenderedMessageMeta,
   type StoatChannelSummary,
   type StoatMessageSummary
 } from "./stoat-session";
@@ -227,7 +228,7 @@ function onStoatMessageCreated(msg: StoatMessageSummary): void {
   if (activeChatPlatform !== "stoat" || msg.channelId !== activeChannelId) return;
   const container = document.getElementById("messages")!;
   const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-  container.append(stoatMessageRow(msg));
+  container.append(stoatMessageRow(msg, lastRenderedMessageMeta(container)));
   if (atBottom) container.scrollTop = container.scrollHeight;
 }
 
@@ -1288,49 +1289,59 @@ function pinNoticeRow(msg: MessageSummary): HTMLElement {
   return row;
 }
 
-function messageRow(msg: MessageSummary): HTMLElement {
+/** Same window stoat-session.ts's stoatMessageRow uses for message grouping — kept as a separate constant rather than importing theirs since these two message pipelines are deliberately not sharing code (see this file's platform-split comments throughout). */
+const GROUP_WINDOW_MS = 7 * 60 * 1000;
+
+function messageRow(msg: MessageSummary, previous: { authorId: string; timestamp: number } | null = null): HTMLElement {
   if (msg.type === MESSAGE_TYPE_PIN_NOTICE) return pinNoticeRow(msg);
 
-  // A UserPFP override, if the user has one and the integration is on,
-  // takes priority over their real Discord avatar — same behaviour as
-  // the real UserPFP plugin.
-  const pfpOverride = getPfpOverride(msg.authorId);
-  const avatarSrc = pfpOverride ?? (msg.avatar ? `https://cdn.discordapp.com/avatars/${msg.authorId}/${msg.avatar}.png?size=64` : null);
-  const avatar = avatarSrc
-    ? el("img", {
-        className: "msg-avatar",
-        src: avatarSrc,
-        alt: "",
-        loading: "lazy"
-      })
-    : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" },
-        msg.authorName[0] ?? "?");
-  avatar.classList.add("clickable-profile");
-  avatar.addEventListener("click", () => openProfilePopout(msg.authorId, avatar));
-
-  const authorName = el("span", { className: "msg-author clickable-profile" }, msg.authorName);
-  authorName.addEventListener("click", () => openProfilePopout(msg.authorId, authorName));
+  const msgTimestampMs = msg.timestamp ? new Date(msg.timestamp).getTime() : 0;
+  const grouped = !!previous && previous.authorId === msg.authorId && msgTimestampMs !== 0 && msgTimestampMs - previous.timestamp < GROUP_WINDOW_MS;
 
   const time = msg.timestamp
     ? new Date(msg.timestamp).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
     : "";
+
+  let avatar: HTMLElement;
+  if (grouped) {
+    avatar = el("time", { className: "msg-hover-time" }, time);
+  } else {
+    // A UserPFP override, if the user has one and the integration is on,
+    // takes priority over their real Discord avatar — same behaviour as
+    // the real UserPFP plugin.
+    const pfpOverride = getPfpOverride(msg.authorId);
+    const avatarSrc = pfpOverride ?? (msg.avatar ? `https://cdn.discordapp.com/avatars/${msg.authorId}/${msg.avatar}.png?size=64` : null);
+    avatar = avatarSrc
+      ? el("img", { className: "msg-avatar", src: avatarSrc, alt: "", loading: "lazy" })
+      : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
+    avatar.classList.add("clickable-profile");
+    avatar.addEventListener("click", () => openProfilePopout(msg.authorId, avatar));
+  }
+
   // textContent path only — message content must never become HTML.
   // applyTwemoji() operates on the resulting text nodes, not the raw
   // string, so it can't reintroduce that risk (see twemoji.ts).
   const content = el("p", { className: "msg-content" }, msg.content);
   applyTwemoji(content);
+
+  const bodyChildren: HTMLElement[] = [];
+  if (!grouped) {
+    const authorName = el("span", { className: "msg-author clickable-profile" }, msg.authorName);
+    authorName.addEventListener("click", () => openProfilePopout(msg.authorId, authorName));
+    bodyChildren.push(el("header", { className: "msg-meta" }, authorName, el("time", { className: "msg-time" }, time)));
+  }
+  bodyChildren.push(content);
+
   const row = el(
     "article",
-    { className: "msg", "data-message": msg.id },
+    {
+      className: grouped ? "msg msg-grouped" : "msg",
+      "data-message": msg.id,
+      "data-author": msg.authorId,
+      "data-timestamp": String(msgTimestampMs)
+    },
     avatar,
-    el("div", { className: "msg-body" },
-      el("header", { className: "msg-meta" },
-        authorName,
-        el("time", { className: "msg-time" }, time)
-      ),
-      // textContent path only — message content must never become HTML
-      content
-    )
+    el("div", { className: "msg-body" }, ...bodyChildren)
   );
   wireDevModeContextMenu(
     row,
@@ -1352,7 +1363,7 @@ async function loadMessages(channelId: string): Promise<void> {
   if (channelId !== activeChannelId || activeChatPlatform !== "discord") return; // user moved on while we fetched
   for (const entry of raw) {
     const msg = toSummary(entry);
-    if (msg) container.append(messageRow(msg));
+    if (msg) container.append(messageRow(msg, lastRenderedMessageMeta(container)));
   }
   container.scrollTop = container.scrollHeight;
 }
@@ -1373,7 +1384,7 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
   container.replaceChildren();
   const messages = await selectStoatChannel(channelId);
   if (channelId !== activeChannelId || activeChatPlatform !== "stoat") return;
-  for (const msg of messages) container.append(stoatMessageRow(msg));
+  for (const msg of messages) container.append(stoatMessageRow(msg, lastRenderedMessageMeta(container)));
   container.scrollTop = container.scrollHeight;
 }
 
@@ -1442,7 +1453,7 @@ function onMessageCreate(data: unknown): void {
   const container = document.getElementById("messages")!;
   const atBottom =
     container.scrollHeight - container.scrollTop - container.clientHeight < 80;
-  container.append(messageRow(msg));
+  container.append(messageRow(msg, lastRenderedMessageMeta(container)));
   if (atBottom) container.scrollTop = container.scrollHeight;
 }
 
