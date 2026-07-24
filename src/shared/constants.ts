@@ -108,5 +108,8 @@ export const IPC = {
   stoatSearchMessages: "hyaecord:stoat-search-messages",
   stoatGetPinnedMessages: "hyaecord:stoat-get-pinned-messages",
   stoatStartTyping: "hyaecord:stoat-start-typing",
-  stoatStopTyping: "hyaecord:stoat-stop-typing"
+  stoatStopTyping: "hyaecord:stoat-stop-typing",
+  stoatSendFriendRequest: "hyaecord:stoat-send-friend-request",
+  stoatAcceptFriendRequest: "hyaecord:stoat-accept-friend-request",
+  stoatRemoveFriend: "hyaecord:stoat-remove-friend"
 } as const;

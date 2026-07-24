@@ -76,6 +76,8 @@ export interface StoatFriendSummary {
   avatar: string | null;
   online: boolean;
   presence: string | null;
+  /** RelationshipStatus, real values: "Friend" | "Incoming" | "Outgoing" | "Blocked" — see getStoatFriends(). */
+  relationship: string;
 }
 
 /** Discord-style status-dot class ("online"|"idle"|"dnd"|"offline") from Stoat's real `online`/`status.presence` fields. Focus and Busy both read as restrictive/"don't disturb" states, closest existing dot color to what they mean — an approximation, not a documented 1:1 mapping, since Stoat has no "dnd" concept of its own. */
@@ -208,11 +210,34 @@ function onReady(data: unknown): void {
   stateChangeListeners.forEach(cb => cb());
 }
 
-/** Friends aren't a separate endpoint on Stoat — each `User` embeds the current user's `relationship` with them directly (confirmed in the OpenAPI User schema), so this is just a filter over the Ready-populated user cache. */
+const RELATIONSHIP_DISPLAY_STATES = new Set(["Friend", "Incoming", "Outgoing", "Blocked"]);
+
+/** Friends aren't a separate endpoint on Stoat — each `User` embeds the current user's `relationship` with them directly (confirmed in the OpenAPI User schema), so this is just a filter over the Ready-populated user cache. Includes pending/blocked too (not just accepted friends) — the Friends UI needs those for its own tabs, same as Discord's real relationships list does. "BlockedOther" (they blocked you, not the other way round) is deliberately excluded — there's no actionable UI for it. */
 export function getStoatFriends(): StoatFriendSummary[] {
   return [...userCache.values()]
-    .filter(u => u.relationship === "Friend")
-    .map(u => ({ id: u.id, username: u.username, displayName: u.displayName, avatar: u.avatar, online: u.online, presence: u.presence }));
+    .filter(u => RELATIONSHIP_DISPLAY_STATES.has(u.relationship))
+    .map(u => ({
+      id: u.id,
+      username: u.username,
+      displayName: u.displayName,
+      avatar: u.avatar,
+      online: u.online,
+      presence: u.presence,
+      relationship: u.relationship
+    }));
+}
+
+export async function sendStoatFriendRequest(usernameWithDiscriminator: string): Promise<{ ok: boolean; error?: string }> {
+  return window.hyaecord.stoatSendFriendRequest(usernameWithDiscriminator);
+}
+
+export async function acceptStoatFriendRequest(userId: string): Promise<boolean> {
+  return window.hyaecord.stoatAcceptFriendRequest(userId);
+}
+
+/** Also used to decline an incoming request, cancel an outgoing one, or unfriend — same real single endpoint for all four, see rest.ts. */
+export async function removeStoatFriend(userId: string): Promise<boolean> {
+  return window.hyaecord.stoatRemoveFriend(userId);
 }
 
 export function getStoatMembers(serverId: string): StoatMemberSummary[] {

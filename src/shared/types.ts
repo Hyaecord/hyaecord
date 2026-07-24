@@ -202,6 +202,9 @@ export interface HyaecordBridge {
   stoatGetPinnedMessages(channelId: string): Promise<unknown[]>;
   stoatStartTyping(channelId: string): void;
   stoatStopTyping(channelId: string): void;
+  stoatSendFriendRequest(usernameWithDiscriminator: string): Promise<{ ok: boolean; error?: string }>;
+  stoatAcceptFriendRequest(userId: string): Promise<boolean>;
+  stoatRemoveFriend(userId: string): Promise<boolean>;
 }
 
 export interface CreditsContributor {

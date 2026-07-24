@@ -4,7 +4,8 @@ import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
 import { getPresenceStatus, onPresenceChange } from "./session";
 import { icon } from "./icons";
-import { getStoatFriends, isStoatReady, stoatPresenceStatus } from "./stoat-session";
+import { getStoatFriends, isStoatReady, stoatPresenceStatus, acceptStoatFriendRequest, removeStoatFriend } from "./stoat-session";
+import { openStoatProfilePopout } from "./stoat-profile-popout";
 
 /**
  * The Friends list — real friends/blocked-users API
@@ -57,11 +58,18 @@ function actionButton(label: string, onClick: () => void, danger = false): HTMLE
 function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   const name = rel.globalName ?? rel.username;
   const avatar = avatarEl(rel);
-  // Profile popouts fetch via Discord's own REST API — there's no Stoat
-  // equivalent wired up yet, so a Stoat friend's avatar just isn't
-  // clickable rather than opening an empty/error popout.
-  if (rel.platform !== "stoat") {
-    avatar.classList.add("clickable-profile");
+  avatar.classList.add("clickable-profile");
+  if (rel.platform === "stoat") {
+    avatar.addEventListener("click", () =>
+      openStoatProfilePopout(avatar, {
+        username: rel.username,
+        displayName: rel.globalName,
+        avatar: rel.avatar,
+        online: rel.stoatOnline ?? false,
+        presence: rel.stoatPresence ?? null
+      })
+    );
+  } else {
     avatar.addEventListener("click", () => openProfilePopout(rel.id, avatar));
   }
 
@@ -73,30 +81,18 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   }
 
   const actions: HTMLElement[] = [];
-  // Stoat friend requests aren't wired up to any REST calls yet (this pass
-  // only surfaces the real, already-accepted friend list from Stoat's
-  // Ready payload) — no accept/remove actions for those rows rather than
-  // buttons that would silently no-op or hit the wrong platform's API.
-  if (rel.platform === "stoat") {
-    return el(
-      "div",
-      { className: "friend-row" },
-      avatarWrap,
-      el("span", { className: "friend-name" }, name),
-      el("span", { className: "friend-status" }, t("friends.type.friend"))
-    );
-  }
+  const platform = rel.platform === "stoat" ? "stoat" : "discord";
   if (rel.type === RELATIONSHIP_INCOMING) {
     actions.push(
-      actionButton(t("friends.accept"), () => void respond(rel.id, "accept", list)),
-      actionButton(t("friends.decline"), () => void respond(rel.id, "remove", list), true)
+      actionButton(t("friends.accept"), () => void respond(rel.id, "accept", list, platform)),
+      actionButton(t("friends.decline"), () => void respond(rel.id, "remove", list, platform), true)
     );
   } else if (rel.type === RELATIONSHIP_OUTGOING) {
-    actions.push(actionButton(t("friends.cancel"), () => void respond(rel.id, "remove", list), true));
+    actions.push(actionButton(t("friends.cancel"), () => void respond(rel.id, "remove", list, platform), true));
   } else if (rel.type === RELATIONSHIP_BLOCKED) {
-    actions.push(actionButton(t("friends.unblock"), () => void respond(rel.id, "remove", list)));
+    actions.push(actionButton(t("friends.unblock"), () => void respond(rel.id, "remove", list, platform)));
   } else {
-    actions.push(actionButton(t("friends.remove"), () => void respond(rel.id, "remove", list), true));
+    actions.push(actionButton(t("friends.remove"), () => void respond(rel.id, "remove", list, platform), true));
   }
 
   return el(
@@ -116,8 +112,15 @@ function relationshipLabel(type: number): string {
   return "friend";
 }
 
-async function respond(userId: string, action: "accept" | "remove", list: HTMLElement): Promise<void> {
-  const ok = action === "accept" ? await window.hyaecord.acceptFriendRequest(userId) : await window.hyaecord.removeRelationship(userId);
+async function respond(userId: string, action: "accept" | "remove", list: HTMLElement, platform: "discord" | "stoat"): Promise<void> {
+  const ok =
+    platform === "stoat"
+      ? action === "accept"
+        ? await acceptStoatFriendRequest(userId)
+        : await removeStoatFriend(userId)
+      : action === "accept"
+        ? await window.hyaecord.acceptFriendRequest(userId)
+        : await window.hyaecord.removeRelationship(userId);
   if (!ok) {
     showToast(t("friends.actionFailed"));
     return;
@@ -223,7 +226,7 @@ export function openFriendsList(): void {
     const stoatFriends: RelationshipSummary[] = isStoatReady()
       ? getStoatFriends().map(f => ({
           id: f.id,
-          type: RELATIONSHIP_FRIEND,
+          type: stoatRelationshipToType(f.relationship),
           username: f.username,
           globalName: f.displayName,
           avatar: f.avatar,
@@ -235,6 +238,14 @@ export function openFriendsList(): void {
     relationships = [...rels, ...stoatFriends];
     renderList(list);
   });
+}
+
+/** Real RelationshipStatus strings ("Friend"/"Incoming"/"Outgoing"/"Blocked") to this file's existing Discord-numeric convention, so the same tab-filtering/action logic works for both platforms' rows unmodified. */
+function stoatRelationshipToType(relationship: string): number {
+  if (relationship === "Incoming") return RELATIONSHIP_INCOMING;
+  if (relationship === "Outgoing") return RELATIONSHIP_OUTGOING;
+  if (relationship === "Blocked") return RELATIONSHIP_BLOCKED;
+  return RELATIONSHIP_FRIEND;
 }
 
 async function sendRequest(input: HTMLInputElement): Promise<void> {

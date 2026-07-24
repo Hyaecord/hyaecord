@@ -322,6 +322,36 @@ export async function getUser(userId: string): Promise<{ id: string; username: s
   }
 }
 
+export async function sendFriendRequest(usernameWithDiscriminator: string): Promise<{ ok: boolean; error?: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  try {
+    await rest.sendFriendRequest(usernameWithDiscriminator);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof StoatRestError ? err.message : "network" };
+  }
+}
+
+export async function acceptFriendRequest(userId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.acceptFriendRequest(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function removeFriend(userId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.removeFriend(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function startTyping(channelId: string): void {
   gateway?.beginTyping(channelId);
 }

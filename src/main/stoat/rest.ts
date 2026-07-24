@@ -51,6 +51,20 @@ export class StoatRestClient {
     return this.request("GET", `/users/${userId}`);
   }
 
+  /** `POST /users/friend` — real, confirmed via the OpenAPI `DataSendFriendRequest` schema; needs the full `username#discriminator` combo, not just a bare username (Stoat still has discriminators, unlike modern Discord). */
+  sendFriendRequest(usernameWithDiscriminator: string): Promise<RawStoatUser> {
+    return this.request("POST", "/users/friend", { username: usernameWithDiscriminator });
+  }
+
+  acceptFriendRequest(userId: string): Promise<void> {
+    return this.request("PUT", `/users/${userId}/friend`);
+  }
+
+  /** Also used to decline an incoming request, cancel an outgoing one, or unfriend — same single endpoint for all four per the OpenAPI spec's own summary ("Deny Friend Request / Remove Friend"). */
+  removeFriend(userId: string): Promise<void> {
+    return this.request("DELETE", `/users/${userId}/friend`);
+  }
+
   /**
    * `include_users=true` switches the response from a bare message array
    * to `{ messages, users, members? }` — confirmed via the OpenAPI spec's
