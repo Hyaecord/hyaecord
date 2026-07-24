@@ -214,6 +214,9 @@ export interface HyaecordBridge {
   stoatGetProfile(userId: string): Promise<{ bio: string | null; banner: string | null }>;
   stoatGetUnreads(): Promise<Array<{ channelId: string; lastReadId: string | null; mentionIds: string[] }>>;
   stoatAckChannel(channelId: string, messageId: string): Promise<boolean>;
+  stoatEditChannel(channelId: string, patch: { slowmode?: number | null; nsfw?: boolean }): Promise<boolean>;
+  stoatSetDefaultChannelPermissions(channelId: string, allow: number, deny: number): Promise<boolean>;
+  stoatSetRoleChannelPermissions(channelId: string, roleId: string, allow: number, deny: number): Promise<boolean>;
 }
 
 export interface StoatInvitePreview {

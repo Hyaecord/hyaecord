@@ -120,5 +120,8 @@ export const IPC = {
   stoatCreateInvite: "hyaecord:stoat-create-invite",
   stoatGetProfile: "hyaecord:stoat-get-profile",
   stoatGetUnreads: "hyaecord:stoat-get-unreads",
-  stoatAckChannel: "hyaecord:stoat-ack-channel"
+  stoatAckChannel: "hyaecord:stoat-ack-channel",
+  stoatEditChannel: "hyaecord:stoat-edit-channel",
+  stoatSetDefaultChannelPermissions: "hyaecord:stoat-set-default-channel-permissions",
+  stoatSetRoleChannelPermissions: "hyaecord:stoat-set-role-channel-permissions"
 } as const;

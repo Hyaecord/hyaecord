@@ -82,7 +82,10 @@ import {
   createInvite as stoatCreateInvite,
   getUserProfile as stoatGetUserProfile,
   getUnreads as stoatGetUnreads,
-  ackChannel as stoatAckChannel
+  ackChannel as stoatAckChannel,
+  editChannel as stoatEditChannel,
+  setDefaultChannelPermissions as stoatSetDefaultChannelPermissions,
+  setRoleChannelPermissions as stoatSetRoleChannelPermissions
 } from "./stoat";
 
 loadEnvFile();
@@ -222,6 +225,13 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatGetProfile, (_e, userId: string) => stoatGetUserProfile(userId));
   ipcMain.handle(IPC.stoatGetUnreads, () => stoatGetUnreads());
   ipcMain.handle(IPC.stoatAckChannel, (_e, channelId: string, messageId: string) => stoatAckChannel(channelId, messageId));
+  ipcMain.handle(IPC.stoatEditChannel, (_e, channelId: string, patch: { slowmode?: number | null; nsfw?: boolean }) => stoatEditChannel(channelId, patch));
+  ipcMain.handle(IPC.stoatSetDefaultChannelPermissions, (_e, channelId: string, allow: number, deny: number) =>
+    stoatSetDefaultChannelPermissions(channelId, allow, deny)
+  );
+  ipcMain.handle(IPC.stoatSetRoleChannelPermissions, (_e, channelId: string, roleId: string, allow: number, deny: number) =>
+    stoatSetRoleChannelPermissions(channelId, roleId, allow, deny)
+  );
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

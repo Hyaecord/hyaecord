@@ -25,11 +25,55 @@ import { openEmojiPicker } from "./emoji-picker";
  * seeing one).
  */
 
+/**
+ * Real Stoat channel-permission bit flags — fetched live from Stoat's own
+ * current backend source (github.com/stoatchat/stoatchat,
+ * crates/core/permissions/src/models/channel.rs, via the GitHub API this
+ * pass) rather than guessed or assumed to match Discord's unrelated bit
+ * layout. Deliberately a curated subset here (the ones a text/voice
+ * channel permission editor actually needs), not the full enum — server-
+ * management-only bits like ManageServer/ManageRole/KickMembers don't
+ * apply to a per-channel override.
+ */
+export const STOAT_CHANNEL_PERMISSIONS = [
+  { bit: 1 << 20, key: "ViewChannel" },
+  { bit: 1 << 21, key: "ReadMessageHistory" },
+  { bit: 1 << 22, key: "SendMessage" },
+  { bit: 1 << 23, key: "ManageMessages" },
+  { bit: 1 << 24, key: "ManageWebhooks" },
+  { bit: 1 << 25, key: "InviteOthers" },
+  { bit: 1 << 26, key: "SendEmbeds" },
+  { bit: 1 << 27, key: "UploadFiles" },
+  { bit: 1 << 28, key: "Masquerade" },
+  { bit: 1 << 29, key: "React" },
+  { bit: 1 << 30, key: "Connect" },
+  { bit: 1 << 31, key: "Speak" },
+  { bit: 1 << 32, key: "Video" },
+  { bit: 1 << 36, key: "Listen" },
+  { bit: 1 << 37, key: "MentionEveryone" },
+  { bit: 1 << 38, key: "MentionRoles" },
+  { bit: 1 << 39, key: "BypassSlowmode" },
+  { bit: 1 << 0, key: "ManageChannel" }
+] as const;
+
 export interface StoatChannelSummary {
   id: string;
   name: string;
   /** True when the channel's `voice` field (Stoat's VoiceInformation) is set — Stoat has no separate voice-channel type, just this flag on an ordinary TextChannel, per its published OpenAPI schema. */
   hasVoice: boolean;
+  /** Real `TextChannel.slowmode` (seconds, 0-21600) — null/0 means off. */
+  slowmode: number | null;
+  nsfw: boolean;
+  /** Real `TextChannel.default_permissions` (`{a,d}` -> allow/deny bitmasks), null if never customized (falls back to the server's own default). */
+  defaultPermissions: { allow: number; deny: number } | null;
+  /** Real `TextChannel.role_permissions` — per-role overrides keyed by role id. */
+  rolePermissions: Record<string, { allow: number; deny: number }>;
+}
+
+export interface StoatRoleSummary {
+  id: string;
+  name: string;
+  colour: string | null;
 }
 
 export interface StoatGuildSummary {
@@ -40,6 +84,8 @@ export interface StoatGuildSummary {
   channels: StoatChannelSummary[];
   /** Real Server.owner user id — used to tell "Leave Server" from "Delete Server" (same real endpoint serves both, see leaveStoatServer). */
   ownerId: string;
+  /** Real `Server.roles` — powers the per-role channel-permission editor's role picker. */
+  roles: StoatRoleSummary[];
 }
 
 export interface StoatAttachment {
@@ -203,6 +249,8 @@ interface RawStoatServer {
   banner?: { _id: string } | null;
   channels: string[];
   owner: string;
+  /** Real `Server.roles` map, confirmed via the OpenAPI spec. */
+  roles?: Record<string, { name: string; colour?: string | null }>;
 }
 
 interface RawStoatChannel {
@@ -214,6 +262,10 @@ interface RawStoatChannel {
   voice?: unknown | null;
   /** Real field on the Channel schema — the server's own pointer to the newest message, the baseline a real unread/mention badge system compares against. */
   last_message_id?: string | null;
+  slowmode?: number | null;
+  nsfw?: boolean;
+  default_permissions?: { a: number; d: number } | null;
+  role_permissions?: Record<string, { a: number; d: number }>;
 }
 
 interface RawStoatReadyUser {
@@ -227,6 +279,12 @@ interface RawStoatReadyUser {
   status?: { presence?: string | null } | null;
 }
 
+function toRolePermissions(raw: Record<string, { a: number; d: number }> | undefined): Record<string, { allow: number; deny: number }> {
+  const out: Record<string, { allow: number; deny: number }> = {};
+  for (const [roleId, v] of Object.entries(raw ?? {})) out[roleId] = { allow: v.a, deny: v.d };
+  return out;
+}
+
 function toGuildSummary(server: RawStoatServer, channels: RawStoatChannel[]): StoatGuildSummary {
   const channelsById = new Map(channels.map(ch => [ch._id, ch]));
   return {
@@ -237,8 +295,17 @@ function toGuildSummary(server: RawStoatServer, channels: RawStoatChannel[]): St
     channels: server.channels
       .map(id => channelsById.get(id))
       .filter((ch): ch is RawStoatChannel => !!ch && ch.channel_type === "TextChannel")
-      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null })),
-    ownerId: server.owner
+      .map(ch => ({
+        id: ch._id,
+        name: ch.name ?? "?",
+        hasVoice: ch.voice != null,
+        slowmode: ch.slowmode ?? null,
+        nsfw: ch.nsfw ?? false,
+        defaultPermissions: ch.default_permissions ? { allow: ch.default_permissions.a, deny: ch.default_permissions.d } : null,
+        rolePermissions: toRolePermissions(ch.role_permissions)
+      })),
+    ownerId: server.owner,
+    roles: Object.entries(server.roles ?? {}).map(([id, r]) => ({ id, name: r.name, colour: r.colour ?? null }))
   };
 }
 
@@ -277,6 +344,48 @@ export function isStoatServerOwner(serverId: string): boolean {
 /** Real "generate a shareable invite link" for a channel — the app could only ever *use* an invite before this, never create one to share. */
 export async function createStoatInvite(channelId: string): Promise<{ ok: boolean; url?: string; error?: string }> {
   return window.hyaecord.stoatCreateInvite(channelId);
+}
+
+/** Finds the guild + channel entry for a given channel id, if this client currently has it loaded — used to patch local state in place after a successful edit rather than waiting on a full reconnect. */
+function findStoatChannel(channelId: string): StoatChannelSummary | null {
+  for (const guild of guilds) {
+    const ch = guild.channels.find(c => c.id === channelId);
+    if (ch) return ch;
+  }
+  return null;
+}
+
+/** Real "set slowmode" — `PATCH /channels/{id}`, confirmed via the OpenAPI spec's `DataEditChannel` (seconds, 0-21600; `null`/`0` turns it off). */
+export async function setStoatSlowmode(channelId: string, seconds: number | null): Promise<boolean> {
+  const ok = await window.hyaecord.stoatEditChannel(channelId, { slowmode: seconds });
+  if (ok) {
+    const ch = findStoatChannel(channelId);
+    if (ch) ch.slowmode = seconds;
+    stateChangeListeners.forEach(cb => cb());
+  }
+  return ok;
+}
+
+/** Real "edit the @everyone-equivalent permissions for a channel" — `PUT /channels/{id}/permissions/default`. */
+export async function setStoatDefaultChannelPermissions(channelId: string, allow: number, deny: number): Promise<boolean> {
+  const ok = await window.hyaecord.stoatSetDefaultChannelPermissions(channelId, allow, deny);
+  if (ok) {
+    const ch = findStoatChannel(channelId);
+    if (ch) ch.defaultPermissions = { allow, deny };
+    stateChangeListeners.forEach(cb => cb());
+  }
+  return ok;
+}
+
+/** Real "edit one role's permission overrides for a channel" — `PUT /channels/{id}/permissions/{role}`. */
+export async function setStoatRoleChannelPermissions(channelId: string, roleId: string, allow: number, deny: number): Promise<boolean> {
+  const ok = await window.hyaecord.stoatSetRoleChannelPermissions(channelId, roleId, allow, deny);
+  if (ok) {
+    const ch = findStoatChannel(channelId);
+    if (ch) ch.rolePermissions = { ...ch.rolePermissions, [roleId]: { allow, deny } };
+    stateChangeListeners.forEach(cb => cb());
+  }
+  return ok;
 }
 
 /** Real "create a new server" — POST /servers/create, only a name required. The new server also arrives via the "ServerCreate" dispatch (harmlessly de-duped there), but we don't need to wait on that since the REST response gives us the id directly. */

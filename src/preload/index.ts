@@ -50,6 +50,11 @@ const bridge: HyaecordBridge = {
   stoatGetProfile: userId => ipcRenderer.invoke(IPC.stoatGetProfile, userId),
   stoatGetUnreads: () => ipcRenderer.invoke(IPC.stoatGetUnreads),
   stoatAckChannel: (channelId, messageId) => ipcRenderer.invoke(IPC.stoatAckChannel, channelId, messageId),
+  stoatEditChannel: (channelId, patch) => ipcRenderer.invoke(IPC.stoatEditChannel, channelId, patch),
+  stoatSetDefaultChannelPermissions: (channelId, allow, deny) =>
+    ipcRenderer.invoke(IPC.stoatSetDefaultChannelPermissions, channelId, allow, deny),
+  stoatSetRoleChannelPermissions: (channelId, roleId, allow, deny) =>
+    ipcRenderer.invoke(IPC.stoatSetRoleChannelPermissions, channelId, roleId, allow, deny),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

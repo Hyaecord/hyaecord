@@ -438,6 +438,39 @@ export async function createInvite(channelId: string): Promise<{ ok: boolean; ur
   }
 }
 
+/** Real "set slowmode" (and NSFW) — `PATCH /channels/{id}`, confirmed via the OpenAPI spec's `DataEditChannel`. `null` clears slowmode entirely. */
+export async function editChannel(channelId: string, patch: { slowmode?: number | null; nsfw?: boolean }): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.editChannel(channelId, patch);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Real "edit the @everyone-equivalent permissions for this channel" — `PUT /channels/{id}/permissions/default`, confirmed via the OpenAPI spec. */
+export async function setDefaultChannelPermissions(channelId: string, allow: number, deny: number): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.setDefaultChannelPermissions(channelId, { allow, deny });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Real "edit one role's permission overrides for this channel" — `PUT /channels/{id}/permissions/{role}`, confirmed via the OpenAPI spec. */
+export async function setRoleChannelPermissions(channelId: string, roleId: string, allow: number, deny: number): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.setRoleChannelPermissions(channelId, roleId, { allow, deny });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface StoatInvitePreview {
   serverId: string;
   serverName: string;

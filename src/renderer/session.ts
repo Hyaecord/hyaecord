@@ -18,6 +18,7 @@ import { applyTwemoji } from "./twemoji";
 import { setStoatMessageHandler } from "./stoat-profile-popout";
 import { openJoinServerDialog } from "./join-server";
 import { showMentionSuggestions, closeMentionSuggestions, type MentionCandidate } from "./mention-suggestions";
+import { openChannelSettings } from "./channel-settings";
 import {
   getStoatGuilds,
   onStoatGuildsChanged,
@@ -54,7 +55,8 @@ import {
   getStoatChannelMentionCount,
   getStoatGuildUnread,
   type StoatChannelSummary,
-  type StoatMessageSummary
+  type StoatMessageSummary,
+  type StoatRoleSummary
 } from "./stoat-session";
 
 /**
@@ -1635,7 +1637,7 @@ function stoatChannelRowClassName(channel: StoatChannelSummary): string {
   return parts.join(" ");
 }
 
-function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
+function stoatChannelRow(channel: StoatChannelSummary, roles: StoatRoleSummary[]): HTMLElement {
   const li = el(
     "li",
     { tabindex: "0", "data-channel": channel.id, className: stoatChannelRowClassName(channel) },
@@ -1662,6 +1664,10 @@ function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
             }
           });
         }
+      },
+      {
+        label: t("server.channelSettings"),
+        onClick: () => openChannelSettings(channel, roles)
       }
     ]);
   });
@@ -1729,7 +1735,7 @@ function selectStoatGuildUI(id: string): void {
       // same class Discord's dedicated voice channels use) rather than
       // routed to a join action Stoat's LiveKit voice isn't wired up for
       // yet.
-      const li = stoatChannelRow(channel);
+      const li = stoatChannelRow(channel, guild.roles);
       const select = () => {
         list.querySelectorAll("li").forEach(item => item.removeAttribute("aria-current"));
         li.setAttribute("aria-current", "true");

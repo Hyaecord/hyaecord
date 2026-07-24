@@ -149,6 +149,30 @@ export class StoatRestClient {
     return this.request("POST", `/channels/${channelId}/invites`);
   }
 
+  /** `PATCH /channels/{target}` with `DataEditChannel` — real, confirmed via the OpenAPI spec. Used here for `slowmode` (seconds, 0-21600 per the schema) and `nsfw`; `name`/`description`/`icon` aren't exposed by this app's UI yet. */
+  editChannel(channelId: string, patch: { slowmode?: number | null; nsfw?: boolean }): Promise<RawStoatChannel> {
+    return this.request("PATCH", `/channels/${channelId}`, patch);
+  }
+
+  /**
+   * `PUT /channels/{target}/permissions/default` — "Set Default Permission",
+   * real per the OpenAPI spec (`DataDefaultChannelPermissions`). Sets the
+   * `@everyone`-equivalent allow/deny overrides for a text channel. The bit
+   * values themselves (`ChannelPermission`) come from Stoat's own real,
+   * current backend source (github.com/stoatchat/stoatchat,
+   * crates/core/permissions/src/models/channel.rs, confirmed live via the
+   * GitHub API this pass, not guessed or reused from Discord's unrelated
+   * permission bits).
+   */
+  setDefaultChannelPermissions(channelId: string, permissions: { allow: number; deny: number }): Promise<RawStoatChannel> {
+    return this.request("PUT", `/channels/${channelId}/permissions/default`, { permissions });
+  }
+
+  /** `PUT /channels/{target}/permissions/{role_id}` — "Set Role Permission", real per the OpenAPI spec (`DataSetRolePermissions`). Same real bit values as setDefaultChannelPermissions above, applied to one specific role's override instead of the default. */
+  setRoleChannelPermissions(channelId: string, roleId: string, permissions: { allow: number; deny: number }): Promise<RawStoatChannel> {
+    return this.request("PUT", `/channels/${channelId}/permissions/${roleId}`, { permissions });
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
@@ -273,6 +297,11 @@ export interface RawStoatChannel {
   recipients?: string[];
   icon?: { _id: string } | null;
   last_message_id?: string | null;
+  /** Real fields on TextChannel, confirmed via the OpenAPI spec — back the real slowmode/permission editor. */
+  slowmode?: number | null;
+  nsfw?: boolean;
+  default_permissions?: { a: number; d: number } | null;
+  role_permissions?: Record<string, { a: number; d: number }>;
 }
 
 /** `ChannelUnread` — confirmed real via the OpenAPI spec: `_id` is a composite `{channel, user}` key, `last_id` the last message read in that channel, `mentions` the array of message ids that actually pinged the user (the real data a "ping counter" badge needs, not just a plain unread dot). */

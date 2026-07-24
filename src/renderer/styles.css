@@ -833,6 +833,31 @@ body {
   font-size: 0.95rem;
 }
 
+.modal.channel-settings-modal { width: min(480px, calc(100vw - 2rem)); max-height: min(640px, calc(100vh - 4rem)); overflow-y: auto; }
+.channel-settings-slowmode-input { width: 100px; }
+.channel-settings-role-select { width: 100%; margin: 0.5rem 0; padding: 0.4rem; border-radius: var(--radius-s); border: 1px solid var(--border); background: var(--bg-raise); color: var(--text); }
+.channel-settings-perm-grid { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.75rem; }
+.channel-settings-perm-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius-s);
+  background: var(--bg-hover);
+  font-size: 0.85rem;
+}
+.channel-settings-perm-state {
+  width: 32px;
+  height: 26px;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--border);
+  font-weight: 700;
+  cursor: pointer;
+}
+.channel-settings-perm-state.perm-neutral { background: var(--bg-raise); color: var(--text-dim); }
+.channel-settings-perm-state.perm-allow { background: #23a55a; color: #fff; border-color: #23a55a; }
+.channel-settings-perm-state.perm-deny { background: #ed4245; color: #fff; border-color: #ed4245; }
+
 .leave-server-confirm {
   position: fixed;
   z-index: 70;
