@@ -576,6 +576,15 @@ body {
   white-space: pre-wrap;
 }
 .msg-edited { color: var(--text-dim); font-size: 0.72rem; }
+.msg-edit-input {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--radius-s);
+  border: 1px solid var(--accent);
+  background: var(--bg-raise);
+  color: var(--text);
+  font: inherit;
+}
 .msg-attachments { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
 .msg-attachment-image {
   max-width: 340px;

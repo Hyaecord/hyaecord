@@ -245,6 +245,26 @@ export async function unpinMessage(channelId: string, messageId: string): Promis
   }
 }
 
+export async function editMessage(channelId: string, messageId: string, content: string): Promise<boolean> {
+  if (!rest || !content.trim()) return false;
+  try {
+    await rest.editMessage(channelId, messageId, content);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteMessage(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.deleteMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function addReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
   if (!rest) return false;
   try {

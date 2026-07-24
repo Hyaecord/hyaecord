@@ -196,6 +196,8 @@ export interface HyaecordBridge {
   getCredits(): Promise<CreditsContributor[]>;
   stoatAddReaction(channelId: string, messageId: string, emoji: string): Promise<boolean>;
   stoatRemoveReaction(channelId: string, messageId: string, emoji: string): Promise<boolean>;
+  stoatEditMessage(channelId: string, messageId: string, content: string): Promise<boolean>;
+  stoatDeleteMessage(channelId: string, messageId: string): Promise<boolean>;
 }
 
 export interface CreditsContributor {

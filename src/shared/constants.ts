@@ -102,5 +102,7 @@ export const IPC = {
   stoatGetUser: "hyaecord:stoat-get-user",
   getCredits: "hyaecord:get-credits",
   stoatAddReaction: "hyaecord:stoat-add-reaction",
-  stoatRemoveReaction: "hyaecord:stoat-remove-reaction"
+  stoatRemoveReaction: "hyaecord:stoat-remove-reaction",
+  stoatEditMessage: "hyaecord:stoat-edit-message",
+  stoatDeleteMessage: "hyaecord:stoat-delete-message"
 } as const;

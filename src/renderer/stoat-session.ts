@@ -2,7 +2,7 @@ import type { StoatSession, StoatMemberSummary } from "@shared/types";
 import { el, t } from "./ui";
 import { applyTwemoji } from "./twemoji";
 import { ulidTimestampMs } from "./ulid";
-import { openContextMenu } from "./context-menu";
+import { openContextMenu, type ContextMenuItem } from "./context-menu";
 import { openEmojiPicker } from "./emoji-picker";
 
 /**
@@ -449,6 +449,14 @@ export async function unpinStoatMessage(channelId: string, messageId: string): P
   return window.hyaecord.stoatUnpinMessage(channelId, messageId);
 }
 
+export async function editStoatMessage(channelId: string, messageId: string, content: string): Promise<boolean> {
+  return window.hyaecord.stoatEditMessage(channelId, messageId, content);
+}
+
+export async function deleteStoatMessage(channelId: string, messageId: string): Promise<boolean> {
+  return window.hyaecord.stoatDeleteMessage(channelId, messageId);
+}
+
 export async function addStoatReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
   return window.hyaecord.stoatAddReaction(channelId, messageId, emoji);
 }
@@ -624,6 +632,32 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
       : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
   const content = el("p", { className: "msg-content" }, msg.content);
   applyTwemoji(content);
+
+  /** Swaps the content paragraph for an inline `<input>` (Enter saves via the real PATCH endpoint, Escape cancels) — no modal system for this, matching how lightweight the original edit is meant to feel. */
+  const startEditing = (): void => {
+    const input = el("input", { type: "text", className: "msg-edit-input", value: msg.content }) as HTMLInputElement;
+    content.replaceWith(input);
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+    const finish = async (save: boolean) => {
+      if (save && input.value.trim() && input.value !== msg.content) {
+        const ok = await editStoatMessage(msg.channelId, msg.id, input.value.trim());
+        if (ok) {
+          msg.content = input.value.trim();
+          msg.edited = true;
+        }
+      }
+      content.replaceChildren(msg.content);
+      applyTwemoji(content);
+      input.replaceWith(content);
+    };
+    input.addEventListener("keydown", ev => {
+      if (ev.key === "Enter") void finish(true);
+      else if (ev.key === "Escape") void finish(false);
+    });
+    input.addEventListener("blur", () => void finish(true));
+  };
+
   const bodyChildren: HTMLElement[] = [];
   if (!grouped) {
     bodyChildren.push(
@@ -656,12 +690,30 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
   );
   row.addEventListener("contextmenu", ev => {
     ev.preventDefault();
-    openContextMenu(ev.clientX, ev.clientY, [
+    const items: ContextMenuItem[] = [
       {
         label: msg.pinned ? t("pins.unpin") : t("pins.pin"),
         onClick: () => void (msg.pinned ? unpinStoatMessage(msg.channelId, msg.id) : pinStoatMessage(msg.channelId, msg.id))
       }
-    ]);
+    ];
+    // Edit/delete are only real REST actions for your own messages — Stoat
+    // has no per-channel permission model this app computes yet (see the
+    // scope note on stoatMessageRow itself), so there's no equivalent of
+    // Discord's MANAGE_MESSAGES-can-delete-anyone's-message here.
+    if (msg.authorId === selfUserId) {
+      items.push(
+        { label: t("message.edit"), onClick: startEditing },
+        {
+          label: t("message.delete"),
+          onClick: () => {
+            void deleteStoatMessage(msg.channelId, msg.id).then(ok => {
+              if (ok) row.remove();
+            });
+          }
+        }
+      );
+    }
+    openContextMenu(ev.clientX, ev.clientY, items);
   });
   return row;
 }
