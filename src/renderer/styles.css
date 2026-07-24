@@ -455,6 +455,15 @@ body {
   flex-direction: column;
   background: var(--bg-base);
   min-width: 0;
+  /* Same flex/grid auto-min-size bug class as .messages below, one level
+   * up: `.chat` is itself a grid item inside `.shell`, and a grid item's
+   * default min-height is its content's size, not 0 — found live on a
+   * channel with enough history to exceed the window height, where `.chat`
+   * grew past the window instead of staying clipped to it, pushing
+   * `.messages`'s own internal scroll (and the composer beneath it) off
+   * the bottom of the screen entirely.
+   */
+  min-height: 0;
 }
 
 .chat-header {
