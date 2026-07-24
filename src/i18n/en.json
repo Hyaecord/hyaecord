@@ -33,6 +33,7 @@
   "profile.title": "User profile",
   "profile.loading": "Loading profile…",
   "profile.error": "Couldn't load this profile.",
+  "profile.message": "Message",
   "composer.silentOn": "Sending silently (recipients get no notification for the next message)",
   "composer.silentOff": "Send silently",
   "composer.readOnly": "You don't have permission to send messages in this channel",

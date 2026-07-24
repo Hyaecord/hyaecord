@@ -205,6 +205,7 @@ export interface HyaecordBridge {
   stoatSendFriendRequest(usernameWithDiscriminator: string): Promise<{ ok: boolean; error?: string }>;
   stoatAcceptFriendRequest(userId: string): Promise<boolean>;
   stoatRemoveFriend(userId: string): Promise<boolean>;
+  stoatOpenDM(userId: string): Promise<string | null>;
 }
 
 export interface CreditsContributor {

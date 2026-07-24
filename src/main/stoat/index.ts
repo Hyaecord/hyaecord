@@ -360,6 +360,17 @@ export function stopTyping(channelId: string): void {
   gateway?.endTyping(channelId);
 }
 
+/** Real "start a new DM" — Stoat had no way to open one with someone you don't already have a DM channel with; `GET /users/{id}/dm` both opens the existing one and creates one if needed, per the OpenAPI spec. */
+export async function openDM(userId: string): Promise<string | null> {
+  if (!rest) return null;
+  try {
+    const channel = await rest.openDM(userId);
+    return channel._id;
+  } catch {
+    return null;
+  }
+}
+
 export async function getDMs(): Promise<StoatDMSummary[]> {
   if (!rest) return [];
   try {

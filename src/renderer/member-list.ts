@@ -145,7 +145,7 @@ export function renderStoatMembers(members: StoatMemberEntry[]): void {
       el("span", { className: "member-name" }, name)
     );
     row.addEventListener("click", () =>
-      openStoatProfilePopout(row, { username: m.username, displayName: m.displayName, avatar: m.avatar, online: m.online, presence: m.presence })
+      openStoatProfilePopout(row, { id: m.userId, username: m.username, displayName: m.displayName, avatar: m.avatar, online: m.online, presence: m.presence })
     );
     list.append(row);
   }

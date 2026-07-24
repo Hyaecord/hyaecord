@@ -726,6 +726,7 @@ body {
 .profile-popout-name { margin: 0.5rem 1rem 0; font-size: 1.1rem; }
 .profile-popout-username { margin: 0.1rem 1rem 0; color: var(--text-dim); font-size: 0.85rem; }
 .profile-popout-status-text { margin: 0.4rem 1rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
+.profile-popout-message-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 1rem; }
 .profile-banner {
   height: 80px;
   background: var(--bg-hover);

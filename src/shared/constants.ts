@@ -111,5 +111,6 @@ export const IPC = {
   stoatStopTyping: "hyaecord:stoat-stop-typing",
   stoatSendFriendRequest: "hyaecord:stoat-send-friend-request",
   stoatAcceptFriendRequest: "hyaecord:stoat-accept-friend-request",
-  stoatRemoveFriend: "hyaecord:stoat-remove-friend"
+  stoatRemoveFriend: "hyaecord:stoat-remove-friend",
+  stoatOpenDM: "hyaecord:stoat-open-dm"
 } as const;

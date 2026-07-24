@@ -30,11 +30,19 @@ function onEscape(ev: KeyboardEvent): void {
 }
 
 export interface StoatProfileData {
+  id: string;
   username: string;
   displayName: string | null;
   avatar: string | null;
   online: boolean;
   presence: string | null;
+}
+
+/** Set by session.ts (which owns real channel navigation) — lets this popout's "Message" button actually open a real DM and jump to it, without this module needing to import session.ts itself (that would be circular: session.ts already imports openStoatProfilePopout indirectly via member-list.ts/friends.ts). */
+let messageHandler: ((userId: string, displayName: string) => void) | null = null;
+
+export function setStoatMessageHandler(handler: (userId: string, displayName: string) => void): void {
+  messageHandler = handler;
 }
 
 export function openStoatProfilePopout(anchor: HTMLElement, user: StoatProfileData): void {
@@ -56,7 +64,23 @@ export function openStoatProfilePopout(anchor: HTMLElement, user: StoatProfileDa
     ),
     el("h2", { className: "profile-popout-name" }, name),
     el("p", { className: "profile-popout-username" }, `@${user.username}`),
-    el("p", { className: "profile-popout-status-text" }, t(`friends.presence.${status}`))
+    el("p", { className: "profile-popout-status-text" }, t(`friends.presence.${status}`)),
+    // "Start a DM with this person" — real gap found while checking for
+    // reachable UI: neither platform had any way to start a *new* DM at
+    // all before this (Stoat now does; Discord's own equivalent gap
+    // wasn't touched this pass per the owner's Stoat-first scope).
+    el(
+      "button",
+      {
+        type: "button",
+        className: "btn primary profile-popout-message-btn",
+        onClick: () => {
+          messageHandler?.(user.id, name);
+          close();
+        }
+      },
+      t("profile.message")
+    )
   );
 
   document.body.append(popout);

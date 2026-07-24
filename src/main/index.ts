@@ -73,7 +73,8 @@ import {
   stopTyping as stoatStopTyping,
   sendFriendRequest as stoatSendFriendRequest,
   acceptFriendRequest as stoatAcceptFriendRequest,
-  removeFriend as stoatRemoveFriend
+  removeFriend as stoatRemoveFriend,
+  openDM as stoatOpenDM
 } from "./stoat";
 
 loadEnvFile();
@@ -202,6 +203,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatSendFriendRequest, (_e, username: string) => stoatSendFriendRequest(username));
   ipcMain.handle(IPC.stoatAcceptFriendRequest, (_e, userId: string) => stoatAcceptFriendRequest(userId));
   ipcMain.handle(IPC.stoatRemoveFriend, (_e, userId: string) => stoatRemoveFriend(userId));
+  ipcMain.handle(IPC.stoatOpenDM, (_e, userId: string) => stoatOpenDM(userId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

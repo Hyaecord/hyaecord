@@ -15,6 +15,7 @@ import { openPinsPanel } from "./pins";
 import { initVoiceUI, setVoiceChannelNameResolver } from "./voice-ui";
 import { icon } from "./icons";
 import { applyTwemoji } from "./twemoji";
+import { setStoatMessageHandler } from "./stoat-profile-popout";
 import {
   getStoatGuilds,
   onStoatGuildsChanged,
@@ -233,6 +234,18 @@ export function initSession(): void {
     applyLiveStoatReaction(document.getElementById("messages")!, messageId, emoji, userId, added);
   });
   onStoatTyping(onStoatTypingEvent);
+  setStoatMessageHandler((userId, displayName) => void messageStoatUser(userId, displayName));
+}
+
+/** Real "start a new DM" — there was no way to message someone you didn't already have an open DM with. `GET /users/{id}/dm` (rest.ts) both opens the existing DM and creates one if needed; jumps straight into it rather than waiting for the DM list to refetch and show it. */
+async function messageStoatUser(userId: string, displayName: string): Promise<void> {
+  const channelId = await window.hyaecord.stoatOpenDM(userId);
+  if (!channelId) {
+    showToast(t("friends.actionFailed"));
+    return;
+  }
+  selectDms();
+  void loadStoatMessages(null, channelId, displayName);
 }
 
 /** channelId -> userId -> auto-expiry timer (in case a real EndTyping is missed — the same defensive-timeout shape Discord's own client uses for its typing indicator). */

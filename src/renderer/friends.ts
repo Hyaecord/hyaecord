@@ -62,6 +62,7 @@ function friendRow(rel: RelationshipSummary, list: HTMLElement): HTMLElement {
   if (rel.platform === "stoat") {
     avatar.addEventListener("click", () =>
       openStoatProfilePopout(avatar, {
+        id: rel.id,
         username: rel.username,
         displayName: rel.globalName,
         avatar: rel.avatar,

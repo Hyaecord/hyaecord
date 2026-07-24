@@ -102,6 +102,11 @@ export class StoatRestClient {
     return this.request("GET", "/users/dms");
   }
 
+  /** `GET /users/{target}/dm` — "Open Direct Message": opens the existing DM with this user, or creates one if none exists yet. Confirmed real via the OpenAPI spec. */
+  openDM(userId: string): Promise<RawStoatChannel> {
+    return this.request("GET", `/users/${userId}/dm`);
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The

@@ -41,6 +41,7 @@ const bridge: HyaecordBridge = {
   stoatSendFriendRequest: username => ipcRenderer.invoke(IPC.stoatSendFriendRequest, username),
   stoatAcceptFriendRequest: userId => ipcRenderer.invoke(IPC.stoatAcceptFriendRequest, userId),
   stoatRemoveFriend: userId => ipcRenderer.invoke(IPC.stoatRemoveFriend, userId),
+  stoatOpenDM: userId => ipcRenderer.invoke(IPC.stoatOpenDM, userId),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {
