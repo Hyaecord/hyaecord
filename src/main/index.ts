@@ -80,7 +80,9 @@ import {
   leaveServer as stoatLeaveServer,
   createServer as stoatCreateServer,
   createInvite as stoatCreateInvite,
-  getUserProfile as stoatGetUserProfile
+  getUserProfile as stoatGetUserProfile,
+  getUnreads as stoatGetUnreads,
+  ackChannel as stoatAckChannel
 } from "./stoat";
 
 loadEnvFile();
@@ -218,6 +220,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatCreateServer, (_e, name: string) => stoatCreateServer(name));
   ipcMain.handle(IPC.stoatCreateInvite, (_e, channelId: string) => stoatCreateInvite(channelId));
   ipcMain.handle(IPC.stoatGetProfile, (_e, userId: string) => stoatGetUserProfile(userId));
+  ipcMain.handle(IPC.stoatGetUnreads, () => stoatGetUnreads());
+  ipcMain.handle(IPC.stoatAckChannel, (_e, channelId: string, messageId: string) => stoatAckChannel(channelId, messageId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

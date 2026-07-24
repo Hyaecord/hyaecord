@@ -212,6 +212,8 @@ export interface HyaecordBridge {
   stoatCreateServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }>;
   stoatCreateInvite(channelId: string): Promise<{ ok: boolean; url?: string; error?: string }>;
   stoatGetProfile(userId: string): Promise<{ bio: string | null; banner: string | null }>;
+  stoatGetUnreads(): Promise<Array<{ channelId: string; lastReadId: string | null; mentionIds: string[] }>>;
+  stoatAckChannel(channelId: string, messageId: string): Promise<boolean>;
 }
 
 export interface StoatInvitePreview {

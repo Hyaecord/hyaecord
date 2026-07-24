@@ -50,6 +50,9 @@ import {
   leaveStoatServer,
   createStoatInvite,
   onStoatReplyRequested,
+  isStoatChannelUnread,
+  getStoatChannelMentionCount,
+  getStoatGuildUnread,
   type StoatChannelSummary,
   type StoatMessageSummary
 } from "./stoat-session";
@@ -230,7 +233,10 @@ export function initSession(): void {
   initVoiceUI();
   setVoiceChannelNameResolver(resolveChannelName);
   initStoatSession();
-  onStoatGuildsChanged(renderRail);
+  onStoatGuildsChanged(() => {
+    renderRail();
+    refreshStoatChannelUnreadIndicators();
+  });
   onStoatStateChange(() => updateLoginGate());
   onStoatMessageCreate(onStoatMessageCreated);
   onStoatMessageUpdate(onStoatMessageUpdated);
@@ -1274,6 +1280,18 @@ function buildStoatGuildPill(guild: { id: string; name: string; icon: string | n
   if (state.settings.mergeSidebar) {
     pill.append(el("span", { className: "platform-badge platform-badge-stoat", "aria-hidden": "true" }, "S"));
   }
+  // Real unread/mention badge — backed by Stoat's actual GET /sync/unreads
+  // + ack endpoints (see stoat-session.ts), not a guess: a small dot for
+  // "something new" (bottom-right, distinct from the platform badge's
+  // top-left position), replaced by a numbered red pill once any of those
+  // unread messages actually mention the user, same as Discord's own
+  // client distinguishes a plain unread server from one with a real ping.
+  const unread = getStoatGuildUnread(guild.id);
+  if (unread.mentionCount > 0) {
+    pill.append(el("span", { className: "server-pill-mention-badge", "aria-hidden": "true" }, String(unread.mentionCount)));
+  } else if (unread.hasUnread) {
+    pill.append(el("span", { className: "server-pill-unread-dot", "aria-hidden": "true" }));
+  }
   return pill;
 }
 
@@ -1610,12 +1628,22 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
 }
 
 /** Same leading-glyph convention Discord's own channel list uses (see buildChannelRow) — a real `hash`/`volume-2` SVG icon, not a `#`/🔊 character, so both platforms read identically at a glance. */
+function stoatChannelRowClassName(channel: StoatChannelSummary): string {
+  const parts: string[] = [];
+  if (channel.hasVoice) parts.push("voice-channel-item");
+  if (isStoatChannelUnread(channel.id)) parts.push("channel-row-unread");
+  return parts.join(" ");
+}
+
 function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
   const li = el(
     "li",
-    { tabindex: "0", "data-channel": channel.id, className: channel.hasVoice ? "voice-channel-item" : "" },
+    { tabindex: "0", "data-channel": channel.id, className: stoatChannelRowClassName(channel) },
     icon(channel.hasVoice ? "volume-2" : "hash", "channel-icon"),
-    channel.name
+    channel.name,
+    getStoatChannelMentionCount(channel.id) > 0
+      ? el("span", { className: "channel-row-mention-badge", "aria-hidden": "true" }, String(getStoatChannelMentionCount(channel.id)))
+      : ""
   );
   // Real "generate an invite link" — the app could only ever use an
   // invite (item 79), never create one to share, until now.
@@ -1638,6 +1666,31 @@ function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
     ]);
   });
   return li;
+}
+
+/**
+ * Patches unread state onto whatever channel rows are already in the DOM
+ * rather than rebuilding the list — called on every unread-state change
+ * (new live message, ack) so it stays cheap and doesn't disturb scroll
+ * position or focus. Safe to run unconditionally even when a Discord
+ * guild (or DMs) is the one currently shown: `isStoatChannelUnread`
+ * returns false for any id it doesn't recognize as a Stoat channel, so
+ * non-Stoat rows are simply left untouched.
+ */
+function refreshStoatChannelUnreadIndicators(): void {
+  document.querySelectorAll<HTMLElement>("#channels li[data-channel]").forEach(li => {
+    const channelId = li.dataset.channel!;
+    const unread = isStoatChannelUnread(channelId);
+    li.classList.toggle("channel-row-unread", unread);
+    const existingBadge = li.querySelector(".channel-row-mention-badge");
+    const mentionCount = getStoatChannelMentionCount(channelId);
+    if (mentionCount > 0) {
+      if (existingBadge) existingBadge.textContent = String(mentionCount);
+      else li.append(el("span", { className: "channel-row-mention-badge", "aria-hidden": "true" }, String(mentionCount)));
+    } else {
+      existingBadge?.remove();
+    }
+  });
 }
 
 function selectStoatGuildUI(id: string): void {

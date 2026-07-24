@@ -368,6 +368,34 @@ export async function removeFriend(userId: string): Promise<boolean> {
   }
 }
 
+export interface StoatUnreadSummary {
+  channelId: string;
+  lastReadId: string | null;
+  mentionIds: string[];
+}
+
+/** Real per-channel read state — `GET /sync/unreads`, the actual data a real unread/mention badge system needs (Ready carries none). */
+export async function getUnreads(): Promise<StoatUnreadSummary[]> {
+  if (!rest) return [];
+  try {
+    const raw = await rest.getUnreads();
+    return raw.map(u => ({ channelId: u._id.channel, lastReadId: u.last_id ?? null, mentionIds: u.mentions ?? [] }));
+  } catch {
+    return [];
+  }
+}
+
+/** Real "mark read" — `PUT /channels/{id}/ack/{message}`. Called whenever a channel is actually opened, and again on each new live message received while it's the one currently open, so the server's own read state stays in sync with what the user has actually seen. */
+export async function ackChannel(channelId: string, messageId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.ackMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function startTyping(channelId: string): void {
   gateway?.beginTyping(channelId);
 }

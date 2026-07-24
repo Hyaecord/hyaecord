@@ -188,6 +188,16 @@ export class StoatRestClient {
     return this.request("DELETE", `/channels/${channelId}/messages/${messageId}/pin`);
   }
 
+  /** `GET /sync/unreads` — "Fetch Unreads": real per-channel read state (`ChannelUnread[]`, confirmed via the OpenAPI spec), the actual backing data for a real unread/mention badge system. Ready's own payload carries no read state at all. */
+  getUnreads(): Promise<RawChannelUnread[]> {
+    return this.request("GET", "/sync/unreads");
+  }
+
+  /** `PUT /channels/{target}/ack/{message}` — "Acknowledge Message": tells the server (and, per the Revolt protocol convention, every other session) that messages up to and including this id have been seen in this channel. */
+  ackMessage(channelId: string, messageId: string): Promise<void> {
+    return this.request("PUT", `/channels/${channelId}/ack/${messageId}`);
+  }
+
   /**
    * The unauthenticated "Query Node" root endpoint — returns real, live
    * server configuration including the actual file/CDN service ("autumn")
@@ -262,6 +272,14 @@ export interface RawStoatChannel {
   server?: string;
   recipients?: string[];
   icon?: { _id: string } | null;
+  last_message_id?: string | null;
+}
+
+/** `ChannelUnread` — confirmed real via the OpenAPI spec: `_id` is a composite `{channel, user}` key, `last_id` the last message read in that channel, `mentions` the array of message ids that actually pinged the user (the real data a "ping counter" badge needs, not just a plain unread dot). */
+export interface RawChannelUnread {
+  _id: { channel: string; user: string };
+  last_id?: string | null;
+  mentions?: string[];
 }
 
 export interface RawStoatConfig {

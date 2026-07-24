@@ -168,11 +168,11 @@ body {
 
 /*
  * Deliberately NOT a small circle in the bottom-right corner: that's the
- * exact position/shape a real unread-mention count badge would use (a
- * real one isn't built yet — see BUILD_PROMPT.md), and a red circle with
- * a bare letter in it was being read as one. This is a small top-left
- * square tag instead — a clearly different shape/position/color so it
- * reads as "which platform" rather than "how many pings".
+ * exact position/shape the real unread-mention count badge below
+ * (.server-pill-mention-badge) uses, and a red circle with a bare letter
+ * in it was being read as one. This is a small top-left square tag
+ * instead — a clearly different shape/position/color so it reads as
+ * "which platform" rather than "how many pings".
  */
 .platform-badge {
   position: absolute;
@@ -190,6 +190,50 @@ body {
 }
 .platform-badge-discord { background: #5865f2; }
 .platform-badge-stoat { background: #6b7280; }
+
+/* Real unread/mention badges — backed by Stoat's actual GET /sync/unreads + ack endpoints, see stoat-session.ts. Bottom-right, the position the comment above reserved for exactly this. */
+.server-pill-unread-dot {
+  position: absolute;
+  inset-inline-end: -2px;
+  bottom: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--bg-base);
+}
+.server-pill-mention-badge {
+  position: absolute;
+  inset-inline-end: -6px;
+  bottom: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: #ed4245;
+  border: 2px solid var(--bg-base);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+
+/* Same real unread state, applied to a channel-list row instead of a server pill — bold white text is Discord's own convention for "this channel has something new", vs. the muted default. */
+#channels li.channel-row-unread { color: var(--text); font-weight: 700; }
+.channel-row-mention-badge {
+  margin-inline-start: auto;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px;
+  background: #ed4245;
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
 .server-rail .server-pill:hover,
 .server-rail .server-pill:focus-visible {
   border-radius: var(--radius-m);

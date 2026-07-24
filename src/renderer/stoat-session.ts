@@ -124,6 +124,49 @@ const userCache = new Map<string, CachedStoatUser>();
 /** Keyed by server id -> that server's real member list, fetched via `GET /servers/{id}/members` when the server is opened (see fetchStoatMembers) — Ready's own `members` array only ever carries the current user's own membership, not the full roster. */
 const membersByServer = new Map<string, StoatMemberSummary[]>();
 
+/**
+ * Real unread/mention tracking — backing data for a real "ping counter",
+ * a genuine gap found live (neither platform had one; Ready carries no
+ * read state at all). Three parallel maps rather than one combined
+ * object: `channelLastMessageId` is the server's own pointer to the
+ * newest message in a channel (from `Channel.last_message_id` at Ready
+ * time, kept current by live `Message` dispatches); `channelReadPointer`
+ * is *our* last-acked position (seeded from `GET /sync/unreads`' real
+ * `last_id`, advanced by `ackStoatChannel`); a channel is unread exactly
+ * when the two disagree (ULID string comparison — same length, lexical
+ * order matches chronological order). `channelMentionIds` holds the
+ * actual message ids that ping the user, seeded from `sync/unreads`'
+ * `mentions` and grown by live messages containing `<@selfUserId>`.
+ */
+const channelLastMessageId = new Map<string, string | null>();
+const channelReadPointer = new Map<string, string | null>();
+const channelMentionIds = new Map<string, Set<string>>();
+
+/** True when this channel has a message newer than what we've acked. */
+export function isStoatChannelUnread(channelId: string): boolean {
+  const latest = channelLastMessageId.get(channelId);
+  if (!latest) return false;
+  const read = channelReadPointer.get(channelId) ?? null;
+  return read === null || latest > read;
+}
+
+export function getStoatChannelMentionCount(channelId: string): number {
+  return channelMentionIds.get(channelId)?.size ?? 0;
+}
+
+/** Aggregate across every text channel in a server — powers the server pill's unread dot/mention badge. */
+export function getStoatGuildUnread(guildId: string): { hasUnread: boolean; mentionCount: number } {
+  const guild = guilds.find(g => g.id === guildId);
+  if (!guild) return { hasUnread: false, mentionCount: 0 };
+  let hasUnread = false;
+  let mentionCount = 0;
+  for (const ch of guild.channels) {
+    if (isStoatChannelUnread(ch.id)) hasUnread = true;
+    mentionCount += getStoatChannelMentionCount(ch.id);
+  }
+  return { hasUnread, mentionCount };
+}
+
 export function onStoatGuildsChanged(cb: () => void): () => void {
   stateChangeListeners.add(cb);
   return () => stateChangeListeners.delete(cb);
@@ -159,6 +202,8 @@ interface RawStoatChannel {
   server?: string;
   /** VoiceInformation | null — presence (not shape) is all that matters here; see StoatChannelSummary.hasVoice. */
   voice?: unknown | null;
+  /** Real field on the Channel schema — the server's own pointer to the newest message, the baseline a real unread/mention badge system compares against. */
+  last_message_id?: string | null;
 }
 
 interface RawStoatReadyUser {
@@ -265,7 +310,29 @@ function onReady(data: unknown): void {
 
   const allChannels = payload.channels ?? [];
   guilds = (payload.servers ?? []).map(server => toGuildSummary(server, allChannels));
+
+  channelLastMessageId.clear();
+  channelReadPointer.clear();
+  channelMentionIds.clear();
+  for (const ch of allChannels) {
+    if (ch.channel_type === "TextChannel" || ch.channel_type === "DirectMessage" || ch.channel_type === "Group") {
+      // Defaulted to "fully read" until the real GET /sync/unreads fetch
+      // below resolves — a channel absent from that response means Stoat
+      // itself considers it read, so this default is only ever wrong for
+      // the brief window before that fetch lands, never silently stale.
+      channelLastMessageId.set(ch._id, ch.last_message_id ?? null);
+      channelReadPointer.set(ch._id, ch.last_message_id ?? null);
+    }
+  }
   stateChangeListeners.forEach(cb => cb());
+
+  void window.hyaecord.stoatGetUnreads().then(unreads => {
+    for (const u of unreads) {
+      channelReadPointer.set(u.channelId, u.lastReadId);
+      channelMentionIds.set(u.channelId, new Set(u.mentionIds));
+    }
+    stateChangeListeners.forEach(cb => cb());
+  });
 }
 
 const RELATIONSHIP_DISPLAY_STATES = new Set(["Friend", "Incoming", "Outgoing", "Blocked"]);
@@ -437,6 +504,20 @@ async function onLiveMessage(data: unknown): Promise<void> {
     replyToId: raw.replies?.[0] ?? null,
     timestamp: ulidTimestampMs(raw._id)
   };
+  channelLastMessageId.set(raw.channel, raw._id);
+  if (selfUserId && msg.content.includes(`<@${selfUserId}>`)) {
+    const mentions = channelMentionIds.get(raw.channel) ?? new Set<string>();
+    mentions.add(raw._id);
+    channelMentionIds.set(raw.channel, mentions);
+  }
+  if (raw.channel === activeChannelId) {
+    // Already being looked at — ack immediately rather than letting it
+    // flash unread for a moment, same as Discord's own client acking
+    // messages that arrive in the channel you're currently viewing.
+    void ackStoatChannel(raw.channel, raw._id);
+  } else {
+    stateChangeListeners.forEach(cb => cb());
+  }
   messageCreateListeners.forEach(cb => cb(msg));
 }
 
@@ -528,6 +609,9 @@ export function initStoatSession(): void {
       userCache.clear();
       membersByServer.clear();
       cachedDms = [];
+      channelLastMessageId.clear();
+      channelReadPointer.clear();
+      channelMentionIds.clear();
       stateChangeListeners.forEach(cb => cb());
     }
     sessionListeners.forEach(cb => cb(session.state));
@@ -562,10 +646,24 @@ function mapRawMessages(raw: RawStoatMessageSummary[]): StoatMessageSummary[] {
   return raw.map(m => ({ ...m, timestamp: ulidTimestampMs(m.id) }));
 }
 
+/** Real "mark read" — `PUT /channels/{id}/ack/{message}`. Updates local state optimistically (rather than waiting on the round trip) so the badge clears the instant a channel is opened, matching what the user actually sees. */
+export async function ackStoatChannel(channelId: string, messageId: string): Promise<void> {
+  channelReadPointer.set(channelId, messageId);
+  channelMentionIds.delete(channelId);
+  stateChangeListeners.forEach(cb => cb());
+  await window.hyaecord.stoatAckChannel(channelId, messageId);
+}
+
 export async function selectStoatChannel(channelId: string): Promise<StoatMessageSummary[]> {
   activeChannelId = channelId;
   const raw = (await window.hyaecord.stoatFetchMessages(channelId)) as RawStoatMessageSummary[];
-  return mapRawMessages(raw);
+  const messages = mapRawMessages(raw);
+  const latest = messages[messages.length - 1];
+  if (latest) {
+    channelLastMessageId.set(channelId, latest.id);
+    void ackStoatChannel(channelId, latest.id);
+  }
+  return messages;
 }
 
 export async function sendStoatMessage(channelId: string, content: string, replyTo?: { id: string; mention: boolean }): Promise<boolean> {

@@ -118,5 +118,7 @@ export const IPC = {
   stoatLeaveServer: "hyaecord:stoat-leave-server",
   stoatCreateServer: "hyaecord:stoat-create-server",
   stoatCreateInvite: "hyaecord:stoat-create-invite",
-  stoatGetProfile: "hyaecord:stoat-get-profile"
+  stoatGetProfile: "hyaecord:stoat-get-profile",
+  stoatGetUnreads: "hyaecord:stoat-get-unreads",
+  stoatAckChannel: "hyaecord:stoat-ack-channel"
 } as const;
