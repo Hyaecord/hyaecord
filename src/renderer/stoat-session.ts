@@ -170,6 +170,30 @@ const userCache = new Map<string, CachedStoatUser>();
 /** Keyed by server id -> that server's real member list, fetched via `GET /servers/{id}/members` when the server is opened (see fetchStoatMembers) — Ready's own `members` array only ever carries the current user's own membership, not the full roster. */
 const membersByServer = new Map<string, StoatMemberSummary[]>();
 
+export interface StoatEmojiSummary {
+  id: string;
+  name: string;
+  animated: boolean;
+  url: string;
+}
+
+/** Keyed by server id -> that server's real custom emoji, fetched via `GET /servers/{id}/emojis` when the server is opened (see fetchStoatServerEmojis) — same lazy-per-server-open pattern as membersByServer. */
+const emojisByServer = new Map<string, StoatEmojiSummary[]>();
+/** Flat id -> emoji lookup across every server whose emoji this client has fetched so far — used by message-content shortcode rendering, which only knows a message's channel/server loosely and shouldn't need to re-derive it just to resolve a `:id:`. */
+const emojiCache = new Map<string, StoatEmojiSummary>();
+
+export function getStoatServerEmojis(serverId: string): StoatEmojiSummary[] {
+  return emojisByServer.get(serverId) ?? [];
+}
+
+/** Real per-server custom emoji via `GET /servers/{id}/emojis` — powers both the emoji picker's "this server" section and real `:id:` shortcode rendering in message content. */
+export async function fetchStoatServerEmojis(serverId: string): Promise<StoatEmojiSummary[]> {
+  const emojis = await window.hyaecord.stoatGetServerEmojis(serverId);
+  emojisByServer.set(serverId, emojis);
+  for (const e of emojis) emojiCache.set(e.id, e);
+  return emojis;
+}
+
 /**
  * Real unread/mention tracking — backing data for a real "ping counter",
  * a genuine gap found live (neither platform had one; Ready carries no
@@ -887,6 +911,11 @@ function reactionsEl(msg: StoatMessageSummary): HTMLElement {
     for (const r of msg.reactions) {
       if (r.userIds.length === 0) continue;
       const mine = !!selfUserId && r.userIds.includes(selfUserId);
+      // Message.reactions keys are "emoji id" — a raw unicode character for
+      // a standard reaction, or a bare custom-emoji id (no colons) for one
+      // of a server's own. Only the latter needs an <img>; applyTwemoji
+      // handles the rest exactly as before.
+      const customEmoji = emojiCache.get(r.emoji);
       const pill = el(
         "button",
         {
@@ -905,25 +934,40 @@ function reactionsEl(msg: StoatMessageSummary): HTMLElement {
             render();
           }
         },
-        r.emoji,
+        customEmoji ? el("img", { className: "msg-emoji", src: customEmoji.url, alt: customEmoji.name }) : r.emoji,
         " ",
         el("span", { className: "msg-reaction-count" }, String(r.userIds.length))
       );
-      applyTwemoji(pill);
+      if (!customEmoji) applyTwemoji(pill);
       wrap.append(pill);
     }
     const addButton = el(
       "button",
-      { type: "button", className: "msg-reaction-add", "aria-label": t("emojiPicker.title"), onClick: () => openEmojiPicker(addButton, emoji => {
-        const existing = msg.reactions.find(r => r.emoji === emoji);
-        if (existing) {
-          if (!existing.userIds.includes(selfUserId ?? "")) existing.userIds.push(selfUserId ?? "");
-        } else {
-          msg.reactions.push({ emoji, userIds: selfUserId ? [selfUserId] : [] });
-        }
-        void addStoatReaction(msg.channelId, msg.id, emoji);
-        render();
-      }) },
+      {
+        type: "button",
+        className: "msg-reaction-add",
+        "aria-label": t("emojiPicker.title"),
+        onClick: () =>
+          openEmojiPicker(
+            addButton,
+            picked => {
+              // Custom-emoji picks come back as ":id:" (the same shortcode
+              // syntax used to insert one into composer text) — the real
+              // reaction endpoint wants the bare id, no colons, same as
+              // Message.reactions' own keys above.
+              const emoji = picked.startsWith(":") && picked.endsWith(":") ? picked.slice(1, -1) : picked;
+              const existing = msg.reactions.find(r => r.emoji === emoji);
+              if (existing) {
+                if (!existing.userIds.includes(selfUserId ?? "")) existing.userIds.push(selfUserId ?? "");
+              } else {
+                msg.reactions.push({ emoji, userIds: selfUserId ? [selfUserId] : [] });
+              }
+              void addStoatReaction(msg.channelId, msg.id, emoji);
+              render();
+            },
+            activeGuildId ? getStoatServerEmojis(activeGuildId) : []
+          )
+      },
       "+"
     );
     wrap.append(addButton);
@@ -983,19 +1027,39 @@ export function applyLiveStoatReaction(container: HTMLElement, messageId: string
  * session.ts's Discord path follows) and resolves each id against the
  * user cache, falling back to a generic "@user" for anyone not cached.
  */
-const MENTION_PATTERN = /<@([0-9A-Za-z]{26})>/g;
+/**
+ * Real custom-emoji shortcode syntax (`:id:`, the message-content-side
+ * counterpart of the real `:id:` reaction target already handled by
+ * addReaction/removeReaction) — found live as literal unrendered text in
+ * a real user's profile bio before this. Only substitutes an image when
+ * the id is actually a known real emoji (see emojiCache); anything else
+ * matching the shape but not a real cached emoji id is left as plain
+ * text rather than guessed at, since ordinary text can coincidentally
+ * contain `:something:`.
+ */
+const EMOJI_SHORTCODE_PATTERN = /<@[0-9A-Za-z]{26}>|:([0-9A-Za-z]{26}):/g;
 
-/** Clears and re-populates an existing `<p class="msg-content">` with parsed mention nodes — shared by the initial render and by edit-in-place (item 70), so an edited message's mentions still render correctly rather than reverting to plain text. */
+/** Clears and re-populates an existing `<p class="msg-content">` with parsed mention/emoji nodes — shared by the initial render and by edit-in-place (item 70), so an edited message keeps rendering both correctly rather than reverting to plain text. */
 function fillStoatMessageContent(target: HTMLElement, content: string): void {
   target.replaceChildren();
   let lastIndex = 0;
-  for (const match of content.matchAll(MENTION_PATTERN)) {
-    const [full, userId] = match;
+  for (const match of content.matchAll(EMOJI_SHORTCODE_PATTERN)) {
+    const [full, emojiId] = match;
     const index = match.index ?? 0;
     if (index > lastIndex) target.append(content.slice(lastIndex, index));
-    const cached = userId ? userCache.get(userId) : undefined;
-    const name = cached?.displayName || cached?.username || t("message.unknownUser");
-    target.append(el("span", { className: "msg-mention" }, `@${name}`));
+    if (emojiId) {
+      const emoji = emojiCache.get(emojiId);
+      if (emoji) {
+        target.append(el("img", { className: "msg-emoji", src: emoji.url, alt: `:${emoji.name}:`, title: `:${emoji.name}:`, loading: "lazy" }));
+      } else {
+        target.append(full); // unknown id — leave the literal shortcode text rather than guess
+      }
+    } else {
+      const userId = full.slice(2, -1);
+      const cached = userCache.get(userId);
+      const name = cached?.displayName || cached?.username || t("message.unknownUser");
+      target.append(el("span", { className: "msg-mention" }, `@${name}`));
+    }
     lastIndex = index + full.length;
   }
   if (lastIndex < content.length) target.append(content.slice(lastIndex));

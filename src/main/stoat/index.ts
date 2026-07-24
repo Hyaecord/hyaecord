@@ -471,6 +471,24 @@ export async function setRoleChannelPermissions(channelId: string, roleId: strin
   }
 }
 
+export interface StoatEmojiSummary {
+  id: string;
+  name: string;
+  animated: boolean;
+  url: string;
+}
+
+/** Real "list a server's custom emoji" — `GET /servers/{id}/emojis`, confirmed via the OpenAPI spec. Not preloaded for every server up front — fetched when a server's emoji picker/reaction picker is actually opened, same lazy-load reasoning as getServerMembers. */
+export async function getServerEmojis(serverId: string): Promise<StoatEmojiSummary[]> {
+  if (!rest) return [];
+  try {
+    const raw = await rest.getServerEmojis(serverId);
+    return raw.map(e => ({ id: e._id, name: e.name, animated: !!e.animated, url: stoatFileUrl("emojis", e._id) }));
+  } catch {
+    return [];
+  }
+}
+
 export interface StoatInvitePreview {
   serverId: string;
   serverName: string;

@@ -173,6 +173,11 @@ export class StoatRestClient {
     return this.request("PUT", `/channels/${channelId}/permissions/${roleId}`, { permissions });
   }
 
+  /** `GET /servers/{target}/emojis` — "Fetch Server Emoji", real per the OpenAPI spec's `Emoji` schema. */
+  getServerEmojis(serverId: string): Promise<RawStoatEmoji[]> {
+    return this.request("GET", `/servers/${serverId}/emojis`);
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
@@ -302,6 +307,13 @@ export interface RawStoatChannel {
   nsfw?: boolean;
   default_permissions?: { a: number; d: number } | null;
   role_permissions?: Record<string, { a: number; d: number }>;
+}
+
+/** `Emoji` — confirmed real via the OpenAPI spec. `_id` doubles as the Autumn CDN asset id (bucket `emojis`, same convention as avatars/icons/banners) and the id used in a real `:id:` message-content shortcode / reaction target. */
+export interface RawStoatEmoji {
+  _id: string;
+  name: string;
+  animated?: boolean;
 }
 
 /** `ChannelUnread` — confirmed real via the OpenAPI spec: `_id` is a composite `{channel, user}` key, `last_id` the last message read in that channel, `mentions` the array of message ids that actually pinged the user (the real data a "ping counter" badge needs, not just a plain unread dot). */

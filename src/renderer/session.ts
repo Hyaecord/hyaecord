@@ -54,6 +54,8 @@ import {
   isStoatChannelUnread,
   getStoatChannelMentionCount,
   getStoatGuildUnread,
+  getStoatServerEmojis,
+  fetchStoatServerEmojis,
   type StoatChannelSummary,
   type StoatMessageSummary,
   type StoatRoleSummary
@@ -614,14 +616,20 @@ function wireComposer(): void {
 
   const emojiButton = document.getElementById("emoji-picker-button") as HTMLButtonElement;
   emojiButton.addEventListener("click", () => {
-    openEmojiPicker(emojiButton, emoji => {
-      const start = input.selectionStart ?? input.value.length;
-      const end = input.selectionEnd ?? input.value.length;
-      input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
-      const caret = start + emoji.length;
-      input.setSelectionRange(caret, caret);
-      input.focus();
-    });
+    const customEmoji =
+      activeChatPlatform === "stoat" && activeGuildId ? getStoatServerEmojis(activeGuildId) : [];
+    openEmojiPicker(
+      emojiButton,
+      emoji => {
+        const start = input.selectionStart ?? input.value.length;
+        const end = input.selectionEnd ?? input.value.length;
+        input.value = input.value.slice(0, start) + emoji + input.value.slice(end);
+        const caret = start + emoji.length;
+        input.setSelectionRange(caret, caret);
+        input.focus();
+      },
+      customEmoji
+    );
   });
 }
 
@@ -1723,6 +1731,10 @@ function selectStoatGuildUI(id: string): void {
   void fetchStoatMembers(id).then(members => {
     if (activeGuildId === id) renderStoatMembers(members);
   });
+  // Real custom-emoji fetch for this server (GET /servers/{id}/emojis) —
+  // populates both the emoji picker's "This Server" tab and real `:id:`
+  // shortcode rendering in message content (fillStoatMessageContent).
+  void fetchStoatServerEmojis(id);
 
   const list = document.getElementById("channels")!;
   list.replaceChildren();

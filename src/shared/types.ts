@@ -217,6 +217,7 @@ export interface HyaecordBridge {
   stoatEditChannel(channelId: string, patch: { slowmode?: number | null; nsfw?: boolean }): Promise<boolean>;
   stoatSetDefaultChannelPermissions(channelId: string, allow: number, deny: number): Promise<boolean>;
   stoatSetRoleChannelPermissions(channelId: string, roleId: string, allow: number, deny: number): Promise<boolean>;
+  stoatGetServerEmojis(serverId: string): Promise<Array<{ id: string; name: string; animated: boolean; url: string }>>;
 }
 
 export interface StoatInvitePreview {

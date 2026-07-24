@@ -85,7 +85,8 @@ import {
   ackChannel as stoatAckChannel,
   editChannel as stoatEditChannel,
   setDefaultChannelPermissions as stoatSetDefaultChannelPermissions,
-  setRoleChannelPermissions as stoatSetRoleChannelPermissions
+  setRoleChannelPermissions as stoatSetRoleChannelPermissions,
+  getServerEmojis as stoatGetServerEmojis
 } from "./stoat";
 
 loadEnvFile();
@@ -232,6 +233,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatSetRoleChannelPermissions, (_e, channelId: string, roleId: string, allow: number, deny: number) =>
     stoatSetRoleChannelPermissions(channelId, roleId, allow, deny)
   );
+  ipcMain.handle(IPC.stoatGetServerEmojis, (_e, serverId: string) => stoatGetServerEmojis(serverId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

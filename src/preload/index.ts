@@ -55,6 +55,7 @@ const bridge: HyaecordBridge = {
     ipcRenderer.invoke(IPC.stoatSetDefaultChannelPermissions, channelId, allow, deny),
   stoatSetRoleChannelPermissions: (channelId, roleId, allow, deny) =>
     ipcRenderer.invoke(IPC.stoatSetRoleChannelPermissions, channelId, roleId, allow, deny),
+  stoatGetServerEmojis: serverId => ipcRenderer.invoke(IPC.stoatGetServerEmojis, serverId),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {
