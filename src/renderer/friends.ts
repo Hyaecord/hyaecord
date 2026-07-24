@@ -206,6 +206,12 @@ export function openFriendsList(): void {
       el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("div", { className: "friend-add-row" }, usernameInput, addButton),
+    // Only shown when Stoat friends can actually appear in this same list
+    // (below) — without it, someone might reasonably assume this one input
+    // sends a request on whichever platform, when it's really Discord-only
+    // this pass (see BUILD_PROMPT.md item 73 for why: the two platforms
+    // need different input formats and there's no platform picker here).
+    isStoatReady() ? el("p", { className: "step-hint friend-add-caution" }, t("friends.addDiscordOnly")) : "",
     el("p", { className: "step-hint friend-add-caution" }, t("friends.addCaution")),
     tabsBar,
     list
