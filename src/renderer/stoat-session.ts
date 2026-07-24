@@ -753,6 +753,34 @@ export function applyLiveStoatReaction(container: HTMLElement, messageId: string
   if (countEl) countEl.textContent = String(nextUsers.length);
 }
 
+/**
+ * Real mention syntax — `<@userId>` (26-char ULID, same convention
+ * Discord uses with `<@id>`, well-established and stable across the
+ * Revolt-derived protocol Stoat forked from) inside message content was
+ * rendering as literal, unreadable `<@01H8...>` text since nothing ever
+ * parsed it. Splits content into safe text/element nodes (never
+ * `innerHTML` — same "message content must never become HTML" rule
+ * session.ts's Discord path follows) and resolves each id against the
+ * user cache, falling back to a generic "@user" for anyone not cached.
+ */
+const MENTION_PATTERN = /<@([0-9A-Za-z]{26})>/g;
+
+/** Clears and re-populates an existing `<p class="msg-content">` with parsed mention nodes — shared by the initial render and by edit-in-place (item 70), so an edited message's mentions still render correctly rather than reverting to plain text. */
+function fillStoatMessageContent(target: HTMLElement, content: string): void {
+  target.replaceChildren();
+  let lastIndex = 0;
+  for (const match of content.matchAll(MENTION_PATTERN)) {
+    const [full, userId] = match;
+    const index = match.index ?? 0;
+    if (index > lastIndex) target.append(content.slice(lastIndex, index));
+    const cached = userId ? userCache.get(userId) : undefined;
+    const name = cached?.displayName || cached?.username || t("message.unknownUser");
+    target.append(el("span", { className: "msg-mention" }, `@${name}`));
+    lastIndex = index + full.length;
+  }
+  if (lastIndex < content.length) target.append(content.slice(lastIndex));
+}
+
 /** Same window Discord's own client uses for grouping consecutive messages from one author — see GROUP_WINDOW_MS's twin in session.ts. */
 const GROUP_WINDOW_MS = 7 * 60 * 1000;
 
@@ -807,7 +835,8 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
     : msg.avatar
       ? el("img", { className: "msg-avatar", src: msg.avatar, alt: "", loading: "lazy" })
       : el("span", { className: "msg-avatar msg-avatar-fallback", "aria-hidden": "true" }, msg.authorName[0] ?? "?");
-  const content = el("p", { className: "msg-content" }, msg.content);
+  const content = el("p", { className: "msg-content" });
+  fillStoatMessageContent(content, msg.content);
   applyTwemoji(content);
 
   /** Swaps the content paragraph for an inline `<input>` (Enter saves via the real PATCH endpoint, Escape cancels) — no modal system for this, matching how lightweight the original edit is meant to feel. */
@@ -824,7 +853,7 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
           msg.edited = true;
         }
       }
-      content.replaceChildren(msg.content);
+      fillStoatMessageContent(content, msg.content);
       applyTwemoji(content);
       input.replaceWith(content);
     };

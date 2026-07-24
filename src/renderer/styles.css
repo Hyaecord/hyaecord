@@ -582,6 +582,13 @@ body {
 }
 .msg-edited { color: var(--text-dim); font-size: 0.72rem; }
 .msg-reply-indicator { margin: 0 0 0.2rem; font-size: 0.78rem; color: var(--text-dim); }
+.msg-mention {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--accent);
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 600;
+}
 .composer-reply-bar {
   display: flex;
   align-items: center;

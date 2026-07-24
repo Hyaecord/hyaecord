@@ -53,6 +53,7 @@
   "message.reply": "Reply",
   "message.replyingTo": "Replying to a message",
   "message.replyingToNamed": "Replying to {name}",
+  "message.unknownUser": "user",
   "composer.replyingTo": "Replying to {name}",
   "composer.cancelReply": "Cancel reply",
   "serverFolders.untitled": "Folder",
