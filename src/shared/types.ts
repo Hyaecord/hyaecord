@@ -193,6 +193,14 @@ export interface HyaecordBridge {
   stoatPinMessage(channelId: string, messageId: string): Promise<boolean>;
   stoatUnpinMessage(channelId: string, messageId: string): Promise<boolean>;
   stoatGetUser(userId: string): Promise<{ id: string; username: string; displayName: string | null; avatar: string | null } | null>;
+  getCredits(): Promise<CreditsContributor[]>;
+}
+
+export interface CreditsContributor {
+  username: string;
+  avatarUrl: string;
+  profileUrl: string;
+  contributions: number;
 }
 
 export interface StoatDMSummary {
@@ -328,9 +336,19 @@ export interface PluginInfo {
   error: string | null;
   settingsSchema?: Record<string, PluginSettingSchemaEntry>;
   settingsValues: Record<string, boolean | number | string>;
-  /** Set only for plugins that are a from-scratch reimplementation of an existing Equicord/Vencord plugin's behaviour — see PLUGIN_PARITY.md. Renders a dual-logo attribution badge. */
+  /**
+   * Set only for plugins that are a from-scratch reimplementation of an
+   * existing Equicord/Vencord plugin's behaviour — see PLUGIN_PARITY.md.
+   * Renders one logo per real source project plus Hyaecord's own.
+   * `sources` can be more than one entry: Equicord bundles every one of
+   * Vencord's own plugins (`src/plugins/` in the Equicord repo) alongside
+   * its own exclusives (`src/equicordplugins/`) — a plugin that
+   * originates from the former genuinely ships in *both* projects, so its
+   * badge is real when it lists both, not just Equicord because that's
+   * where the source link happens to point.
+   */
   portedFrom: {
-    source: "equicord" | "vencord";
+    sources: Array<"equicord" | "vencord">;
     originalName: string;
     url: string;
   } | null;

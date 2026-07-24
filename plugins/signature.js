@@ -12,7 +12,7 @@ definePlugin({
   description: "Appends a signature to the end of your messages.",
   authors: ["Ven, Rini, ImBanana (Vencord)", "KrystalSkull (Equicord)", "Hyaecord"],
   portedFrom: {
-    source: "equicord",
+    sources: ["equicord"],
     originalName: "Signature",
     url: "https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/signature/index.tsx"
   },

@@ -23,7 +23,7 @@ definePlugin({
   description: "Type a time in backticks (`3:51`, `17:59`, `0:13PM`) and it becomes a real Discord timestamp.",
   authors: ["Ven, Tyler, Grzesiek11 (Vencord)", "Hyaecord"],
   portedFrom: {
-    source: "vencord",
+    sources: ["vencord", "equicord"],
     originalName: "SendTimestamps",
     url: "https://github.com/Equicord/Equicord/blob/main/src/plugins/sendTimestamps/index.tsx"
   },

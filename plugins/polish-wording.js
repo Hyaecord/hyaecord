@@ -67,7 +67,7 @@ definePlugin({
   description: "Fixes missing apostrophes in contractions, and can expand them to full words.",
   authors: ["Samwich (Vencord)", "WKoA (Equicord)", "Hyaecord"],
   portedFrom: {
-    source: "equicord",
+    sources: ["equicord"],
     originalName: "PolishWording",
     url: "https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/polishWording/index.ts"
   },

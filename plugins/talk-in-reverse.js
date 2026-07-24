@@ -12,7 +12,7 @@ definePlugin({
   description: "Reverses the message content before sending it.",
   authors: ["Tolgchu (Equicord)", "Hyaecord"],
   portedFrom: {
-    source: "equicord",
+    sources: ["equicord"],
     originalName: "TalkInReverse",
     url: "https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/talkInReverse/index.tsx"
   },

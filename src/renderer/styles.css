@@ -1023,6 +1023,35 @@ body {
 .credits-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
 .credits-license { color: var(--text-dim); font-size: 0.8rem; }
 .credits-disclaimer { font-size: 0.75rem; margin-top: 0.75rem; }
+.credits-subheading { margin: 1rem 0 0.3rem; font-size: 0.95rem; }
+.contributors-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  min-height: 2.5rem;
+}
+.contributor-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  width: 64px;
+  padding: 0.4rem;
+  border: none;
+  background: none;
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  color: var(--text-dim);
+}
+.contributor-tile:hover { background: var(--bg-hover); color: var(--text); }
+.contributor-tile img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.contributor-name {
+  font-size: 0.68rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .emoji-picker-grid {
   /* Same flex-column + inner-scroll-region pattern as the server rail's
      settings-button fix earlier: without flex:1 + min-height:0 here, this

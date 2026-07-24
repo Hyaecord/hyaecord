@@ -29,6 +29,7 @@ const bridge: HyaecordBridge = {
   stoatPinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.stoatPinMessage, channelId, messageId),
   stoatUnpinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.stoatUnpinMessage, channelId, messageId),
   stoatGetUser: userId => ipcRenderer.invoke(IPC.stoatGetUser, userId),
+  getCredits: () => ipcRenderer.invoke(IPC.getCredits),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

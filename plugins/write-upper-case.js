@@ -11,7 +11,7 @@ definePlugin({
   description: "Changes the first letter of each sentence in your messages to uppercase.",
   authors: ["Samwich (Vencord)", "KrystalSkull (Equicord)", "Hyaecord"],
   portedFrom: {
-    source: "equicord",
+    sources: ["equicord"],
     originalName: "WriteUpperCase",
     url: "https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/writeUpperCase/index.ts"
   },

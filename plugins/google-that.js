@@ -16,7 +16,7 @@ definePlugin({
   description: "Adds a /googlethat command that sends a Google search link.",
   authors: ["Samwich (Vencord)", "KrystalSkull (Equicord)", "Hyaecord"],
   portedFrom: {
-    source: "equicord",
+    sources: ["equicord"],
     originalName: "GoogleThat",
     url: "https://github.com/Equicord/Equicord/blob/main/src/equicordplugins/googleThat/index.ts"
   },

@@ -67,8 +67,15 @@ export interface PluginRuntimeApi {
 }
 
 export interface PortedFrom {
-  /** Which mod project the plugin's behaviour was ported/adapted from. */
-  source: "equicord" | "vencord";
+  /**
+   * Which mod project(s) the plugin's behaviour was ported/adapted from.
+   * More than one entry when it genuinely ships in both — a plugin from
+   * Equicord's `src/plugins/` directory is a Vencord-original plugin
+   * Equicord just bundles, so it's real in both places (`["vencord",
+   * "equicord"]`); one from `src/equicordplugins/` only exists in
+   * Equicord (`["equicord"]`).
+   */
+  sources: Array<"equicord" | "vencord">;
   /** The original plugin's name, if different from this port's `name`. */
   originalName: string;
   /** Link to the original plugin's source file, for attribution and to verify the port against. */

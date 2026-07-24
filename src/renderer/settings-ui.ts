@@ -252,6 +252,21 @@ const CREDITS = [
   { name: "ws", url: "https://github.com/websockets/ws", license: "MIT" }
 ];
 
+/** One contributor tile: real GitHub avatar + username, linking to their real profile — see credits.ts for why it's a GitHub avatar specifically (that's what GitHub's own contributors API actually returns; there's no general way to source a Discord avatar for an arbitrary contributor). */
+function contributorTile(c: { username: string; avatarUrl: string; profileUrl: string }): HTMLElement {
+  return el(
+    "button",
+    {
+      type: "button",
+      className: "contributor-tile",
+      title: c.username,
+      onClick: () => void window.hyaecord.openExternal(c.profileUrl)
+    },
+    el("img", { src: c.avatarUrl, alt: "", loading: "lazy" }),
+    el("span", { className: "contributor-name" }, c.username)
+  );
+}
+
 function creditsSection(): HTMLElement {
   const list = el(
     "ul",
@@ -269,11 +284,31 @@ function creditsSection(): HTMLElement {
       )
     )
   );
+
+  const contributorsGrid = el("div", { className: "contributors-grid" }, el("p", { className: "step-hint" }, t("settings.credits.loading")));
+  void window.hyaecord.getCredits().then(contributors => {
+    contributorsGrid.replaceChildren();
+    if (contributors.length === 0) {
+      contributorsGrid.append(el("p", { className: "step-hint" }, t("settings.credits.contributorsEmpty")));
+      return;
+    }
+    for (const c of contributors) contributorsGrid.append(contributorTile(c));
+  });
+
   return el(
     "div",
     { className: "credits-body" },
     el("p", { className: "row-description" }, t("settings.credits.intro")),
     list,
+    el("h3", { className: "credits-subheading" }, t("settings.credits.contributors")),
+    contributorsGrid,
+    // Honest empty state, not a "coming soon" placeholder — Stoat support
+    // is new enough this pass that nobody outside this app's own commits
+    // has specifically worked on it yet; this section exists so real
+    // Stoat-focused contributors have somewhere to be credited once they
+    // show up, not to imply a program that doesn't exist yet.
+    el("h3", { className: "credits-subheading" }, t("settings.credits.stoatHelpers")),
+    el("p", { className: "row-description" }, t("settings.credits.stoatHelpersEmpty")),
     el("p", { className: "row-description credits-disclaimer" }, t("settings.credits.disclaimer"))
   );
 }
@@ -373,9 +408,16 @@ function pluginSettingRow(pluginId: string, key: string, plugin: PluginInfo): HT
  * shows the source project's icon and Hyaecord's own icon side by side, so
  * it's visually clear the code was adapted, not vendored unmodified.
  */
+const SOURCE_LABELS: Record<"equicord" | "vencord", string> = { equicord: "Equicord", vencord: "Vencord" };
+
 function portedFromBadge(portedFrom: PluginInfo["portedFrom"]): HTMLElement | string {
   if (!portedFrom) return "";
-  const sourceLabel = portedFrom.source === "equicord" ? "Equicord" : "Vencord";
+  const sourceLabels = portedFrom.sources.map(s => SOURCE_LABELS[s]).join(" + ");
+  const logos: HTMLElement[] = [];
+  portedFrom.sources.forEach((source, i) => {
+    if (i > 0) logos.push(el("span", { className: "plugin-attribution-plus", "aria-hidden": "true" }, "+"));
+    logos.push(el("span", { className: `plugin-attribution-logo plugin-attribution-logo-${source}`, "aria-hidden": "true" }));
+  });
   return el(
     "a",
     {
@@ -383,12 +425,12 @@ function portedFromBadge(portedFrom: PluginInfo["portedFrom"]): HTMLElement | st
       href: portedFrom.url,
       target: "_blank",
       rel: "noreferrer",
-      title: t("plugins.portedFrom", { source: sourceLabel, original: portedFrom.originalName })
+      title: t("plugins.portedFrom", { source: sourceLabels, original: portedFrom.originalName })
     },
-    el("span", { className: `plugin-attribution-logo plugin-attribution-logo-${portedFrom.source}`, "aria-hidden": "true" }),
+    ...logos,
     el("span", { className: "plugin-attribution-plus", "aria-hidden": "true" }, "+"),
     el("span", { className: "plugin-attribution-logo plugin-attribution-logo-hyaecord", "aria-hidden": "true" }),
-    el("span", { className: "plugin-attribution-label" }, t("plugins.portedFrom.short", { source: sourceLabel }))
+    el("span", { className: "plugin-attribution-label" }, t("plugins.portedFrom.short", { source: sourceLabels }))
   );
 }
 
