@@ -772,6 +772,7 @@ body {
 }
 .join-server-name { font-weight: 600; margin: 0; }
 .join-server-card .btn { margin-inline-start: auto; }
+.modal.join-server-modal { width: min(440px, calc(100vw - 2rem)); }
 .join-server-divider {
   margin: 1.25rem 0 0.5rem;
   padding-top: 1rem;
