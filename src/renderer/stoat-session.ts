@@ -143,10 +143,6 @@ export function onStoatStateChange(cb: (state: StoatSession["state"]) => void): 
   return () => sessionListeners.delete(cb);
 }
 
-export function getActiveStoatChannel(): { guildId: string | null; channelId: string | null } {
-  return { guildId: activeGuildId, channelId: activeChannelId };
-}
-
 interface RawStoatServer {
   _id: string;
   name?: string;
