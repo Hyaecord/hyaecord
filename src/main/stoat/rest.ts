@@ -122,6 +122,11 @@ export class StoatRestClient {
     return this.request("DELETE", `/servers/${serverId}?leave_silently=false`);
   }
 
+  /** `POST /servers/create` — real per the OpenAPI spec's `DataCreateServer`/`CreateServerLegacyResponse`; only `name` is required. */
+  createServer(name: string): Promise<RawCreateServerResponse> {
+    return this.request("POST", "/servers/create", { name });
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
@@ -254,4 +259,9 @@ export interface RawInviteJoinResponse {
   type: string;
   server?: { _id: string; name?: string; icon?: { _id: string } | null; channels: string[]; banner?: { _id: string } | null };
   channels?: Array<{ _id: string; channel_type?: string; name?: string; voice?: unknown | null }>;
+}
+
+export interface RawCreateServerResponse {
+  server: { _id: string; name?: string; icon?: { _id: string } | null; banner?: { _id: string } | null; channels: string[]; owner: string };
+  channels: Array<{ _id: string; channel_type?: string; name?: string; voice?: unknown | null }>;
 }

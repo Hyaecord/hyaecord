@@ -221,6 +221,11 @@ export function isStoatServerOwner(serverId: string): boolean {
   return !!guild && !!selfUserId && guild.ownerId === selfUserId;
 }
 
+/** Real "create a new server" — POST /servers/create, only a name required. The new server also arrives via the "ServerCreate" dispatch (harmlessly de-duped there), but we don't need to wait on that since the REST response gives us the id directly. */
+export async function createStoatServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }> {
+  return window.hyaecord.stoatCreateServer(name);
+}
+
 export async function leaveStoatServer(serverId: string): Promise<boolean> {
   const ok = await window.hyaecord.stoatLeaveServer(serverId);
   if (ok) {

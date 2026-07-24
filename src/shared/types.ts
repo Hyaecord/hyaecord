@@ -209,6 +209,7 @@ export interface HyaecordBridge {
   stoatPreviewInvite(codeOrUrl: string): Promise<{ ok: true; invite: StoatInvitePreview } | { ok: false; error: string }>;
   stoatJoinInvite(code: string): Promise<{ ok: boolean; error?: string }>;
   stoatLeaveServer(serverId: string): Promise<boolean>;
+  stoatCreateServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }>;
 }
 
 export interface StoatInvitePreview {

@@ -360,6 +360,19 @@ export function stopTyping(channelId: string): void {
   gateway?.endTyping(channelId);
 }
 
+/** Real "create a new server" — `POST /servers/create`, only `name` required (no icon upload needed, so no dependency on the Autumn upload flow this pass deliberately doesn't build — see stoat-session.ts's module doc comment). Returns the new server id directly from the REST response rather than waiting on the "ServerCreate" gateway dispatch (which still arrives too, harmlessly de-duped client-side). */
+export async function createServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, error: "invalid" };
+  try {
+    const res = await rest.createServer(trimmed);
+    return { ok: true, serverId: res.server._id };
+  } catch (err) {
+    return { ok: false, error: err instanceof StoatRestError ? err.message : "network" };
+  }
+}
+
 export async function leaveServer(serverId: string): Promise<boolean> {
   if (!rest) return false;
   try {

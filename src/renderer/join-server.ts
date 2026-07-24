@@ -1,6 +1,6 @@
 import { el, showToast, t, trapFocus } from "./ui";
 import { icon } from "./icons";
-import { previewStoatInvite, joinStoatServer } from "./stoat-session";
+import { previewStoatInvite, joinStoatServer, createStoatServer } from "./stoat-session";
 
 /**
  * "Join a Stoat server" — real gap found while auditing reachable UI:
@@ -90,6 +90,39 @@ export function openJoinServerDialog(): void {
     t("joinServer.preview")
   );
 
+  // Real "create a new server" — same real gap category as joining
+  // (there was no way to add a server to the account at all), just the
+  // other half of it. POST /servers/create only needs a name, so this
+  // doesn't need an icon-upload flow (deliberately not built this pass —
+  // see stoat-session.ts's module doc comment).
+  const createNameInput = el("input", {
+    type: "text",
+    className: "friend-add-input",
+    placeholder: t("joinServer.createPlaceholder"),
+    "aria-label": t("joinServer.createPlaceholder")
+  }) as HTMLInputElement;
+  const createError = el("p", { className: "login-error", role: "alert" });
+  const createButton = el(
+    "button",
+    {
+      type: "button",
+      className: "btn primary",
+      onClick: async () => {
+        createError.textContent = "";
+        const name = createNameInput.value.trim();
+        if (!name) return;
+        const res = await createStoatServer(name);
+        if (res.ok) {
+          showToast(t("joinServer.created", { name }));
+          close();
+        } else {
+          createError.textContent = t("joinServer.invalid");
+        }
+      }
+    },
+    t("joinServer.create")
+  );
+
   const dialog = el(
     "div",
     { className: "modal join-server-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "join-server-title" },
@@ -102,7 +135,10 @@ export function openJoinServerDialog(): void {
     el("p", { className: "modal-subtitle" }, t("joinServer.subtitle")),
     el("div", { className: "friend-add-row" }, codeInput, previewButton),
     errorEl,
-    previewArea
+    previewArea,
+    el("h2", { className: "join-server-divider" }, t("joinServer.orCreate")),
+    el("div", { className: "friend-add-row" }, createNameInput, createButton),
+    createError
   );
 
   const overlay = el("div", { className: "overlay" }, dialog);

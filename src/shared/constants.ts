@@ -115,5 +115,6 @@ export const IPC = {
   stoatOpenDM: "hyaecord:stoat-open-dm",
   stoatPreviewInvite: "hyaecord:stoat-preview-invite",
   stoatJoinInvite: "hyaecord:stoat-join-invite",
-  stoatLeaveServer: "hyaecord:stoat-leave-server"
+  stoatLeaveServer: "hyaecord:stoat-leave-server",
+  stoatCreateServer: "hyaecord:stoat-create-server"
 } as const;
