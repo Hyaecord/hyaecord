@@ -3,6 +3,7 @@ import { el, t } from "./ui";
 import { applyTwemoji } from "./twemoji";
 import { ulidTimestampMs } from "./ulid";
 import { openContextMenu } from "./context-menu";
+import { openEmojiPicker } from "./emoji-picker";
 
 /**
  * Stoat (formerly Revolt) session — a real, separate integration talking
@@ -43,6 +44,11 @@ export interface StoatAttachment {
   height: number | null;
 }
 
+export interface StoatReaction {
+  emoji: string;
+  userIds: string[];
+}
+
 export interface StoatMessageSummary {
   id: string;
   channelId: string;
@@ -53,6 +59,7 @@ export interface StoatMessageSummary {
   pinned: boolean;
   edited: boolean;
   attachments: StoatAttachment[];
+  reactions: StoatReaction[];
   /** Decoded from the message's own ULID — see ulid.ts; Stoat's Message schema has no separate timestamp field. */
   timestamp: number | null;
 }
@@ -337,6 +344,7 @@ async function onLiveMessage(data: unknown): Promise<void> {
     pinned: raw.pinned ?? false,
     edited: !!raw.edited,
     attachments: attachmentsFromRaw(raw.attachments),
+    reactions: [],
     timestamp: ulidTimestampMs(raw._id)
   };
   messageCreateListeners.forEach(cb => cb(msg));
@@ -357,12 +365,29 @@ function onLiveMessageDelete(data: unknown): void {
   messageDeleteListeners.forEach(cb => cb(payload.id!));
 }
 
+type StoatReactionListener = (messageId: string, emoji: string, userId: string, added: boolean) => void;
+const messageReactionListeners = new Set<StoatReactionListener>();
+
+export function onStoatMessageReaction(cb: StoatReactionListener): () => void {
+  messageReactionListeners.add(cb);
+  return () => messageReactionListeners.delete(cb);
+}
+
+/** "MessageReact"/"MessageUnreact" — per the same Revolt protocol convention as the message events above, carrying `{id, channel_id, user_id, emoji_id}`; same honesty caveat about not being live-verified this pass. */
+function onLiveReaction(data: unknown, added: boolean): void {
+  const payload = data as { id?: string; user_id?: string; emoji_id?: string };
+  if (!payload.id || !payload.user_id || !payload.emoji_id) return;
+  messageReactionListeners.forEach(cb => cb(payload.id!, payload.emoji_id!, payload.user_id!, added));
+}
+
 export function initStoatSession(): void {
   window.hyaecord.onStoatEvent((event, data) => {
     if (event === "READY") onReady(data);
     else if (event === "Message") void onLiveMessage(data);
     else if (event === "MessageUpdate") onLiveMessageUpdate(data);
     else if (event === "MessageDelete") onLiveMessageDelete(data);
+    else if (event === "MessageReact") onLiveReaction(data, true);
+    else if (event === "MessageUnreact") onLiveReaction(data, false);
   });
   window.hyaecord.onStoatState(session => {
     currentState = session.state;
@@ -397,6 +422,7 @@ interface RawStoatMessageSummary {
   pinned: boolean;
   edited: boolean;
   attachments: StoatAttachment[];
+  reactions: StoatReaction[];
 }
 
 export async function selectStoatChannel(channelId: string): Promise<StoatMessageSummary[]> {
@@ -421,6 +447,14 @@ export async function pinStoatMessage(channelId: string, messageId: string): Pro
 
 export async function unpinStoatMessage(channelId: string, messageId: string): Promise<boolean> {
   return window.hyaecord.stoatUnpinMessage(channelId, messageId);
+}
+
+export async function addStoatReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
+  return window.hyaecord.stoatAddReaction(channelId, messageId, emoji);
+}
+
+export async function removeStoatReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
+  return window.hyaecord.stoatRemoveReaction(channelId, messageId, emoji);
 }
 
 export function getSelfStoatUserId(): string | null {
@@ -461,6 +495,108 @@ function attachmentsEl(attachments: StoatAttachment[]): HTMLElement | null {
           )
     )
   );
+}
+
+/**
+ * Renders one pill per reaction (emoji + count), highlighted when the
+ * current user is one of the reactors, plus a small "+" to add a new one
+ * via the existing emoji picker. Clicking toggles the real reaction via
+ * PUT/DELETE (rest.ts) and optimistically updates `msg.reactions` in
+ * place before the round trip resolves, re-rendering just this row —
+ * the same optimistic-then-reconcile pattern real chat clients use so a
+ * click feels instant rather than waiting on the network.
+ */
+function reactionsEl(msg: StoatMessageSummary): HTMLElement {
+  const wrap = el("div", { className: "msg-reactions" });
+  const render = () => {
+    wrap.replaceChildren();
+    for (const r of msg.reactions) {
+      if (r.userIds.length === 0) continue;
+      const mine = !!selfUserId && r.userIds.includes(selfUserId);
+      const pill = el(
+        "button",
+        {
+          type: "button",
+          className: mine ? "msg-reaction-pill is-mine" : "msg-reaction-pill",
+          "data-emoji": r.emoji,
+          "data-users": r.userIds.join(","),
+          onClick: () => {
+            if (mine) {
+              r.userIds = r.userIds.filter(id => id !== selfUserId);
+              void removeStoatReaction(msg.channelId, msg.id, r.emoji);
+            } else if (selfUserId) {
+              r.userIds = [...r.userIds, selfUserId];
+              void addStoatReaction(msg.channelId, msg.id, r.emoji);
+            }
+            render();
+          }
+        },
+        r.emoji,
+        " ",
+        el("span", { className: "msg-reaction-count" }, String(r.userIds.length))
+      );
+      applyTwemoji(pill);
+      wrap.append(pill);
+    }
+    const addButton = el(
+      "button",
+      { type: "button", className: "msg-reaction-add", "aria-label": t("emojiPicker.title"), onClick: () => openEmojiPicker(addButton, emoji => {
+        const existing = msg.reactions.find(r => r.emoji === emoji);
+        if (existing) {
+          if (!existing.userIds.includes(selfUserId ?? "")) existing.userIds.push(selfUserId ?? "");
+        } else {
+          msg.reactions.push({ emoji, userIds: selfUserId ? [selfUserId] : [] });
+        }
+        void addStoatReaction(msg.channelId, msg.id, emoji);
+        render();
+      }) },
+      "+"
+    );
+    wrap.append(addButton);
+  };
+  render();
+  return wrap;
+}
+
+/**
+ * Patches an already-rendered message row's reaction pills directly in
+ * the DOM for a live reaction from someone else — reads/writes each
+ * pill's own `data-users` attribute rather than needing the original
+ * `StoatMessageSummary` object still in memory (this app doesn't keep
+ * one around after rendering), so a live `MessageReact`/`MessageUnreact`
+ * dispatch can update the right message even though session.ts's chat
+ * pane only tracks DOM state, not a live message array.
+ */
+export function applyLiveStoatReaction(container: HTMLElement, messageId: string, emoji: string, userId: string, added: boolean): void {
+  const reactionsRow = container.querySelector<HTMLElement>(`.msg[data-message="${messageId}"] .msg-reactions`);
+  if (!reactionsRow) return;
+  const existing = reactionsRow.querySelector<HTMLButtonElement>(`.msg-reaction-pill[data-emoji="${CSS.escape(emoji)}"]`);
+  const users = existing ? existing.dataset.users!.split(",").filter(Boolean) : [];
+  const nextUsers = added ? [...new Set([...users, userId])] : users.filter(id => id !== userId);
+
+  if (nextUsers.length === 0) {
+    existing?.remove();
+    return;
+  }
+  const mine = !!selfUserId && nextUsers.includes(selfUserId);
+  const pill =
+    existing ??
+    (() => {
+      const messageEl = reactionsRow.closest<HTMLElement>(".msg");
+      const channelId = messageEl?.dataset.channel ?? "";
+      const created = el("button", { type: "button", className: "msg-reaction-pill", "data-emoji": emoji }, emoji, " ", el("span", { className: "msg-reaction-count" }, "0"));
+      created.addEventListener("click", () => {
+        const mine = created.classList.contains("is-mine");
+        void (mine ? removeStoatReaction(channelId, messageId, emoji) : addStoatReaction(channelId, messageId, emoji));
+      });
+      applyTwemoji(created);
+      reactionsRow.insertBefore(created, reactionsRow.lastElementChild); // before the "+" add button
+      return created;
+    })();
+  pill.dataset.users = nextUsers.join(",");
+  pill.classList.toggle("is-mine", mine);
+  const countEl = pill.querySelector(".msg-reaction-count");
+  if (countEl) countEl.textContent = String(nextUsers.length);
 }
 
 /** Same window Discord's own client uses for grouping consecutive messages from one author — see GROUP_WINDOW_MS's twin in session.ts. */
@@ -505,9 +641,16 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
   bodyChildren.push(content);
   const attachmentsRow = attachmentsEl(msg.attachments);
   if (attachmentsRow) bodyChildren.push(attachmentsRow);
+  bodyChildren.push(reactionsEl(msg));
   const row = el(
     "article",
-    { className: grouped ? "msg msg-grouped" : "msg", "data-message": msg.id, "data-author": msg.authorId, "data-timestamp": String(msg.timestamp ?? 0) },
+    {
+      className: grouped ? "msg msg-grouped" : "msg",
+      "data-message": msg.id,
+      "data-author": msg.authorId,
+      "data-timestamp": String(msg.timestamp ?? 0),
+      "data-channel": msg.channelId
+    },
     avatar,
     el("div", { className: "msg-body" }, ...bodyChildren)
   );

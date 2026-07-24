@@ -141,6 +141,15 @@ function toAttachment(file: { _id: string; filename: string; content_type: strin
   };
 }
 
+export interface StoatReactionSummary {
+  emoji: string;
+  userIds: string[];
+}
+
+function toReactions(reactions: Record<string, string[]> | undefined): StoatReactionSummary[] {
+  return Object.entries(reactions ?? {}).map(([emoji, userIds]) => ({ emoji, userIds }));
+}
+
 function toSummary(
   raw: RawStoatMessage,
   users: Map<string, RawStoatUser>
@@ -154,6 +163,7 @@ function toSummary(
   pinned: boolean;
   edited: boolean;
   attachments: StoatAttachmentSummary[];
+  reactions: StoatReactionSummary[];
 } {
   const author = raw.user ?? users.get(raw.author);
   return {
@@ -165,7 +175,8 @@ function toSummary(
     content: raw.content ?? "",
     pinned: raw.pinned ?? false,
     edited: !!raw.edited,
-    attachments: (raw.attachments ?? []).map(toAttachment)
+    attachments: (raw.attachments ?? []).map(toAttachment),
+    reactions: toReactions(raw.reactions)
   };
 }
 
@@ -228,6 +239,26 @@ export async function unpinMessage(channelId: string, messageId: string): Promis
   if (!rest) return false;
   try {
     await rest.unpinMessage(channelId, messageId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function addReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.addReaction(channelId, messageId, emoji);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function removeReaction(channelId: string, messageId: string, emoji: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.removeReaction(channelId, messageId, emoji);
     return true;
   } catch {
     return false;

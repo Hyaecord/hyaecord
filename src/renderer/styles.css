@@ -599,6 +599,35 @@ body {
 }
 .msg-attachment-file:hover { background: var(--bg-hover); }
 
+.msg-reactions { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.35rem; align-items: center; }
+.msg-reaction-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-raise);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.msg-reaction-pill:hover { border-color: var(--accent); }
+.msg-reaction-pill.is-mine { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, var(--bg-raise)); color: var(--text); }
+.msg-reaction-count { font-size: 0.78rem; }
+.msg-reaction-add {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  border: 1px dashed var(--border);
+  background: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+}
+.msg:hover .msg-reaction-add,
+.msg-reaction-add:focus-visible { opacity: 1; }
+
 .pin-notice {
   color: var(--text-dim);
   font-size: 0.82rem;

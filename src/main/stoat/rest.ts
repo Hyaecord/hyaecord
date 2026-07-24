@@ -88,6 +88,15 @@ export class StoatRestClient {
     return this.request("POST", `/channels/${channelId}/messages/${messageId}/pin`);
   }
 
+  /** `PUT/DELETE .../reactions/{emoji}` — confirmed real via the OpenAPI spec. `emoji` is the raw unicode character itself for a standard emoji reaction (custom server emoji aren't supported by this pass), matching the `Message.reactions` hashmap's own "emoji ID" keys. */
+  addReaction(channelId: string, messageId: string, emoji: string): Promise<void> {
+    return this.request("PUT", `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`);
+  }
+
+  removeReaction(channelId: string, messageId: string, emoji: string): Promise<void> {
+    return this.request("DELETE", `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`);
+  }
+
   unpinMessage(channelId: string, messageId: string): Promise<void> {
     return this.request("DELETE", `/channels/${channelId}/messages/${messageId}/pin`);
   }
@@ -137,6 +146,8 @@ export interface RawStoatMessage {
   pinned?: boolean;
   attachments?: RawStoatFile[] | null;
   edited?: string | null;
+  /** Hashmap of emoji "id" (the raw unicode character, for a standard reaction) to the array of user ids who reacted with it — confirmed real via the OpenAPI Message schema. */
+  reactions?: Record<string, string[]>;
 }
 
 export interface RawStoatBulkMessages {

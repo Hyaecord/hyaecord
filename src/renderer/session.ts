@@ -35,6 +35,8 @@ import {
   onStoatMessageCreate,
   onStoatMessageUpdate,
   onStoatMessageDelete,
+  onStoatMessageReaction,
+  applyLiveStoatReaction,
   lastRenderedMessageMeta,
   type StoatChannelSummary,
   type StoatMessageSummary
@@ -221,6 +223,10 @@ export function initSession(): void {
   onStoatMessageCreate(onStoatMessageCreated);
   onStoatMessageUpdate(onStoatMessageUpdated);
   onStoatMessageDelete(onStoatMessageDeleted);
+  onStoatMessageReaction((messageId, emoji, userId, added) => {
+    if (activeChatPlatform !== "stoat") return;
+    applyLiveStoatReaction(document.getElementById("messages")!, messageId, emoji, userId, added);
+  });
 }
 
 /** Stoat's half of onMessageCreate() — live messages weren't shown at all before this; the chat pane only ever updated by reselecting the channel. */
