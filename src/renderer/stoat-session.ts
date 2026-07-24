@@ -171,6 +171,39 @@ interface RawStoatReadyUser {
   status?: { presence?: string | null } | null;
 }
 
+function toGuildSummary(server: RawStoatServer, channels: RawStoatChannel[]): StoatGuildSummary {
+  const channelsById = new Map(channels.map(ch => [ch._id, ch]));
+  return {
+    id: server._id,
+    name: server.name ?? "?",
+    icon: server.icon ? `${cdnBase}/icons/${server.icon._id}` : null,
+    banner: server.banner ? `${cdnBase}/banners/${server.banner._id}` : null,
+    channels: server.channels
+      .map(id => channelsById.get(id))
+      .filter((ch): ch is RawStoatChannel => !!ch && ch.channel_type === "TextChannel")
+      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null }))
+  };
+}
+
+/** "ServerCreate" — real per the Revolt protocol convention, sent when you join a new server (via invite or otherwise) so the client doesn't need a full reconnect to see it. Payload carries the new server plus its channels together. */
+function onLiveServerCreate(data: unknown): void {
+  const payload = data as { server?: RawStoatServer; channels?: RawStoatChannel[] };
+  if (!payload.server) return;
+  if (guilds.some(g => g.id === payload.server!._id)) return; // already have it (e.g. a duplicate/replay dispatch)
+  guilds = [...guilds, toGuildSummary(payload.server, payload.channels ?? [])];
+  stateChangeListeners.forEach(cb => cb());
+}
+
+/** Real "preview a server invite" — GET /invites/{code} (rest.ts), before actually joining. */
+export async function previewStoatInvite(codeOrUrl: string) {
+  return window.hyaecord.stoatPreviewInvite(codeOrUrl);
+}
+
+/** Real "join a server" — POST /invites/{code}. The new server arrives live via the "ServerCreate" dispatch above rather than needing a manual refetch. */
+export async function joinStoatServer(code: string) {
+  return window.hyaecord.stoatJoinInvite(code);
+}
+
 function onReady(data: unknown): void {
   const payload = data as {
     servers?: RawStoatServer[];
@@ -196,17 +229,8 @@ function onReady(data: unknown): void {
 
   membersByServer.clear();
 
-  const channelsById = new Map((payload.channels ?? []).map(ch => [ch._id, ch]));
-  guilds = (payload.servers ?? []).map(server => ({
-    id: server._id,
-    name: server.name ?? "?",
-    icon: server.icon ? `${cdnBase}/icons/${server.icon._id}` : null,
-    banner: server.banner ? `${cdnBase}/banners/${server.banner._id}` : null,
-    channels: server.channels
-      .map(id => channelsById.get(id))
-      .filter((ch): ch is RawStoatChannel => !!ch && ch.channel_type === "TextChannel")
-      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null }))
-  }));
+  const allChannels = payload.channels ?? [];
+  guilds = (payload.servers ?? []).map(server => toGuildSummary(server, allChannels));
   stateChangeListeners.forEach(cb => cb());
 }
 
@@ -459,6 +483,7 @@ export function initStoatSession(): void {
     else if (event === "MessageDelete") onLiveMessageDelete(data);
     else if (event === "MessageReact") onLiveReaction(data, true);
     else if (event === "MessageUnreact") onLiveReaction(data, false);
+    else if (event === "ServerCreate") onLiveServerCreate(data);
   });
   window.hyaecord.onStoatState(session => {
     currentState = session.state;

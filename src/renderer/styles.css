@@ -727,6 +727,30 @@ body {
 .profile-popout-username { margin: 0.1rem 1rem 0; color: var(--text-dim); font-size: 0.85rem; }
 .profile-popout-status-text { margin: 0.4rem 1rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
 .profile-popout-message-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 1rem; }
+
+.join-server-pill { color: var(--text-dim); }
+.join-server-preview { margin-top: 0.75rem; }
+.join-server-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  background: var(--bg-raise);
+}
+.join-server-icon { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.join-server-icon-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+.join-server-name { font-weight: 600; margin: 0; }
+.join-server-card .btn { margin-inline-start: auto; }
 .profile-banner {
   height: 80px;
   background: var(--bg-hover);

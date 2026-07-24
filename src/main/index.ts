@@ -74,7 +74,9 @@ import {
   sendFriendRequest as stoatSendFriendRequest,
   acceptFriendRequest as stoatAcceptFriendRequest,
   removeFriend as stoatRemoveFriend,
-  openDM as stoatOpenDM
+  openDM as stoatOpenDM,
+  previewInvite as stoatPreviewInvite,
+  joinServerInvite as stoatJoinInvite
 } from "./stoat";
 
 loadEnvFile();
@@ -204,6 +206,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatAcceptFriendRequest, (_e, userId: string) => stoatAcceptFriendRequest(userId));
   ipcMain.handle(IPC.stoatRemoveFriend, (_e, userId: string) => stoatRemoveFriend(userId));
   ipcMain.handle(IPC.stoatOpenDM, (_e, userId: string) => stoatOpenDM(userId));
+  ipcMain.handle(IPC.stoatPreviewInvite, (_e, codeOrUrl: string) => stoatPreviewInvite(codeOrUrl));
+  ipcMain.handle(IPC.stoatJoinInvite, (_e, code: string) => stoatJoinInvite(code));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

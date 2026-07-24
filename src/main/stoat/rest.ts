@@ -107,6 +107,16 @@ export class StoatRestClient {
     return this.request("GET", `/users/${userId}/dm`);
   }
 
+  /** `GET /invites/{code}` — "Fetch Invite", real per the OpenAPI spec's `InviteResponse`. Accepts a bare code, not a full URL — the caller strips any `stoat.chat/invite/` prefix first. */
+  fetchInvite(code: string): Promise<RawInviteResponse> {
+    return this.request("GET", `/invites/${code}`);
+  }
+
+  /** `POST /invites/{code}` — "Join Invite", real per the OpenAPI spec's `InviteJoinResponse`. */
+  joinInvite(code: string): Promise<RawInviteJoinResponse> {
+    return this.request("POST", `/invites/${code}`);
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
@@ -224,4 +234,19 @@ export interface RawStoatConfig {
   features: {
     autumn: { enabled: boolean; url: string };
   };
+}
+
+/** Only the "Server" invite variant's fields this app actually uses — the real schema (`InviteResponse`) also has a "Group" variant with different fields, not relevant here since group DMs aren't joined via invite the same way. */
+export interface RawInviteResponse {
+  type: string;
+  server_id?: string;
+  server_name?: string;
+  server_icon?: { _id: string } | null;
+  member_count?: number;
+}
+
+export interface RawInviteJoinResponse {
+  type: string;
+  server?: { _id: string; name?: string; icon?: { _id: string } | null; channels: string[]; banner?: { _id: string } | null };
+  channels?: Array<{ _id: string; channel_type?: string; name?: string; voice?: unknown | null }>;
 }

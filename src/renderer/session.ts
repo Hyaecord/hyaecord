@@ -16,6 +16,7 @@ import { initVoiceUI, setVoiceChannelNameResolver } from "./voice-ui";
 import { icon } from "./icons";
 import { applyTwemoji } from "./twemoji";
 import { setStoatMessageHandler } from "./stoat-profile-popout";
+import { openJoinServerDialog } from "./join-server";
 import {
   getStoatGuilds,
   onStoatGuildsChanged,
@@ -1103,6 +1104,26 @@ export function renderRail(): void {
     icon("users")
   );
   rail.append(friendsPill);
+
+  // Real gap found while auditing reachable UI: there was no way to add a
+  // *new* Stoat server to the account at all, only interact with ones
+  // already in the Ready snapshot. Stoat-only per this pass's scope —
+  // Discord has the same underlying gap (no in-app "join via invite"
+  // either) but wasn't touched here.
+  if (isStoatReady()) {
+    const joinServerPill = el(
+      "button",
+      {
+        className: "server-pill join-server-pill",
+        type: "button",
+        title: t("joinServer.title"),
+        "aria-label": t("joinServer.title"),
+        onClick: () => openJoinServerDialog()
+      },
+      icon("plus")
+    );
+    rail.append(joinServerPill);
+  }
 
   const showDiscord = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "discord";
   const showStoat = state.settings.mergeSidebar || state.settings.activeSidebarPlatform === "stoat";

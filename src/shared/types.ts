@@ -206,6 +206,15 @@ export interface HyaecordBridge {
   stoatAcceptFriendRequest(userId: string): Promise<boolean>;
   stoatRemoveFriend(userId: string): Promise<boolean>;
   stoatOpenDM(userId: string): Promise<string | null>;
+  stoatPreviewInvite(codeOrUrl: string): Promise<{ ok: true; invite: StoatInvitePreview } | { ok: false; error: string }>;
+  stoatJoinInvite(code: string): Promise<{ ok: boolean; error?: string }>;
+}
+
+export interface StoatInvitePreview {
+  serverId: string;
+  serverName: string;
+  serverIcon: string | null;
+  memberCount: number;
 }
 
 export interface CreditsContributor {

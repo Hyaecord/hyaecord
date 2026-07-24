@@ -112,5 +112,7 @@ export const IPC = {
   stoatSendFriendRequest: "hyaecord:stoat-send-friend-request",
   stoatAcceptFriendRequest: "hyaecord:stoat-accept-friend-request",
   stoatRemoveFriend: "hyaecord:stoat-remove-friend",
-  stoatOpenDM: "hyaecord:stoat-open-dm"
+  stoatOpenDM: "hyaecord:stoat-open-dm",
+  stoatPreviewInvite: "hyaecord:stoat-preview-invite",
+  stoatJoinInvite: "hyaecord:stoat-join-invite"
 } as const;

@@ -360,6 +360,46 @@ export function stopTyping(channelId: string): void {
   gateway?.endTyping(channelId);
 }
 
+export interface StoatInvitePreview {
+  serverId: string;
+  serverName: string;
+  serverIcon: string | null;
+  memberCount: number;
+}
+
+/** Real "preview a server invite before joining" — `GET /invites/{code}`, strips any `stoat.chat/invite/`-style prefix the user might have pasted in whole. */
+export async function previewInvite(codeOrUrl: string): Promise<{ ok: true; invite: StoatInvitePreview } | { ok: false; error: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  const code = codeOrUrl.trim().replace(/^https?:\/\/(www\.)?stoat\.chat\/invite\//, "").replace(/\/$/, "");
+  if (!code) return { ok: false, error: "invalid" };
+  try {
+    const raw = await rest.fetchInvite(code);
+    if (raw.type !== "Server" || !raw.server_id) return { ok: false, error: "invalid" };
+    return {
+      ok: true,
+      invite: {
+        serverId: raw.server_id,
+        serverName: raw.server_name ?? "?",
+        serverIcon: raw.server_icon ? stoatFileUrl("icons", raw.server_icon._id) : null,
+        memberCount: raw.member_count ?? 0
+      }
+    };
+  } catch (err) {
+    return { ok: false, error: err instanceof StoatRestError ? err.message : "network" };
+  }
+}
+
+/** Real "actually join" — `POST /invites/{code}`. The renderer re-derives the same bare code from whatever was previewed, so this doesn't need the raw pasted URL again. */
+export async function joinServerInvite(code: string): Promise<{ ok: boolean; error?: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  try {
+    await rest.joinInvite(code);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof StoatRestError ? err.message : "network" };
+  }
+}
+
 /** Real "start a new DM" — Stoat had no way to open one with someone you don't already have a DM channel with; `GET /users/{id}/dm` both opens the existing one and creates one if needed, per the OpenAPI spec. */
 export async function openDM(userId: string): Promise<string | null> {
   if (!rest) return null;
