@@ -1,15 +1,18 @@
 import { el, t } from "./ui";
 import { stoatPresenceStatus } from "./stoat-session";
+import { applyTwemoji } from "./twemoji";
 
 /**
  * A minimal profile popout for Stoat users — deliberately not sharing
- * profile-popout.ts's implementation: that one fetches Discord's real
- * `/users/{id}/profile` endpoint (bio, banner, connections, badges) over
- * REST on open. Stoat has an equivalent (`GET /users/{target}/profile`)
- * but this pass only surfaces what's already in memory (avatar, name,
- * presence — everywhere a Stoat avatar is clickable already has this from
- * the user cache) rather than adding another network round trip; a real
- * bio/banner popout is a reasonable future increment, not done here.
+ * profile-popout.ts's implementation, since the two platforms' real
+ * profile endpoints return different fields (Discord's also has
+ * connections/badges/theme colours; Stoat's is just bio + banner).
+ * Avatar/name/presence render instantly from the already-cached data
+ * (everywhere this popout opens from already has that in memory); the
+ * real bio/banner (`GET /users/{id}/profile`, confirmed via the OpenAPI
+ * spec) load in progressively after, the same "don't block the popout
+ * opening on a network round trip" pattern Discord's own profile popout
+ * uses.
  */
 
 let openPopout: HTMLElement | null = null;
@@ -86,19 +89,40 @@ export function openStoatProfilePopout(anchor: HTMLElement, user: StoatProfileDa
   document.body.append(popout);
   openPopout = popout;
 
-  const rect = anchor.getBoundingClientRect();
-  const width = 280;
-  let left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
-  let top = rect.bottom + 6;
-  popout.style.left = `${left}px`;
-  popout.style.top = `${top}px`;
-  requestAnimationFrame(() => {
-    const h = popout.getBoundingClientRect().height;
-    if (top + h > window.innerHeight - 12) {
-      popout.style.top = `${Math.max(12, rect.top - h - 6)}px`;
-    }
-  });
+  const reposition = () => {
+    const rect = anchor.getBoundingClientRect();
+    const width = 280;
+    const left = Math.max(12, Math.min(rect.left, window.innerWidth - width - 12));
+    let top = rect.bottom + 6;
+    popout.style.left = `${left}px`;
+    popout.style.top = `${top}px`;
+    requestAnimationFrame(() => {
+      const h = popout.getBoundingClientRect().height;
+      if (top + h > window.innerHeight - 12) {
+        top = Math.max(12, rect.top - h - 6);
+        popout.style.top = `${top}px`;
+      }
+    });
+  };
+  reposition();
 
   document.addEventListener("pointerdown", onOutsideClick, true);
   document.addEventListener("keydown", onEscape, true);
+
+  void window.hyaecord.stoatGetProfile(user.id).then(profile => {
+    if (openPopout !== popout) return; // closed while loading
+    if (profile.banner) {
+      popout.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.45)), url(${profile.banner})`;
+      popout.style.backgroundSize = "cover";
+      popout.style.backgroundPosition = "top";
+    }
+    if (profile.bio) {
+      const messageBtn = popout.querySelector(".profile-popout-message-btn");
+      const bio = el("p", { className: "profile-popout-bio" }, profile.bio);
+      applyTwemoji(bio);
+      if (messageBtn) messageBtn.before(bio);
+      else popout.append(bio);
+    }
+    reposition(); // content just grew — the flip-above-if-clipped check needs to re-run
+  });
 }

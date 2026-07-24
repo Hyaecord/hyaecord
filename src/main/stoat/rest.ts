@@ -51,6 +51,11 @@ export class StoatRestClient {
     return this.request("GET", `/users/${userId}`);
   }
 
+  /** `GET /users/{target}/profile` — "Fetch User Profile" (bio + banner), real per the OpenAPI spec. Deliberately not preloaded for everyone in the member/friends list — only fetched when a profile popout is actually opened, same reasoning Discord's own profile popout uses. */
+  getProfile(userId: string): Promise<{ content: string | null; background: { _id: string } | null }> {
+    return this.request("GET", `/users/${userId}/profile`);
+  }
+
   /** `POST /users/friend` — real, confirmed via the OpenAPI `DataSendFriendRequest` schema; needs the full `username#discriminator` combo, not just a bare username (Stoat still has discriminators, unlike modern Discord). */
   sendFriendRequest(usernameWithDiscriminator: string): Promise<RawStoatUser> {
     return this.request("POST", "/users/friend", { username: usernameWithDiscriminator });

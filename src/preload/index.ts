@@ -47,6 +47,7 @@ const bridge: HyaecordBridge = {
   stoatLeaveServer: serverId => ipcRenderer.invoke(IPC.stoatLeaveServer, serverId),
   stoatCreateServer: name => ipcRenderer.invoke(IPC.stoatCreateServer, name),
   stoatCreateInvite: channelId => ipcRenderer.invoke(IPC.stoatCreateInvite, channelId),
+  stoatGetProfile: userId => ipcRenderer.invoke(IPC.stoatGetProfile, userId),
   discordLogout: () => ipcRenderer.invoke(IPC.discordLogout),
   getDiscordSession: () => ipcRenderer.invoke(IPC.discordGetSession),
   onDiscordState: cb => {

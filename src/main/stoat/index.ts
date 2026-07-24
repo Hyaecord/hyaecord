@@ -308,6 +308,20 @@ export async function removeReaction(channelId: string, messageId: string, emoji
   }
 }
 
+/** Real bio/banner for the profile popout — fetched on demand only when a popout actually opens (see rest.ts's getProfile), not preloaded for every user in a list. */
+export async function getUserProfile(userId: string): Promise<{ bio: string | null; banner: string | null }> {
+  if (!rest) return { bio: null, banner: null };
+  try {
+    const profile = await rest.getProfile(userId);
+    return {
+      bio: profile.content ?? null,
+      banner: profile.background ? stoatFileUrl("backgrounds", profile.background._id) : null
+    };
+  } catch {
+    return { bio: null, banner: null };
+  }
+}
+
 /** Resolves an author the renderer hasn't cached yet (e.g. someone who posts a live message but wasn't in Ready's initial user snapshot) — real `GET /users/{id}`, not a guess at what the gateway would eventually send. */
 export async function getUser(userId: string): Promise<{ id: string; username: string; displayName: string | null; avatar: string | null } | null> {
   if (!rest) return null;

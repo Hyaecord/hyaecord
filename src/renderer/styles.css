@@ -747,6 +747,7 @@ body {
 .profile-popout-username { margin: 0.1rem 1rem 0; color: var(--text-dim); font-size: 0.85rem; }
 .profile-popout-status-text { margin: 0.4rem 1rem 1rem; color: var(--text-dim); font-size: 0.85rem; }
 .profile-popout-message-btn { display: block; width: calc(100% - 2rem); margin: 0 1rem 1rem; }
+.profile-popout-bio { margin: 0 1rem 1rem; color: var(--text); font-size: 0.85rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 .join-server-pill { color: var(--text-dim); }
 .join-server-preview { margin-top: 0.75rem; }
