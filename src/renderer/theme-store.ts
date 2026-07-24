@@ -22,6 +22,21 @@ export function openThemeStore(): void {
   };
 
   const list = el("div", { className: "theme-store-list" }, el("p", { className: "step-hint" }, t("themeStore.loading")));
+  let allThemes: CommunityTheme[] = [];
+
+  const searchInput = el("input", {
+    type: "text",
+    className: "theme-store-search",
+    placeholder: t("themeStore.searchPlaceholder"),
+    "aria-label": t("themeStore.searchPlaceholder")
+  }) as HTMLInputElement;
+  searchInput.addEventListener("input", () => {
+    const query = searchInput.value.trim().toLowerCase();
+    const filtered = query
+      ? allThemes.filter(th => th.name.toLowerCase().includes(query) || th.author.toLowerCase().includes(query))
+      : allThemes;
+    renderList(list, filtered);
+  });
 
   const dialog = el(
     "div",
@@ -31,6 +46,7 @@ export function openThemeStore(): void {
       el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
     el("p", { className: "modal-subtitle" }, t("themeStore.subtitle")),
+    searchInput,
     list,
     el("div", { className: "theme-store-footer" },
       el("p", { className: "step-hint" }, t("themeStore.submit.body")),
@@ -60,14 +76,15 @@ export function openThemeStore(): void {
   document.body.append(overlay);
   (dialog.querySelector(".close") as HTMLButtonElement).focus();
 
-  void window.hyaecord.getCommunityThemes().then(themes => renderList(list, themes));
+  void window.hyaecord.getCommunityThemes().then(themes => {
+    allThemes = themes;
+    renderList(list, themes);
+  });
 }
 
 function renderList(container: HTMLElement, themes: CommunityTheme[]): void {
   container.replaceChildren();
-
-  const noneCard = themeCard(null);
-  container.append(noneCard);
+  container.append(themeCard(null));
 
   if (themes.length === 0) {
     container.append(el("p", { className: "step-hint" }, t("themeStore.empty")));

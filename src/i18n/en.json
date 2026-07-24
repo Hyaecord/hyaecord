@@ -89,6 +89,7 @@
   "themeStore.title": "Community Theme Store",
   "themeStore.subtitle": "Every theme ships a light and a dark version — layout and motion stay the same, only colours change. Submitted and reviewed by the community, hosted free on GitHub.",
   "themeStore.loading": "Loading themes…",
+  "themeStore.searchPlaceholder": "Search themes by name or author…",
   "themeStore.empty": "Couldn't reach the theme registry — check your connection and try again later.",
   "themeStore.none": "Default (no override)",
   "themeStore.byAuthor": "by {author}",

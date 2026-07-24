@@ -1234,6 +1234,16 @@ body {
 .modal h1 { font-size: 1.4rem; }
 .modal h2 { font-size: 1.05rem; margin-bottom: 0.5rem; }
 .modal-subtitle { color: var(--text-dim); margin: 0.35rem 0 1rem; }
+.theme-store-search {
+  width: 100%;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-m);
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text);
+  font: inherit;
+}
 .modal p { margin-bottom: 0.75rem; }
 
 .wizard-body { flex: 1; overflow-y: auto; min-height: 14rem; }
