@@ -1,5 +1,5 @@
 import type { UserProfile } from "@shared/types";
-import { el, t } from "./ui";
+import { el, showToast, t } from "./ui";
 import { getPfpOverride, getBgOverride } from "./avatar-overrides";
 import { wireUserContextMenu, profileColorsItem } from "./context-menu";
 
@@ -132,7 +132,22 @@ function renderProfileBody(profile: UserProfile, globalBadges: Array<{ icon: str
     avatar,
     el("div", { className: "profile-identity" }, ...identityChildren)
   );
-  wireUserContextMenu(body, profile.id, () => (profile.themeColors ? [profileColorsItem(profile.themeColors)] : []));
+  // Real `blockUser` IPC (main process's real Discord block-relationship
+  // REST call) existed but had no reachable UI anywhere in the app —
+  // found the same way as item 74's account-switcher gap, auditing for
+  // dead/unreachable bridge methods. The profile popout's own context
+  // menu is where Discord's real client puts this action too.
+  wireUserContextMenu(body, profile.id, () => [
+    ...(profile.themeColors ? [profileColorsItem(profile.themeColors)] : []),
+    {
+      label: t("friends.block"),
+      onClick: () => {
+        void window.hyaecord.blockUser(profile.id).then(ok => {
+          showToast(ok ? t("friends.blocked", { name: profile.globalName ?? profile.username }) : t("friends.actionFailed"));
+        });
+      }
+    }
+  ]);
   if (badges) body.append(badges);
   if (profile.bio) body.append(el("p", { className: "profile-bio" }, profile.bio));
   if (connections) body.append(connections);

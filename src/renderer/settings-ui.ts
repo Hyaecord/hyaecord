@@ -100,6 +100,59 @@ function voiceVideoSection(): HTMLElement {
  * for it here, rather than a dead "coming soon" row.
  */
 function accountsSection(): HTMLElement {
+  // There was genuinely no way to disconnect (or reconnect a different)
+  // Discord account from the UI at all before this — Stoat had a real
+  // connect/disconnect row, Discord didn't, found while auditing this
+  // section for the activeSidebarPlatform gap right above it.
+  const discordStatus = el("p", { className: "row-description" }, t("settings.accounts.checking"));
+  const discordRow = el(
+    "div",
+    { className: "setting-row" },
+    el("span", { className: "row-text" }, el("span", { className: "row-label" }, "Discord"), discordStatus)
+  );
+  const refreshDiscordRow = async () => {
+    const session = await window.hyaecord.getDiscordSession();
+    discordRow.querySelector(".account-action-btn")?.remove();
+    if (session.state === "ready" && session.user) {
+      discordStatus.textContent = t("settings.accounts.connectedAs", { name: session.user.globalName ?? session.user.username });
+      discordRow.append(
+        el(
+          "button",
+          {
+            className: "btn ghost account-action-btn",
+            type: "button",
+            onClick: async () => {
+              await window.hyaecord.discordLogout();
+              renderRail();
+              void refreshDiscordRow();
+            }
+          },
+          t("settings.accounts.disconnect")
+        )
+      );
+    } else {
+      discordStatus.textContent = t("settings.accounts.notConnected");
+      discordRow.append(
+        el(
+          "button",
+          {
+            className: "btn account-action-btn",
+            type: "button",
+            onClick: async () => {
+              discordStatus.textContent = t("settings.accounts.connecting");
+              const res = await window.hyaecord.discordLoginBrowser();
+              if (!res.ok && res.error !== "cancelled") showToast(t("settings.accounts.connectFailed"));
+              renderRail();
+              void refreshDiscordRow();
+            }
+          },
+          t("settings.accounts.connect")
+        )
+      );
+    }
+  };
+  void refreshDiscordRow();
+
   const stoatStatus = el("p", { className: "row-description" }, t("settings.accounts.checking"));
   const stoatRow = el(
     "div",
@@ -185,7 +238,7 @@ function accountsSection(): HTMLElement {
     }
   );
 
-  return el("div", { className: "accounts-section" }, stoatRow, mergeToggle, platformSwitchRow);
+  return el("div", { className: "accounts-section" }, discordRow, stoatRow, mergeToggle, platformSwitchRow);
 }
 
 function avatarSection(): HTMLElement {

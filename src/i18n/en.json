@@ -72,6 +72,8 @@
   "friends.decline": "Decline",
   "friends.cancel": "Cancel Request",
   "friends.unblock": "Unblock",
+  "friends.block": "Block User",
+  "friends.blocked": "Blocked {name}.",
   "friends.remove": "Remove Friend",
   "friends.type.friend": "Friend",
   "friends.type.incoming": "Incoming Request",
