@@ -172,6 +172,16 @@ export function onStoatGuildsChanged(cb: () => void): () => void {
   return () => stateChangeListeners.delete(cb);
 }
 
+let stateChangeDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+/** Coalesces a burst of rapid-fire notifications (e.g. a busy server's live messages updating unread state) into a single re-render, rather than letting every listener — including a full server-pill DOM rebuild — run once per message. */
+function notifyStateChangeDebounced(): void {
+  if (stateChangeDebounceTimer) return;
+  stateChangeDebounceTimer = setTimeout(() => {
+    stateChangeDebounceTimer = null;
+    stateChangeListeners.forEach(cb => cb());
+  }, 250);
+}
+
 export function getStoatGuilds(): StoatGuildSummary[] {
   return guilds;
 }
@@ -516,7 +526,14 @@ async function onLiveMessage(data: unknown): Promise<void> {
     // messages that arrive in the channel you're currently viewing.
     void ackStoatChannel(raw.channel, raw._id);
   } else {
-    stateChangeListeners.forEach(cb => cb());
+    // Real perf bug found live: a busy joined server (six-figure member
+    // count, correspondingly high message throughput) fired this on
+    // *every* incoming message, and every listener here (renderRail())
+    // does a full server-pill DOM rebuild — pinning the renderer at
+    // ~75% CPU from unread-badge updates for channels nobody was even
+    // looking at. Debounced instead: a burst of messages within the
+    // window collapses into one re-render.
+    notifyStateChangeDebounced();
   }
   messageCreateListeners.forEach(cb => cb(msg));
 }
