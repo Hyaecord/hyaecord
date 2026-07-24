@@ -17,6 +17,7 @@ import { icon } from "./icons";
 import { applyTwemoji } from "./twemoji";
 import { setStoatMessageHandler } from "./stoat-profile-popout";
 import { openJoinServerDialog } from "./join-server";
+import { showMentionSuggestions, closeMentionSuggestions, type MentionCandidate } from "./mention-suggestions";
 import {
   getStoatGuilds,
   onStoatGuildsChanged,
@@ -520,11 +521,38 @@ function wireComposer(): void {
         input.focus();
         closeSlashSuggestions();
       });
+      return;
+    }
+    closeSlashSuggestions();
+
+    // Real "@mention" composer autocomplete for Stoat — the real <@id>
+    // rendering (item 84) existed with no way to actually type one other
+    // than knowing someone's raw ULID by hand. Guild channels only (real
+    // member list to suggest from, see getStoatMembers) — DMs don't have
+    // a readily-available candidate pool this app tracks, a real, stated
+    // scope cut rather than a guess at who else might be in the DM.
+    const mentionMatch = activeChatPlatform === "stoat" && activeGuildId ? input.value.match(/@(\w*)$/) : null;
+    if (mentionMatch) {
+      const candidates: MentionCandidate[] = getStoatMembers(activeGuildId!).map(m => ({
+        id: m.userId,
+        displayName: m.nickname || m.displayName || m.username,
+        username: m.username
+      }));
+      showMentionSuggestions(input, mentionMatch[1] ?? "", candidates, candidate => {
+        const start = input.value.length - mentionMatch[0].length;
+        input.value = `${input.value.slice(0, start)}<@${candidate.id}> `;
+        input.setSelectionRange(input.value.length, input.value.length);
+        input.focus();
+        closeMentionSuggestions();
+      });
     } else {
-      closeSlashSuggestions();
+      closeMentionSuggestions();
     }
   });
-  input.addEventListener("blur", () => closeSlashSuggestions());
+  input.addEventListener("blur", () => {
+    closeSlashSuggestions();
+    closeMentionSuggestions();
+  });
 
   input.addEventListener("keydown", async ev => {
     if (ev.key !== "Enter" || !activeChannelId || !input.value.trim()) return;
