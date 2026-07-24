@@ -3,13 +3,14 @@ import { icon } from "./icons";
 import { previewStoatInvite, joinStoatServer, createStoatServer } from "./stoat-session";
 
 /**
- * "Join a Stoat server" — real gap found while auditing reachable UI:
- * there was no way to add a *new* server to the account at all, only
- * interact with ones already in the Ready snapshot. Backed by Stoat's
- * real invite endpoints (`GET`/`POST /invites/{code}`, confirmed via its
- * OpenAPI spec — `rest.ts`), a two-step preview-then-join flow like
- * Discord's own official client uses for invite links, not an
- * immediate blind join.
+ * "Add a Stoat server" — join via invite, or create a new one. Real gap
+ * found while auditing reachable UI: there was no way to add a *new*
+ * server to the account at all, only interact with ones already in the
+ * Ready snapshot. Backed by Stoat's real invite endpoints (`GET`/`POST
+ * /invites/{code}`, confirmed via its OpenAPI spec — `rest.ts`), a
+ * two-step preview-then-join flow like Discord's own official client
+ * uses for invite links, not an immediate blind join; and `POST
+ * /servers/create` for the create half.
  */
 
 let openDialog: HTMLElement | null = null;
