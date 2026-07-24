@@ -198,6 +198,8 @@ export interface HyaecordBridge {
   stoatRemoveReaction(channelId: string, messageId: string, emoji: string): Promise<boolean>;
   stoatEditMessage(channelId: string, messageId: string, content: string): Promise<boolean>;
   stoatDeleteMessage(channelId: string, messageId: string): Promise<boolean>;
+  stoatSearchMessages(channelId: string, query: string): Promise<unknown[]>;
+  stoatGetPinnedMessages(channelId: string): Promise<unknown[]>;
 }
 
 export interface CreditsContributor {

@@ -30,6 +30,7 @@ import {
   fetchStoatMembers,
   fetchStoatDMs,
   fetchStoatPins,
+  searchStoatMessages,
   pinStoatMessage,
   unpinStoatMessage,
   onStoatMessageCreate,
@@ -278,8 +279,34 @@ function jumpToChannel(guildId: string | null, channelId: string): void {
 function wireMessageSearch(): void {
   const button = document.getElementById("message-search-button") as HTMLButtonElement;
   button.addEventListener("click", () => {
-    openMessageSearch(button, { guildId: activeGuildId, channelId: activeGuildId ? null : activeChannelId }, resolveChannelName, channelId =>
-      jumpToChannel(activeGuildId, channelId)
+    if (activeChatPlatform === "stoat") {
+      if (!activeChannelId) return;
+      const channelId = activeChannelId;
+      // Stoat's real search endpoint (see rest.ts's searchMessages) is
+      // scoped to one channel, not guild-wide like Discord's — every hit
+      // is already in the channel that's currently open, so "jump" is a
+      // no-op beyond just closing the panel.
+      openMessageSearch(
+        button,
+        async query => ({
+          indexing: false,
+          hits: (await searchStoatMessages(channelId, query)).map(m => ({ id: m.id, channelId: m.channelId, content: m.content, authorName: m.authorName }))
+        }),
+        () => document.getElementById("chat-header")?.textContent ?? channelId,
+        () => {}
+      );
+      return;
+    }
+    const guildId = activeGuildId;
+    const channelId = activeChannelId;
+    openMessageSearch(
+      button,
+      async query => {
+        const result = await window.hyaecord.searchMessages(query, guildId, guildId ? null : channelId);
+        return { indexing: result.indexing, hits: result.messages };
+      },
+      resolveChannelName,
+      jumpChannelId => jumpToChannel(guildId, jumpChannelId)
     );
   });
 
@@ -288,10 +315,6 @@ function wireMessageSearch(): void {
     if (!activeChannelId) return;
     const channelId = activeChannelId;
     if (activeChatPlatform === "stoat") {
-      // No dedicated "list pins" endpoint on Stoat (see stoat-session.ts's
-      // fetchStoatPins) — this only finds pins within the channel's most
-      // recently fetched messages, a real but narrower scope than
-      // Discord's actual pins API below.
       openPinsPanel(pinsButton, {
         listPins: async () =>
           (await fetchStoatPins(channelId)).map(m => ({

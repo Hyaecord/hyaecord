@@ -193,6 +193,27 @@ export async function fetchMessages(channelId: string) {
   }
 }
 
+async function searchInternal(channelId: string, query: string | null, pinnedOnly: boolean) {
+  if (!rest) return [];
+  try {
+    const { messages, users } = await rest.searchMessages(channelId, query, pinnedOnly);
+    const userMap = new Map(users.map(u => [u._id, u]));
+    return messages.reverse().map(m => toSummary(m, userMap));
+  } catch {
+    return [];
+  }
+}
+
+/** Real full-text search within one channel — `POST /channels/{id}/search`, confirmed real via the OpenAPI spec. */
+export async function searchMessages(channelId: string, query: string) {
+  return searchInternal(channelId, query, false);
+}
+
+/** Real "every pinned message in this channel," not just the ones within the last-fetched page — see rest.ts's searchMessages for why this is a genuine upgrade over filtering fetchMessages() client-side. */
+export async function getPinnedMessages(channelId: string) {
+  return searchInternal(channelId, null, true);
+}
+
 export async function sendMessage(channelId: string, content: string): Promise<boolean> {
   if (!rest || !content.trim()) return false;
   try {

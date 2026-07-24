@@ -66,7 +66,9 @@ import {
   addReaction as stoatAddReaction,
   removeReaction as stoatRemoveReaction,
   editMessage as stoatEditMessage,
-  deleteMessage as stoatDeleteMessage
+  deleteMessage as stoatDeleteMessage,
+  searchMessages as stoatSearchMessages,
+  getPinnedMessages as stoatGetPinnedMessages
 } from "./stoat";
 
 loadEnvFile();
@@ -188,6 +190,8 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatRemoveReaction, (_e, channelId: string, messageId: string, emoji: string) => stoatRemoveReaction(channelId, messageId, emoji));
   ipcMain.handle(IPC.stoatEditMessage, (_e, channelId: string, messageId: string, content: string) => stoatEditMessage(channelId, messageId, content));
   ipcMain.handle(IPC.stoatDeleteMessage, (_e, channelId: string, messageId: string) => stoatDeleteMessage(channelId, messageId));
+  ipcMain.handle(IPC.stoatSearchMessages, (_e, channelId: string, query: string) => stoatSearchMessages(channelId, query));
+  ipcMain.handle(IPC.stoatGetPinnedMessages, (_e, channelId: string) => stoatGetPinnedMessages(channelId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

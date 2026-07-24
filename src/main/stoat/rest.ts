@@ -66,6 +66,23 @@ export class StoatRestClient {
     return this.request("POST", `/channels/${channelId}/messages`, { content });
   }
 
+  /**
+   * `POST .../search` — real full-text/pinned-only message search
+   * (`DataMessageSearch`), confirmed via the OpenAPI spec. `pinned: true`
+   * (mutually exclusive with `query` per the spec) is what actually makes
+   * a real "all pinned messages in this channel" list possible, instead
+   * of the earlier "only pins found in the last 50 fetched messages"
+   * limitation `fetchStoatPins` used before this existed.
+   */
+  searchMessages(channelId: string, query: string | null, pinnedOnly: boolean): Promise<RawStoatBulkMessages> {
+    return this.request("POST", `/channels/${channelId}/search`, {
+      query: pinnedOnly ? null : query,
+      pinned: pinnedOnly ? true : null,
+      limit: 50,
+      include_users: true
+    });
+  }
+
   /** Per the OpenAPI spec's `GET /users/dms` — returns every open DM and group-DM channel. */
   getDMs(): Promise<RawStoatChannel[]> {
     return this.request("GET", "/users/dms");

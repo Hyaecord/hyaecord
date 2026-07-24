@@ -1,17 +1,28 @@
-import type { MessageSearchResult } from "@shared/types";
 import { el, t } from "./ui";
 import { applyTwemoji } from "./twemoji";
 
+/** Platform-agnostic shape both Discord's real search response and Stoat's own real search response (see stoat-session.ts's searchStoatMessages) get mapped into, so this panel isn't hardcoded to one platform's REST shape. */
+export interface MessageSearchHit {
+  id: string;
+  channelId: string;
+  content: string;
+  authorName: string;
+}
+
 /**
  * Message search, closing the last real gap in the README's "Search &
- * pinned messages — Not yet built" row. Backed by Discord's own real
- * search endpoints — `GET /guilds/{guild.id}/messages/search` (guild-wide)
- * and `GET /channels/{channel.id}/messages/search` (a single DM, which has
- * no guild) — verified against the discord-userdoccers source
+ * pinned messages — Not yet built" row. Platform-agnostic itself (see
+ * `MessageSearchHit` above) — the caller (session.ts) supplies the actual
+ * search function per platform: Discord's own real search endpoints —
+ * `GET /guilds/{guild.id}/messages/search` (guild-wide) and `GET
+ * /channels/{channel.id}/messages/search` (a single DM, which has no
+ * guild) — verified against the discord-userdoccers source
  * (github.com/discord-userdoccers/discord-userdoccers, the project behind
  * docs.discord.food) rather than guessed, since neither endpoint is
  * documented on the page that URL normally serves for message-related
- * things.
+ * things; Stoat's own real `POST /channels/{id}/search` (confirmed via its
+ * OpenAPI spec, see stoat-session.ts's `searchStoatMessages`), scoped to a
+ * single channel rather than guild-wide.
  *
  * Deliberately scoped: this searches and lists matches, and clicking one
  * switches to that channel — it does *not* jump to the exact message
@@ -21,11 +32,6 @@ import { applyTwemoji } from "./twemoji";
  */
 
 const SEARCH_DEBOUNCE_MS = 400;
-
-export interface MessageSearchScope {
-  guildId: string | null;
-  channelId: string | null;
-}
 
 let openPanel: HTMLElement | null = null;
 
@@ -46,7 +52,7 @@ function onEscape(ev: KeyboardEvent): void {
 
 function renderResults(
   list: HTMLElement,
-  result: MessageSearchResult,
+  result: { indexing: boolean; hits: MessageSearchHit[] },
   resolveChannelName: (channelId: string) => string,
   onJump: (channelId: string) => void
 ): void {
@@ -55,11 +61,11 @@ function renderResults(
     list.append(el("p", { className: "message-search-empty" }, t("messageSearch.indexing")));
     return;
   }
-  if (result.messages.length === 0) {
+  if (result.hits.length === 0) {
     list.append(el("p", { className: "message-search-empty" }, t("messageSearch.empty")));
     return;
   }
-  for (const msg of result.messages) {
+  for (const msg of result.hits) {
     const contentEl = el("div", { className: "message-search-result-content" }, msg.content || t("messageSearch.noContent"));
     applyTwemoji(contentEl);
     const row = el(
@@ -86,7 +92,7 @@ function renderResults(
 
 export function openMessageSearch(
   anchor: HTMLElement,
-  scope: MessageSearchScope,
+  search: (query: string) => Promise<{ indexing: boolean; hits: MessageSearchHit[] }>,
   resolveChannelName: (channelId: string) => string,
   onJump: (channelId: string) => void
 ): void {
@@ -127,7 +133,7 @@ export function openMessageSearch(
     }
     const thisRequest = ++requestId;
     list.replaceChildren(el("p", { className: "message-search-empty" }, t("messageSearch.loading")));
-    void window.hyaecord.searchMessages(query, scope.guildId, scope.channelId).then(result => {
+    void search(query).then(result => {
       if (openPanel !== panel || thisRequest !== requestId) return;
       renderResults(list, result, resolveChannelName, onJump);
     });

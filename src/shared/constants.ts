@@ -104,5 +104,7 @@ export const IPC = {
   stoatAddReaction: "hyaecord:stoat-add-reaction",
   stoatRemoveReaction: "hyaecord:stoat-remove-reaction",
   stoatEditMessage: "hyaecord:stoat-edit-message",
-  stoatDeleteMessage: "hyaecord:stoat-delete-message"
+  stoatDeleteMessage: "hyaecord:stoat-delete-message",
+  stoatSearchMessages: "hyaecord:stoat-search-messages",
+  stoatGetPinnedMessages: "hyaecord:stoat-get-pinned-messages"
 } as const;

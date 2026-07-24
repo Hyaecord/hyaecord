@@ -425,20 +425,30 @@ interface RawStoatMessageSummary {
   reactions: StoatReaction[];
 }
 
+function mapRawMessages(raw: RawStoatMessageSummary[]): StoatMessageSummary[] {
+  return raw.map(m => ({ ...m, timestamp: ulidTimestampMs(m.id) }));
+}
+
 export async function selectStoatChannel(channelId: string): Promise<StoatMessageSummary[]> {
   activeChannelId = channelId;
   const raw = (await window.hyaecord.stoatFetchMessages(channelId)) as RawStoatMessageSummary[];
-  return raw.map(m => ({ ...m, timestamp: ulidTimestampMs(m.id) }));
+  return mapRawMessages(raw);
 }
 
 export async function sendStoatMessage(channelId: string, content: string): Promise<boolean> {
   return window.hyaecord.stoatSendMessage(channelId, content);
 }
 
-/** Stoat has no dedicated "list pins" endpoint (confirmed absent from its OpenAPI paths) — only pin/unpin actions and a `pinned` flag on each message. Real, honest scope: this surfaces pins found within the channel's most recently fetched messages, not the channel's full history. */
+/** Real full-text search within one channel — `POST /channels/{id}/search`, confirmed real via the OpenAPI spec (Stoat's own equivalent of Discord's message search, message-search.ts). */
+export async function searchStoatMessages(channelId: string, query: string): Promise<StoatMessageSummary[]> {
+  const raw = (await window.hyaecord.stoatSearchMessages(channelId, query)) as RawStoatMessageSummary[];
+  return mapRawMessages(raw);
+}
+
+/** Real, full-history pinned-messages list — `POST /channels/{id}/search` with `pinned: true` (confirmed real via the OpenAPI `DataMessageSearch` schema), not limited to whatever the channel's most recently fetched page happens to contain like the first version of this function was. */
 export async function fetchStoatPins(channelId: string): Promise<StoatMessageSummary[]> {
-  const messages = await selectStoatChannel(channelId);
-  return messages.filter(m => m.pinned);
+  const raw = (await window.hyaecord.stoatGetPinnedMessages(channelId)) as RawStoatMessageSummary[];
+  return mapRawMessages(raw);
 }
 
 export async function pinStoatMessage(channelId: string, messageId: string): Promise<boolean> {
