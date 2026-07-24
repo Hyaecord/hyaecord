@@ -1,5 +1,8 @@
 {
   "app.name": "Hyaecord",
+  "voice.connecting": "Connecting…",
+  "voice.connected": "Voice Connected — {channel}",
+  "voice.disconnect": "Disconnect",
   "shell.servers": "Servers",
   "shell.channels": "Channels",
   "shell.members": "Members",
@@ -119,6 +122,7 @@
   "login.vpnNotice": "Looks like you might be using a VPN. Discord's login sometimes throws up extra verification for VPN connections — if login gets stuck, try disabling it and retrying.",
   "login.vpnNotice.dismiss": "Got it",
   "login.error.network": "Couldn't reach Discord. Check your connection and try again.",
+  "login.error.invalid-token": "That token didn't work — try logging in again.",
   "login.sessionOnly": "No system keyring was found, so this login lasts until you quit — nothing was written to disk.",
   "wizard.title": "Welcome to Hyaecord",
   "wizard.subtitle": "Let's get you set up. Everything here is optional and explained in plain language.",

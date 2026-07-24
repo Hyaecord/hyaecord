@@ -1597,7 +1597,12 @@ function showLogin(): void {
         const result = await loginStoat();
         stoatButton.removeAttribute("disabled");
         if (!result.ok && result.error !== "cancelled") {
-          stoatError.textContent = result.error ?? t("login.error.network");
+          // Was showing the raw error code ("invalid-token", "network") as
+          // literal user-facing text instead of a translated message —
+          // Discord's own button (below) already used the real t() lookup;
+          // Stoat's just never matched it. Same real error codes on both
+          // (see main/stoat/index.ts's completeLogin), so the same keys apply.
+          stoatError.textContent = t(`login.error.${result.error}`);
         }
       }
     },
