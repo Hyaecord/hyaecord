@@ -939,7 +939,15 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
     content.replaceWith(input);
     input.focus();
     input.setSelectionRange(input.value.length, input.value.length);
+    // Real bug found live: removing `input` via replaceWith() below also
+    // fires its `blur` listener, which called finish(true) a second time —
+    // throwing on the already-detached node, and worse, silently re-saving
+    // (with whatever was typed) right after the user had just cancelled
+    // with Escape. This guard makes every path but the first a no-op.
+    let finished = false;
     const finish = async (save: boolean) => {
+      if (finished) return;
+      finished = true;
       if (save && input.value.trim() && input.value !== msg.content) {
         const ok = await editStoatMessage(msg.channelId, msg.id, input.value.trim());
         if (ok) {
