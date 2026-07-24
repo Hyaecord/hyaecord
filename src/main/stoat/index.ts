@@ -383,6 +383,17 @@ export async function leaveServer(serverId: string): Promise<boolean> {
   }
 }
 
+/** Real "generate a shareable invite link" — the app could only ever *use* an invite before this (item 79), never create one. Builds the real, clickable `stoat.chat/invite/{code}` URL from the returned code. */
+export async function createInvite(channelId: string): Promise<{ ok: boolean; url?: string; error?: string }> {
+  if (!rest) return { ok: false, error: "network" };
+  try {
+    const invite = await rest.createInvite(channelId);
+    return { ok: true, url: `https://stoat.chat/invite/${invite._id}` };
+  } catch (err) {
+    return { ok: false, error: err instanceof StoatRestError ? err.message : "network" };
+  }
+}
+
 export interface StoatInvitePreview {
   serverId: string;
   serverName: string;

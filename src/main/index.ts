@@ -78,7 +78,8 @@ import {
   previewInvite as stoatPreviewInvite,
   joinServerInvite as stoatJoinInvite,
   leaveServer as stoatLeaveServer,
-  createServer as stoatCreateServer
+  createServer as stoatCreateServer,
+  createInvite as stoatCreateInvite
 } from "./stoat";
 
 loadEnvFile();
@@ -212,6 +213,7 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatJoinInvite, (_e, code: string) => stoatJoinInvite(code));
   ipcMain.handle(IPC.stoatLeaveServer, (_e, serverId: string) => stoatLeaveServer(serverId));
   ipcMain.handle(IPC.stoatCreateServer, (_e, name: string) => stoatCreateServer(name));
+  ipcMain.handle(IPC.stoatCreateInvite, (_e, channelId: string) => stoatCreateInvite(channelId));
   ipcMain.handle(IPC.discordDeleteChannel, (_e, channelId: string) => deleteChannel(channelId));
   ipcMain.handle(IPC.discordMuteGuild, (_e, guildId: string, muted: boolean) => muteGuild(guildId, muted));
   ipcMain.handle(IPC.discordMuteDm, (_e, channelId: string, muted: boolean) => muteDm(channelId, muted));

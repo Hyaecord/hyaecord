@@ -210,6 +210,7 @@ export interface HyaecordBridge {
   stoatJoinInvite(code: string): Promise<{ ok: boolean; error?: string }>;
   stoatLeaveServer(serverId: string): Promise<boolean>;
   stoatCreateServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }>;
+  stoatCreateInvite(channelId: string): Promise<{ ok: boolean; url?: string; error?: string }>;
 }
 
 export interface StoatInvitePreview {

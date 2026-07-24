@@ -221,6 +221,11 @@ export function isStoatServerOwner(serverId: string): boolean {
   return !!guild && !!selfUserId && guild.ownerId === selfUserId;
 }
 
+/** Real "generate a shareable invite link" for a channel — the app could only ever *use* an invite before this, never create one to share. */
+export async function createStoatInvite(channelId: string): Promise<{ ok: boolean; url?: string; error?: string }> {
+  return window.hyaecord.stoatCreateInvite(channelId);
+}
+
 /** Real "create a new server" — POST /servers/create, only a name required. The new server also arrives via the "ServerCreate" dispatch (harmlessly de-duped there), but we don't need to wait on that since the REST response gives us the id directly. */
 export async function createStoatServer(name: string): Promise<{ ok: boolean; serverId?: string; error?: string }> {
   return window.hyaecord.stoatCreateServer(name);

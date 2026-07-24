@@ -47,6 +47,7 @@ import {
   lastRenderedMessageMeta,
   isStoatServerOwner,
   leaveStoatServer,
+  createStoatInvite,
   type StoatChannelSummary,
   type StoatMessageSummary
 } from "./stoat-session";
@@ -1556,12 +1557,33 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
 
 /** Same leading-glyph convention Discord's own channel list uses (see buildChannelRow) — a real `hash`/`volume-2` SVG icon, not a `#`/🔊 character, so both platforms read identically at a glance. */
 function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
-  return el(
+  const li = el(
     "li",
     { tabindex: "0", "data-channel": channel.id, className: channel.hasVoice ? "voice-channel-item" : "" },
     icon(channel.hasVoice ? "volume-2" : "hash", "channel-icon"),
     channel.name
   );
+  // Real "generate an invite link" — the app could only ever use an
+  // invite (item 79), never create one to share, until now.
+  li.addEventListener("contextmenu", ev => {
+    ev.preventDefault();
+    openContextMenu(ev.clientX, ev.clientY, [
+      {
+        label: t("server.createInvite"),
+        onClick: () => {
+          void createStoatInvite(channel.id).then(res => {
+            if (res.ok && res.url) {
+              void navigator.clipboard.writeText(res.url);
+              showToast(t("server.inviteCopied"));
+            } else {
+              showToast(t("friends.actionFailed"));
+            }
+          });
+        }
+      }
+    ]);
+  });
+  return li;
 }
 
 function selectStoatGuildUI(id: string): void {

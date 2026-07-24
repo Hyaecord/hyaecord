@@ -135,6 +135,11 @@ export class StoatRestClient {
     return this.request("POST", "/servers/create", { name });
   }
 
+  /** `POST /channels/{target}/invites` — "Create Invite", real per the OpenAPI spec's `Invite` schema (`_id` is the invite code). Previously the app could only *use* an invite (item 79), never generate a new one to share. */
+  createInvite(channelId: string): Promise<{ _id: string }> {
+    return this.request("POST", `/channels/${channelId}/invites`);
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
