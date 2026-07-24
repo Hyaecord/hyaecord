@@ -13,11 +13,16 @@ import { openEmojiPicker } from "./emoji-picker";
  * shared abstraction here would be indirection without real reuse. They
  * meet only at the render layer (session.ts's merged rail).
  *
- * Scope for this pass: connect, list servers/channels, read and send
- * plain-text messages. Deliberately not built yet: DMs, friends,
- * reactions, voice, file uploads, and anything else Stoat's real API
- * supports beyond that — the same "ship a real vertical slice, flag the
- * rest honestly" approach used throughout this project.
+ * What's real here as of this pass: connect, servers/channels, DMs,
+ * friends (from Ready's per-user `relationship` field), real per-server
+ * members, presence, read/send/edit/delete messages, live message
+ * create/update/delete/reaction/typing dispatches, attachments (display
+ * only — no upload yet), reactions, pins, and channel search. Still not
+ * built: voice (Stoat's real transport is LiveKit, a whole separate
+ * project the same way Discord's real voice transport is, see
+ * BUILD_PROMPT.md item 58), custom server emoji reactions (standard
+ * unicode only), and file uploads (sending an attachment, as opposed to
+ * seeing one).
  */
 
 export interface StoatChannelSummary {
@@ -527,7 +532,6 @@ export function getStoatUser(id: string): { username: string; displayName: strin
   return { username: u.username, displayName: u.displayName, avatar: u.avatar, online: u.online, presence: u.presence };
 }
 
-/** A minimal message row for Stoat — deliberately simpler than Discord's messageRow(): no embed-suppress/mention context menu items (Discord-specific REST calls this platform doesn't have), but pin/unpin is real (see rest.ts) and offered unconditionally, matching Discord's own pin item's author-independent permission rule for DMs — Stoat has no per-channel permission model this app computes yet, so this doesn't attempt to gate it further. */
 /** Renders a message's attachments — inline `<img>` for real images (per `File.metadata.type === "Image"`, not a filename-extension guess), a plain download link for anything else. Neither Discord's nor Stoat's message row rendered attachments at all before this — a real, previously-silent gap on both platforms; only Stoat's is fixed this pass per explicit scope. */
 function attachmentsEl(attachments: StoatAttachment[]): HTMLElement | null {
   if (attachments.length === 0) return null;
@@ -671,6 +675,7 @@ export function lastRenderedMessageMeta(container: HTMLElement): { authorId: str
   return { authorId, timestamp };
 }
 
+/** The Stoat message row — deliberately simpler than Discord's messageRow() in some ways (no embed-suppress/mention context menu items, no per-channel permission gating) but ahead of it in others (real edit/delete/reactions), reflecting how each platform's real API surface differs. */
 export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: string; timestamp: number } | null = null): HTMLElement {
   const grouped = !!previous && previous.authorId === msg.authorId && msg.timestamp !== null && msg.timestamp - previous.timestamp < GROUP_WINDOW_MS;
   const time = msg.timestamp
