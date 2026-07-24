@@ -157,7 +157,6 @@ export class StoatRestClient {
     return this.request("POST", `/channels/${channelId}/messages/${messageId}/pin`);
   }
 
-  /** `PUT/DELETE .../reactions/{emoji}` — confirmed real via the OpenAPI spec. `emoji` is the raw unicode character itself for a standard emoji reaction (custom server emoji aren't supported by this pass), matching the `Message.reactions` hashmap's own "emoji ID" keys. */
   /** `PATCH .../messages/{msg}` with `DataEditMessage` (`{content}`) — confirmed real via the OpenAPI spec. */
   editMessage(channelId: string, messageId: string, content: string): Promise<RawStoatMessage> {
     return this.request("PATCH", `/channels/${channelId}/messages/${messageId}`, { content });
@@ -167,6 +166,7 @@ export class StoatRestClient {
     return this.request("DELETE", `/channels/${channelId}/messages/${messageId}`);
   }
 
+  /** `PUT/DELETE .../reactions/{emoji}` — confirmed real via the OpenAPI spec. `emoji` is the raw unicode character itself for a standard emoji reaction (custom server emoji aren't supported by this pass), matching the `Message.reactions` hashmap's own "emoji ID" keys. */
   addReaction(channelId: string, messageId: string, emoji: string): Promise<void> {
     return this.request("PUT", `/channels/${channelId}/messages/${messageId}/reactions/${encodeURIComponent(emoji)}`);
   }
