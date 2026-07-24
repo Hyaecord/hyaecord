@@ -477,7 +477,12 @@ body {
   font-weight: 700;
   border-bottom: 1px solid var(--border);
 }
-.pins-panel-list { overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+/* flex:1 + min-height:0 — same fix as the composer/emoji-picker flex+scroll
+   bug found earlier tonight: without it, this grows to fit all its content
+   instead of scrolling, and the panel's own overflow:hidden just clips the
+   rest off rather than showing a scrollbar for a channel with more than a
+   couple of pins. */
+.pins-panel-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
 .pins-panel-empty { color: var(--text-dim); padding: 1rem; margin: 0; text-align: center; }
 .pin-item {
   padding: 0.5rem 0.6rem;
@@ -878,7 +883,10 @@ body {
 }
 .sticker-tab:hover { color: var(--text); }
 .sticker-tab.is-active { color: var(--text); border-color: var(--accent); }
+/* flex:1 + min-height:0 — same flex+scroll fix as .emoji-picker-grid/.pins-panel-list/.message-search-results: without it this grows to fit all stickers instead of scrolling, clipped by the parent's own overflow:hidden. */
 .sticker-picker-grid {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 0.6rem;
   display: grid;
@@ -929,7 +937,10 @@ body {
   color: var(--text);
   font: inherit;
 }
+/* Same flex+scroll fix as .sticker-picker-grid above. */
 .gif-picker-grid {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 0 0.6rem 0.6rem;
   columns: 2;
@@ -972,7 +983,10 @@ body {
   color: var(--text);
   font: inherit;
 }
+/* Same flex+scroll fix as .pins-panel-list above. */
 .message-search-results {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   padding: 0 0.6rem 0.6rem;
   display: flex;
