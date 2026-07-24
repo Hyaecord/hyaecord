@@ -1643,7 +1643,16 @@ function stoatChannelRow(channel: StoatChannelSummary): HTMLElement {
 function selectStoatGuildUI(id: string): void {
   const guild = selectStoatGuild(id);
   if (!guild) return;
-  markActivePill(null);
+  // Real bug found live: this used to only get set inside loadStoatMessages()
+  // (i.e. once a *channel* was clicked), so the members-fetch staleness
+  // check below almost always compared against a stale value and silently
+  // dropped the real member list — matching Discord's own selectGuild(),
+  // which sets this immediately at guild-selection time, not channel time.
+  activeGuildId = id;
+  // markActivePill(null) also wrongly flags the DM pill active (its branch
+  // treats a null guildId as "DM view is current") — clear pills directly
+  // instead of routing through the Discord-shaped helper.
+  document.querySelectorAll<HTMLElement>(".server-pill").forEach(p => p.removeAttribute("aria-current"));
   document.querySelectorAll<HTMLElement>(`.server-pill[data-stoat-guild="${id}"]`).forEach(p => p.setAttribute("aria-current", "true"));
   applyServerHeaderBanner(guild.name, guild.banner);
   renderStoatMembers(getStoatMembers(id));
