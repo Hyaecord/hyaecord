@@ -493,7 +493,13 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
 }
 
 function toGifResult(raw: RawGif): GifResult {
-  return { id: raw.id, url: raw.url, videoSrc: raw.gif_src, width: raw.width, height: raw.height, title: raw.title };
+  // `raw.src` is the real playable .mp4 despite the generic name; `gif_src`
+  // is actually a static/animated .webp preview, not a <video>-decodable
+  // source — confirmed live against the real (currently Klipy-backed, per
+  // discord.com/api/v9/gifs/trending-gifs) response shape, since the naming
+  // reads backwards from what it actually holds and had the picker showing
+  // an endless grid of blank tiles (DEMUXER_ERROR_COULD_NOT_OPEN on webp).
+  return { id: raw.id, url: raw.url, videoSrc: raw.src, width: raw.width, height: raw.height, title: raw.title };
 }
 
 /** Powers the GIF picker. Empty query means "show trending" — matches how the official picker opens. */
