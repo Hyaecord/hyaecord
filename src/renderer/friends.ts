@@ -4,7 +4,14 @@ import { getPfpOverride } from "./avatar-overrides";
 import { openProfilePopout } from "./profile-popout";
 import { getPresenceStatus, onPresenceChange } from "./session";
 import { icon } from "./icons";
-import { getStoatFriends, isStoatReady, stoatPresenceStatus, acceptStoatFriendRequest, removeStoatFriend } from "./stoat-session";
+import {
+  getStoatFriends,
+  isStoatReady,
+  stoatPresenceStatus,
+  acceptStoatFriendRequest,
+  removeStoatFriend,
+  sendStoatFriendRequest
+} from "./stoat-session";
 import { openStoatProfilePopout } from "./stoat-profile-popout";
 
 /**
@@ -186,7 +193,7 @@ export function openFriendsList(): void {
   const usernameInput = el("input", {
     type: "text",
     className: "friend-add-input",
-    placeholder: t("friends.addPlaceholder"),
+    placeholder: isStoatReady() ? t("friends.addPlaceholderDiscordOnly") : t("friends.addPlaceholder"),
     "aria-label": t("friends.addPlaceholder")
   }) as HTMLInputElement;
   const addButton = el(
@@ -199,6 +206,35 @@ export function openFriendsList(): void {
     t("friends.addButton")
   );
 
+  const addRows: HTMLElement[] = [el("div", { className: "friend-add-row" }, usernameInput, addButton)];
+
+  // Real Stoat friend-request sending — sendStoatFriendRequest existed as
+  // a real wrapper (main/stoat's real POST /users/friend) but was never
+  // actually reachable from any UI, found the same way as item 75's
+  // dead-bridge-method audit. Kept as its own separate input rather than
+  // sharing the Discord one above: the two platforms need genuinely
+  // different formats (Stoat still requires the full `username#0000`
+  // discriminator combo, Discord just needs a bare username), so a single
+  // shared field with no platform picker would be ambiguous.
+  if (isStoatReady()) {
+    const stoatUsernameInput = el("input", {
+      type: "text",
+      className: "friend-add-input",
+      placeholder: t("friends.addStoatPlaceholder"),
+      "aria-label": t("friends.addStoatPlaceholder")
+    }) as HTMLInputElement;
+    const stoatAddButton = el(
+      "button",
+      {
+        type: "button",
+        className: "btn primary",
+        onClick: () => void sendStoatRequest(stoatUsernameInput)
+      },
+      t("friends.addButton")
+    );
+    addRows.push(el("div", { className: "friend-add-row" }, stoatUsernameInput, stoatAddButton));
+  }
+
   const dialog = el(
     "div",
     { className: "modal friends-modal", role: "dialog", "aria-modal": "true", "aria-labelledby": "friends-title" },
@@ -206,13 +242,7 @@ export function openFriendsList(): void {
       el("h1", { id: "friends-title" }, t("friends.title")),
       el("button", { className: "btn ghost close", type: "button", "aria-label": t("settings.close"), onClick: close }, icon("x"))
     ),
-    el("div", { className: "friend-add-row" }, usernameInput, addButton),
-    // Only shown when Stoat friends can actually appear in this same list
-    // (below) — without it, someone might reasonably assume this one input
-    // sends a request on whichever platform, when it's really Discord-only
-    // this pass (see BUILD_PROMPT.md item 73 for why: the two platforms
-    // need different input formats and there's no platform picker here).
-    isStoatReady() ? el("p", { className: "step-hint friend-add-caution" }, t("friends.addDiscordOnly")) : "",
+    ...addRows,
     el("p", { className: "step-hint friend-add-caution" }, t("friends.addCaution")),
     tabsBar,
     list
@@ -259,6 +289,18 @@ async function sendRequest(input: HTMLInputElement): Promise<void> {
   const username = input.value.trim();
   if (!username) return;
   const res = await window.hyaecord.sendFriendRequest(username);
+  if (res.ok) {
+    input.value = "";
+    showToast(t("friends.requestSent"));
+  } else {
+    showToast(res.error ?? t("friends.actionFailed"));
+  }
+}
+
+async function sendStoatRequest(input: HTMLInputElement): Promise<void> {
+  const username = input.value.trim();
+  if (!username) return;
+  const res = await sendStoatFriendRequest(username);
   if (res.ok) {
     input.value = "";
     showToast(t("friends.requestSent"));
