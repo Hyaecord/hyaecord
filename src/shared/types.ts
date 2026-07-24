@@ -208,6 +208,7 @@ export interface HyaecordBridge {
   stoatOpenDM(userId: string): Promise<string | null>;
   stoatPreviewInvite(codeOrUrl: string): Promise<{ ok: true; invite: StoatInvitePreview } | { ok: false; error: string }>;
   stoatJoinInvite(code: string): Promise<{ ok: boolean; error?: string }>;
+  stoatLeaveServer(serverId: string): Promise<boolean>;
 }
 
 export interface StoatInvitePreview {

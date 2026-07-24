@@ -1,5 +1,5 @@
 import type { DiscordSession } from "@shared/types";
-import { el, mountRotatingText, patchSettings, showToast, state, t } from "./ui";
+import { el, mountRotatingText, patchSettings, showToast, state, t, holdButton } from "./ui";
 import { computeChannelPermissions, hasPermission, Permission } from "./permissions";
 import { openProfilePopout } from "./profile-popout";
 import { openGifPicker } from "./gif-picker";
@@ -45,6 +45,8 @@ import {
   getSelfStoatUserId,
   getStoatUser,
   lastRenderedMessageMeta,
+  isStoatServerOwner,
+  leaveStoatServer,
   type StoatChannelSummary,
   type StoatMessageSummary
 } from "./stoat-session";
@@ -1151,6 +1153,44 @@ export function renderRail(): void {
 }
 
 /** Same visual shape as buildGuildPill, tagged with a small platform badge in the corner (only shown when both platforms are merged into one rail — redundant, and thus omitted, in single-platform mode). */
+let leaveServerPanel: HTMLElement | null = null;
+
+/**
+ * Real "leave" (or, for the owner, "delete" — same endpoint, see
+ * stoat-session.ts's leaveStoatServer) confirmation — hold-to-confirm
+ * rather than an immediate click, matching this app's standing pattern
+ * for destructive actions (moderator.ts's channel delete, etc.) since
+ * leaving/deleting a server is exactly that kind of action and there was
+ * previously no way to do it from inside the app at all.
+ */
+function confirmLeaveStoatServer(anchor: HTMLElement, guildId: string, guildName: string): void {
+  leaveServerPanel?.remove();
+  const isOwner = isStoatServerOwner(guildId);
+  const label = isOwner ? t("server.holdToDelete") : t("server.holdToLeave");
+  const holdBtn = holdButton(label, 1200, () => {
+    void leaveStoatServer(guildId).then(ok => {
+      showToast(ok ? t(isOwner ? "server.deleted" : "server.left", { name: guildName }) : t("friends.actionFailed"));
+      leaveServerPanel?.remove();
+      leaveServerPanel = null;
+      renderRail();
+    });
+  });
+  const panel = el("div", { className: "leave-server-confirm" }, el("p", {}, t(isOwner ? "server.deleteWarning" : "server.leaveWarning", { name: guildName })), holdBtn);
+  document.body.append(panel);
+  leaveServerPanel = panel;
+  const rect = anchor.getBoundingClientRect();
+  panel.style.left = `${rect.right + 8}px`;
+  panel.style.top = `${rect.top}px`;
+  const onOutside = (ev: PointerEvent) => {
+    if (!panel.contains(ev.target as Node)) {
+      panel.remove();
+      leaveServerPanel = null;
+      document.removeEventListener("pointerdown", onOutside, true);
+    }
+  };
+  document.addEventListener("pointerdown", onOutside, true);
+}
+
 function buildStoatGuildPill(guild: { id: string; name: string; icon: string | null }): HTMLElement {
   const pill = el("button", {
     className: "server-pill",
@@ -1159,6 +1199,15 @@ function buildStoatGuildPill(guild: { id: string; name: string; icon: string | n
     "aria-label": guild.name,
     "data-stoat-guild": guild.id,
     onClick: () => selectStoatGuildUI(guild.id)
+  });
+  pill.addEventListener("contextmenu", ev => {
+    ev.preventDefault();
+    openContextMenu(ev.clientX, ev.clientY, [
+      {
+        label: isStoatServerOwner(guild.id) ? t("server.delete") : t("server.leave"),
+        onClick: () => confirmLeaveStoatServer(pill, guild.id, guild.name)
+      }
+    ]);
   });
   if (guild.icon) {
     pill.append(el("img", { src: guild.icon, alt: "", loading: "lazy" }));

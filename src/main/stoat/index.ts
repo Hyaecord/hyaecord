@@ -360,6 +360,16 @@ export function stopTyping(channelId: string): void {
   gateway?.endTyping(channelId);
 }
 
+export async function leaveServer(serverId: string): Promise<boolean> {
+  if (!rest) return false;
+  try {
+    await rest.leaveServer(serverId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export interface StoatInvitePreview {
   serverId: string;
   serverName: string;

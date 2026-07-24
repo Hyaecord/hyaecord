@@ -38,6 +38,8 @@ export interface StoatGuildSummary {
   icon: string | null;
   banner: string | null;
   channels: StoatChannelSummary[];
+  /** Real Server.owner user id — used to tell "Leave Server" from "Delete Server" (same real endpoint serves both, see leaveStoatServer). */
+  ownerId: string;
 }
 
 export interface StoatAttachment {
@@ -149,6 +151,7 @@ interface RawStoatServer {
   icon?: { _id: string } | null;
   banner?: { _id: string } | null;
   channels: string[];
+  owner: string;
 }
 
 interface RawStoatChannel {
@@ -181,7 +184,8 @@ function toGuildSummary(server: RawStoatServer, channels: RawStoatChannel[]): St
     channels: server.channels
       .map(id => channelsById.get(id))
       .filter((ch): ch is RawStoatChannel => !!ch && ch.channel_type === "TextChannel")
-      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null }))
+      .map(ch => ({ id: ch._id, name: ch.name ?? "?", hasVoice: ch.voice != null })),
+    ownerId: server.owner
   };
 }
 
@@ -202,6 +206,28 @@ export async function previewStoatInvite(codeOrUrl: string) {
 /** Real "join a server" — POST /invites/{code}. The new server arrives live via the "ServerCreate" dispatch above rather than needing a manual refetch. */
 export async function joinStoatServer(code: string) {
   return window.hyaecord.stoatJoinInvite(code);
+}
+
+/**
+ * Real "leave" (or, if you're the owner, "delete") a server — the exact
+ * same `DELETE /servers/{id}` endpoint serves both, per the OpenAPI
+ * spec's own summary ("Delete / Leave Server"): non-owners leave,
+ * the owner deletes it for everyone. `isStoatServerOwner()` lets the UI
+ * label and gate this correctly rather than showing a blanket "Leave"
+ * that could actually be a full delete.
+ */
+export function isStoatServerOwner(serverId: string): boolean {
+  const guild = guilds.find(g => g.id === serverId);
+  return !!guild && !!selfUserId && guild.ownerId === selfUserId;
+}
+
+export async function leaveStoatServer(serverId: string): Promise<boolean> {
+  const ok = await window.hyaecord.stoatLeaveServer(serverId);
+  if (ok) {
+    guilds = guilds.filter(g => g.id !== serverId);
+    stateChangeListeners.forEach(cb => cb());
+  }
+  return ok;
 }
 
 function onReady(data: unknown): void {

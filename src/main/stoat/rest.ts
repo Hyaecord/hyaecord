@@ -117,6 +117,11 @@ export class StoatRestClient {
     return this.request("POST", `/invites/${code}`);
   }
 
+  /** `DELETE /servers/{target}` — "Delete / Leave Server" (same endpoint, real per the OpenAPI spec's own summary). `leave_silently` skips the "X left the server" system message. */
+  leaveServer(serverId: string): Promise<void> {
+    return this.request("DELETE", `/servers/${serverId}?leave_silently=false`);
+  }
+
   /**
    * `GET /servers/{target}/members` — confirmed real via the OpenAPI spec
    * (`AllMemberResponse`: `{ members: Member[], users: User[] }`). The
