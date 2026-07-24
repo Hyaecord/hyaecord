@@ -164,6 +164,7 @@ function toSummary(
   edited: boolean;
   attachments: StoatAttachmentSummary[];
   reactions: StoatReactionSummary[];
+  replyToId: string | null;
 } {
   const author = raw.user ?? users.get(raw.author);
   return {
@@ -176,7 +177,8 @@ function toSummary(
     pinned: raw.pinned ?? false,
     edited: !!raw.edited,
     attachments: (raw.attachments ?? []).map(toAttachment),
-    reactions: toReactions(raw.reactions)
+    reactions: toReactions(raw.reactions),
+    replyToId: raw.replies?.[0] ?? null
   };
 }
 
@@ -214,10 +216,10 @@ export async function getPinnedMessages(channelId: string) {
   return searchInternal(channelId, null, true);
 }
 
-export async function sendMessage(channelId: string, content: string): Promise<boolean> {
+export async function sendMessage(channelId: string, content: string, replyTo?: { id: string; mention: boolean }): Promise<boolean> {
   if (!rest || !content.trim()) return false;
   try {
-    await rest.createMessage(channelId, content);
+    await rest.createMessage(channelId, content, replyTo);
     return true;
   } catch {
     return false;

@@ -187,7 +187,7 @@ export interface HyaecordBridge {
   onStoatState(cb: (session: StoatSession) => void): void;
   onStoatEvent(cb: (event: string, data: unknown) => void): void;
   stoatFetchMessages(channelId: string): Promise<unknown[]>;
-  stoatSendMessage(channelId: string, content: string): Promise<boolean>;
+  stoatSendMessage(channelId: string, content: string, replyTo?: { id: string; mention: boolean }): Promise<boolean>;
   stoatGetDMs(): Promise<StoatDMSummary[]>;
   stoatGetServerMembers(serverId: string): Promise<StoatMemberSummary[]>;
   stoatPinMessage(channelId: string, messageId: string): Promise<boolean>;

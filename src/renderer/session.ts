@@ -48,6 +48,7 @@ import {
   isStoatServerOwner,
   leaveStoatServer,
   createStoatInvite,
+  onStoatReplyRequested,
   type StoatChannelSummary,
   type StoatMessageSummary
 } from "./stoat-session";
@@ -239,6 +240,27 @@ export function initSession(): void {
   });
   onStoatTyping(onStoatTypingEvent);
   setStoatMessageHandler((userId, displayName) => void messageStoatUser(userId, displayName));
+  onStoatReplyRequested((messageId, authorName) => setStoatReplyTarget(messageId, authorName));
+}
+
+/** The composer's "replying to X" pill — real reply support (Message.replies, see stoat-session.ts), cleared on send, on manual cancel, or on switching channels. */
+let stoatReplyTarget: { id: string; authorName: string } | null = null;
+
+function setStoatReplyTarget(messageId: string, authorName: string): void {
+  stoatReplyTarget = { id: messageId, authorName };
+  const bar = document.getElementById("composer-reply-bar")!;
+  bar.replaceChildren(
+    el("span", {}, t("composer.replyingTo", { name: authorName })),
+    el("button", { type: "button", "aria-label": t("composer.cancelReply"), onClick: () => clearStoatReplyTarget() }, icon("x"))
+  );
+  bar.hidden = false;
+  document.getElementById("composer-input")?.focus();
+}
+
+function clearStoatReplyTarget(): void {
+  stoatReplyTarget = null;
+  const bar = document.getElementById("composer-reply-bar");
+  if (bar) bar.hidden = true;
 }
 
 /** Real "start a new DM" — there was no way to message someone you didn't already have an open DM with. `GET /users/{id}/dm` (rest.ts) both opens the existing DM and creates one if needed; jumps straight into it rather than waiting for the DM list to refetch and show it. */
@@ -510,8 +532,10 @@ function wireComposer(): void {
     if (activeChatPlatform === "stoat") {
       const content = input.value;
       input.value = "";
-      const ok = await sendStoatMessage(activeChannelId, content);
+      const replyTo = stoatReplyTarget ? { id: stoatReplyTarget.id, mention: true } : undefined;
+      const ok = await sendStoatMessage(activeChannelId, content, replyTo);
       if (!ok) input.value = content;
+      else clearStoatReplyTarget();
       return;
     }
 
@@ -1523,6 +1547,7 @@ function messageRow(msg: MessageSummary, previous: { authorId: string; timestamp
 async function loadMessages(channelId: string): Promise<void> {
   activeChatPlatform = "discord";
   document.getElementById("typing-indicator")!.textContent = "";
+  clearStoatReplyTarget();
   const container = document.getElementById("messages")!;
   container.replaceChildren();
   const raw = await window.hyaecord.fetchMessages(channelId);
@@ -1541,6 +1566,7 @@ async function loadStoatMessages(guildId: string | null, channelId: string, chan
   activeChatPlatform = "stoat";
   document.getElementById("chat-header")!.textContent = `# ${channelName}`;
   document.getElementById("typing-indicator")!.textContent = "";
+  clearStoatReplyTarget();
   // Stoat channels do have a real permission model (default_permissions /
   // role_permissions on TextChannel), but this app doesn't compute
   // effective per-channel permissions for Stoat yet the way it does for

@@ -23,7 +23,7 @@ const bridge: HyaecordBridge = {
     ipcRenderer.on(IPC.stoatEvent, (_e, event: string, data: unknown) => cb(event, data));
   },
   stoatFetchMessages: channelId => ipcRenderer.invoke(IPC.stoatFetchMessages, channelId),
-  stoatSendMessage: (channelId, content) => ipcRenderer.invoke(IPC.stoatSendMessage, channelId, content),
+  stoatSendMessage: (channelId, content, replyTo) => ipcRenderer.invoke(IPC.stoatSendMessage, channelId, content, replyTo),
   stoatGetDMs: () => ipcRenderer.invoke(IPC.stoatGetDMs),
   stoatGetServerMembers: serverId => ipcRenderer.invoke(IPC.stoatGetServerMembers, serverId),
   stoatPinMessage: (channelId, messageId) => ipcRenderer.invoke(IPC.stoatPinMessage, channelId, messageId),

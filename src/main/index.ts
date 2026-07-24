@@ -190,7 +190,9 @@ app.whenReady().then(() => {
   ipcMain.handle(IPC.stoatLogout, () => stoatLogout());
   ipcMain.handle(IPC.stoatGetSession, () => getStoatSessionState());
   ipcMain.handle(IPC.stoatFetchMessages, (_e, channelId: string) => stoatFetchMessages(channelId));
-  ipcMain.handle(IPC.stoatSendMessage, (_e, channelId: string, content: string) => stoatSendMessage(channelId, content));
+  ipcMain.handle(IPC.stoatSendMessage, (_e, channelId: string, content: string, replyTo?: { id: string; mention: boolean }) =>
+    stoatSendMessage(channelId, content, replyTo)
+  );
   ipcMain.handle(IPC.stoatGetDMs, () => stoatGetDMs());
   ipcMain.handle(IPC.stoatGetServerMembers, (_e, serverId: string) => stoatGetServerMembers(serverId));
   ipcMain.handle(IPC.stoatPinMessage, (_e, channelId: string, messageId: string) => stoatPinMessage(channelId, messageId));

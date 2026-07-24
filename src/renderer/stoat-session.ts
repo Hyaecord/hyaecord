@@ -67,6 +67,8 @@ export interface StoatMessageSummary {
   edited: boolean;
   attachments: StoatAttachment[];
   reactions: StoatReaction[];
+  /** Real `Message.replies[0]` (only the first — Stoat supports replying to multiple messages at once, but this app's UI only ever sets one). No embedded quoted content in the schema, only the id — see stoatMessageRow's reply indicator for how that's handled. */
+  replyToId: string | null;
   /** Decoded from the message's own ULID — see ulid.ts; Stoat's Message schema has no separate timestamp field. */
   timestamp: number | null;
 }
@@ -353,6 +355,7 @@ interface RawLiveMessage {
   pinned?: boolean;
   edited?: string | null;
   attachments?: Array<{ _id: string; filename: string; content_type: string; metadata: { type: string; width?: number; height?: number } }> | null;
+  replies?: string[] | null;
 }
 
 function attachmentsFromRaw(files: RawLiveMessage["attachments"]): StoatAttachment[] {
@@ -435,6 +438,7 @@ async function onLiveMessage(data: unknown): Promise<void> {
     edited: !!raw.edited,
     attachments: attachmentsFromRaw(raw.attachments),
     reactions: [],
+    replyToId: raw.replies?.[0] ?? null,
     timestamp: ulidTimestampMs(raw._id)
   };
   messageCreateListeners.forEach(cb => cb(msg));
@@ -555,6 +559,7 @@ interface RawStoatMessageSummary {
   edited: boolean;
   attachments: StoatAttachment[];
   reactions: StoatReaction[];
+  replyToId: string | null;
 }
 
 function mapRawMessages(raw: RawStoatMessageSummary[]): StoatMessageSummary[] {
@@ -567,8 +572,8 @@ export async function selectStoatChannel(channelId: string): Promise<StoatMessag
   return mapRawMessages(raw);
 }
 
-export async function sendStoatMessage(channelId: string, content: string): Promise<boolean> {
-  return window.hyaecord.stoatSendMessage(channelId, content);
+export async function sendStoatMessage(channelId: string, content: string, replyTo?: { id: string; mention: boolean }): Promise<boolean> {
+  return window.hyaecord.stoatSendMessage(channelId, content, replyTo);
 }
 
 /** Real full-text search within one channel — `POST /channels/{id}/search`, confirmed real via the OpenAPI spec (Stoat's own equivalent of Discord's message search, message-search.ts). */
@@ -762,6 +767,36 @@ export function lastRenderedMessageMeta(container: HTMLElement): { authorId: str
 }
 
 /** The Stoat message row — deliberately simpler than Discord's messageRow() in some ways (no embed-suppress/mention context menu items, no per-channel permission gating) but ahead of it in others (real edit/delete/reactions), reflecting how each platform's real API surface differs. */
+type StoatReplyRequestListener = (messageId: string, authorName: string) => void;
+const replyRequestListeners = new Set<StoatReplyRequestListener>();
+
+/** session.ts owns the composer UI (the "replying to X" pill above it, clearing it on send) — this just lets a message row's "Reply" context-menu item ask for that without stoat-session.ts needing to know about composer DOM itself. */
+export function onStoatReplyRequested(cb: StoatReplyRequestListener): () => void {
+  replyRequestListeners.add(cb);
+  return () => replyRequestListeners.delete(cb);
+}
+
+/**
+ * Real reply-to-a-message — `Message.replies`/`DataMessageSend.replies`
+ * (`ReplyIntent[]`), confirmed real via the OpenAPI spec. The schema only
+ * ever gives back message *ids* for replies, no embedded quoted content,
+ * so the indicator below only shows a name/snippet when the original
+ * happens to already be rendered in the current message list (a cheap,
+ * honest best-effort — not a guaranteed "jump to and show the quoted
+ * message" the way Discord's own client can, since that needs fetching
+ * an arbitrary historical message this app doesn't do).
+ */
+function replyIndicatorEl(replyToId: string): HTMLElement {
+  const original = document.querySelector<HTMLElement>(`.msg[data-message="${replyToId}"]`);
+  const originalAuthor = original?.querySelector(".msg-author")?.textContent;
+  return el(
+    "p",
+    { className: "msg-reply-indicator" },
+    "↩ ",
+    originalAuthor ? t("message.replyingToNamed", { name: originalAuthor }) : t("message.replyingTo")
+  );
+}
+
 export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: string; timestamp: number } | null = null): HTMLElement {
   const grouped = !!previous && previous.authorId === msg.authorId && msg.timestamp !== null && msg.timestamp - previous.timestamp < GROUP_WINDOW_MS;
   const time = msg.timestamp
@@ -801,6 +836,7 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
   };
 
   const bodyChildren: HTMLElement[] = [];
+  if (msg.replyToId) bodyChildren.push(replyIndicatorEl(msg.replyToId));
   if (!grouped) {
     bodyChildren.push(
       el(
@@ -833,6 +869,10 @@ export function stoatMessageRow(msg: StoatMessageSummary, previous: { authorId: 
   row.addEventListener("contextmenu", ev => {
     ev.preventDefault();
     const items: ContextMenuItem[] = [
+      {
+        label: t("message.reply"),
+        onClick: () => replyRequestListeners.forEach(cb => cb(msg.id, msg.authorName))
+      },
       {
         label: msg.pinned ? t("pins.unpin") : t("pins.pin"),
         onClick: () => void (msg.pinned ? unpinStoatMessage(msg.channelId, msg.id) : pinStoatMessage(msg.channelId, msg.id))

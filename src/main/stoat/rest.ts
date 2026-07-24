@@ -76,8 +76,12 @@ export class StoatRestClient {
     return this.request("GET", `/channels/${channelId}/messages?limit=${limit}&include_users=true`);
   }
 
-  createMessage(channelId: string, content: string): Promise<RawStoatMessage> {
-    return this.request("POST", `/channels/${channelId}/messages`, { content });
+  /** `replyTo` maps to the real `DataMessageSend.replies` array (`ReplyIntent[]`, confirmed via the OpenAPI spec) — Stoat's real reply-to-a-message feature, not built at all before this. */
+  createMessage(channelId: string, content: string, replyTo?: { id: string; mention: boolean }): Promise<RawStoatMessage> {
+    return this.request("POST", `/channels/${channelId}/messages`, {
+      content,
+      replies: replyTo ? [{ id: replyTo.id, mention: replyTo.mention }] : undefined
+    });
   }
 
   /**
@@ -226,6 +230,8 @@ export interface RawStoatMessage {
   edited?: string | null;
   /** Hashmap of emoji "id" (the raw unicode character, for a standard reaction) to the array of user ids who reacted with it — confirmed real via the OpenAPI Message schema. */
   reactions?: Record<string, string[]>;
+  /** Array of message ids this message replies to — real field, confirmed via the OpenAPI Message schema. Only ids, no embedded quoted content. */
+  replies?: string[] | null;
 }
 
 export interface RawStoatBulkMessages {

@@ -581,6 +581,19 @@ body {
   white-space: pre-wrap;
 }
 .msg-edited { color: var(--text-dim); font-size: 0.72rem; }
+.msg-reply-indicator { margin: 0 0 0.2rem; font-size: 0.78rem; color: var(--text-dim); }
+.composer-reply-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.3rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  background: var(--bg-raise);
+  border-top: 1px solid var(--border);
+}
+.composer-reply-bar button { background: none; border: none; color: var(--text-dim); cursor: pointer; }
+.composer-reply-bar button:hover { color: var(--text); }
 .msg-edit-input {
   width: 100%;
   padding: 0.4rem 0.6rem;
